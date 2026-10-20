@@ -1,0 +1,42 @@
+<%- include('../partials/header') %>
+
+<a class="back" href="/admin/events">← Back to manage events</a>
+
+<section class="section-head">
+  <div>
+    <h1>Archived events</h1>
+    <p class="muted">
+      Events are soft deleted (<code>EVENTS.deleted_at</code>): they disappear from the
+      listings but their registrations, attendance and status history are kept.
+    </p>
+  </div>
+</section>
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr><th>#</th><th>Title</th><th>Date &amp; time</th><th>Venue</th><th>Archived on</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% events.forEach(function (e) { %>
+        <tr>
+          <td><%= e.event_id %></td>
+          <td><strong><%= e.title %></strong></td>
+          <td><%= fmtDate(e.event_date) %></td>
+          <td><%= venueName(e) %></td>
+          <td><%= fmtDate(e.deleted_at) %></td>
+          <td>
+            <form action="/admin/events/<%= e.event_id %>/restore" method="POST" class="inline"
+                  data-confirm="Restore <%= e.title %>?">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+              <button class="link" type="submit">Restore</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!events.length) { %><tr><td colspan="6" class="muted">No archived events.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

@@ -16,7 +16,11 @@ A production-ready, academic-defense-approved **Online Event Registration System
 | 6 | **EJS + HTML/CSS/JS** | EJS ^3.1 | Server-side rendered views |
 | 7 | **Bcrypt & Crypto** | `bcryptjs` + Node `crypto` | Password hashing (salt rounds) & secure token generation |
 
-> The project ships with SQLite as the **default** dialect so it runs anywhere with zero database server setup.
+> The schema has **8 tables** — `VENUES · EVENTS · USERS · REGISTRATIONS · ATTENDANCE ·
+REGISTRATION_STATUS_CHANGES · AUDIT_LOGS · SESSIONS` — and is in 3NF (see
+`docs/DATABASE-AUDIT.md` for the proof and the one documented exception).
+
+The project ships with SQLite as the **default** dialect so it runs anywhere with zero database server setup.
 > Switch to MySQL or PostgreSQL by changing two lines in `.env` — no code changes are required.
 
 ---
@@ -26,12 +30,18 @@ A production-ready, academic-defense-approved **Online Event Registration System
 ```
 event-registration-system/
 ├── config/
-│   └── database.js              # Sequelize connection factory (sqlite | mysql | postgres)
+│   ├── database.js              # Sequelize connection factory (sqlite | mysql | postgres)
+│   └── sessionStore.js          # express-session store backed by the SESSIONS table
 ├── models/                      # ---------- MODEL ----------
-│   ├── index.js                 # loads models + defines associations + capacity helpers
+│   ├── index.js                 # models + associations + capacity/audit/history helpers
 │   ├── User.js                  # USERS          (user_id, email, password, role, reset token)
-│   ├── Event.js                 # EVENTS         (event_id, title, date, venue, capacity)
-│   └── Registration.js          # REGISTRATIONS  (registration_id, user_id, event_id, status)
+│   ├── Venue.js                 # VENUES         (venue master data: name, address, city)
+│   ├── Event.js                 # EVENTS         (event_id, title, date, venue_id, capacity, deleted_at)
+│   ├── Registration.js          # REGISTRATIONS  (registration_id, user_id, event_id, status)
+│   ├── Attendance.js            # ATTENDANCE     (physical check-in, 1:0..1 with registrations)
+│   ├── RegistrationStatusChange.js # REGISTRATION_STATUS_CHANGES (status timeline)
+│   ├── AuditLog.js              # AUDIT_LOGS     (admin action trail)
+│   └── Session.js               # SESSIONS       (express-session store)
 ├── controllers/                 # --------- CONTROLLER --------
 │   ├── eventController.js       # public listing, detail, admin CRUD, timezone-safe input
 │   ├── registrationController.js# registration transaction, duplicate prevention, waitlist, cancel
@@ -40,12 +50,14 @@ event-registration-system/
 ├── routes/
 │   └── index.js                 # URL → controller routing table + asyncHandler
 ├── middlewares/
-│   ├── auth.js                  # session auth, admin role guard, flash messages, asyncHandler
+│   ├── auth.js                  # session auth, role guard, CSRF, safe redirects, asyncHandler
+│   ├── rateLimit.js             # IP rate limiting + per-account login lockout
 │   └── validate.js              # email / required-field / event / password validators
 ├── views/                       # ------------ VIEW -----------
 │   ├── partials/                # header, footer, inline errors & alerts
 │   ├── events/                  # index, show, confirmation, full, duplicate
-│   ├── admin/                   # dashboard, events, event-form, participants, attendance, users
+│   ├── admin/                   # dashboard, events, event-form, participants, attendance, users,
+│   │                            #   venues, audit, archived, registration-history
 │   ├── auth/                    # login, register, forgot-password, reset-password, change-password
 │   ├── my-registrations.ejs
 │   └── error.ejs                # 400 / 403 / 404 / 500 error pages
@@ -56,7 +68,7 @@ event-registration-system/
 │   ├── seed.js                  # demo users, events, registrations
 │   └── reset.js                 # drop + recreate all tables
 ├── test/
-│   └── system.test.js           # automated test suite (16 tests for defense verification)
+│   └── system.test.js           # automated test suite (25 tests, runs on an in-memory DB)
 ├── docs/
 │   ├── DEFENSE-GUIDE.md         # ★ comprehensive academic defense presentation manual
 │   ├── SYSTEM-DOCS.html / .pdf  # ★ full documentation sheet (diagrams inlined)
@@ -64,12 +76,15 @@ event-registration-system/
 │   ├── FLOWCHART.svg / .png     # system flowchart
 │   ├── MVC-ARCHITECTURE.svg     # architecture diagram
 │   ├── DOCUMENTATION.md         # full system documentation
-│   ├── schema.sql               # MySQL DDL schema + reporting queries
+│   ├── GETTING-STARTED.md       # ★ how to run it, initialise the DB, troubleshoot
+│   ├── DATABASE-AUDIT.md        # ★ normalisation audit, fixes, recommendations
+│   ├── schema.sql               # MySQL DDL for the running schema + reporting queries
+│   ├── schema-3nf.sql           # proposed normalised v2 schema (venue, attendance, tokens, audit)
 │   ├── REGISTRATIONS-SAMPLE.json# sample request/response payloads
 │   ├── generate-diagrams.py     # regenerates the diagrams
 │   └── build-html.py            # builds the documentation sheet
 ├── server.js                    # app entry point
-├── .env.example
+├── .env.example                 # copy to .env
 └── package.json
 ```
 
@@ -87,7 +102,7 @@ cp .env.example .env          # Windows: copy .env.example .env
 # 3. load demo data (creates tables + 5 realistic events + seed accounts)
 npm run seed
 
-# 4. run automated test suite (verifies all 16 business rules & security controls)
+# 4. run automated test suite (verifies all 25 business rules & security controls)
 npm test
 
 # 5. start the server
@@ -95,6 +110,10 @@ npm start                     # or: npm run dev   (auto-restart on change)
 ```
 
 Open <http://localhost:3000> in your browser.
+
+> **New to the project?** Read [`docs/GETTING-STARTED.md`](./docs/GETTING-STARTED.md)
+> first — it explains how the database is created at runtime, which commands are
+> destructive, and how to fix the errors you are most likely to hit.
 
 ### Demo accounts (after `npm run seed`)
 

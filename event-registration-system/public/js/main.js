@@ -1,5 +1,39 @@
-/* public/js/main.js - light client-side validation (progressive enhancement) */
+/* public/js/main.js
+ * Progressive enhancement only - the server is the source of truth.
+ *
+ * CSP note: this file exists so the pages can ship with
+ * `script-src 'self'` (no inline <script>, no onclick/onsubmit attributes).
+ *   data-confirm="question"   -> ask before submitting the form
+ *   data-print                -> window.print()
+ *   data-autosubmit           -> submit the form when this control changes
+ */
 (function () {
+  'use strict';
+
+  /* ------------------------------ confirm forms ---------------------------- */
+  document.querySelectorAll('form[data-confirm]').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+      if (!window.confirm(form.getAttribute('data-confirm'))) {
+        e.preventDefault();
+      }
+    });
+  });
+
+  /* --------------------------------- print -------------------------------- */
+  document.querySelectorAll('[data-print]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      window.print();
+    });
+  });
+
+  /* ------------------------------ auto-submit ----------------------------- */
+  document.querySelectorAll('[data-autosubmit]').forEach(function (control) {
+    control.addEventListener('change', function () {
+      if (control.form) control.form.submit();
+    });
+  });
+
+  /* --------------------------- registration form --------------------------- */
   var form = document.getElementById('registrationForm');
   if (!form) return;
 
@@ -25,10 +59,7 @@
         box.className = 'alert alert-error client-errors';
         form.prepend(box);
       }
-      box.innerHTML =
-        '<strong>Please fix the following:</strong><ul>' +
-        problems.map(function (p) { return '<li>' + p + '</li>'; }).join('') +
-        '</ul>';
+      box.textContent = 'Please fix the following: ' + problems.join(' ');
       box.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   });

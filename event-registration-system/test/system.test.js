@@ -7,13 +7,36 @@ const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert');
 const { Op } = require('sequelize');
 
-const { sequelize, User, Event, Registration, getEventCapacity } = require('../models');
+// The suite recreates the schema with { force: true }. Point it at an
+// in-memory database so `npm test` can never wipe the demo/development
+// database in database/event_registration.sqlite.
+process.env.DB_STORAGE = process.env.TEST_DB_STORAGE || ':memory:';
+
+const {
+  sequelize,
+  User,
+  Venue,
+  Event,
+  Registration,
+  Attendance,
+  RegistrationStatusChange,
+  AuditLog,
+  getEventCapacity,
+  logStatusChange,
+  logAudit,
+} = require('../models');
 const { validateRegistration, validateEvent, validatePassword } = require('../middlewares/validate');
+const { createRateLimiter, accountLoginLockout } = require('../middlewares/rateLimit');
+const { SequelizeSessionStore } = require('../config/sessionStore');
 
 describe('Event Registration System - Defense Verification Suite', () => {
+  // Shared venue: EVENTS.venue_id is NOT NULL, so every event needs one.
+  let venue;
+
   before(async () => {
     // Recreate fresh tables
     await sequelize.sync({ force: true });
+    venue = await Venue.create({ name: 'Test Hall', city: 'Cagayan de Oro', address: '1 Main St' });
   });
 
   after(async () => {
@@ -69,18 +92,22 @@ describe('Event Registration System - Defense Verification Suite', () => {
       });
     });
 
-    it('should generate a 64-char crypto reset token with 1-hour expiration', async () => {
+    it('should generate a 64-char crypto reset token and store only its hash', async () => {
       token = await user.generateResetToken();
       assert.ok(token, 'Token must exist');
       assert.strictEqual(token.length, 64, 'Token must be 64 hexadecimal characters');
-      assert.strictEqual(user.reset_password_token, token);
+      assert.match(token, /^[a-f0-9]{64}$/, 'Token must be hexadecimal');
+
+      // Security: the raw token is handed to the user, never persisted.
+      assert.notStrictEqual(user.reset_password_token, token, 'Raw token must not be stored');
+      assert.strictEqual(user.reset_password_token, User.hashResetToken(token));
       assert.ok(user.reset_password_expires > new Date(), 'Expiry must be in the future');
     });
 
     it('should locate user by valid unexpired token', async () => {
       const found = await User.findOne({
         where: {
-          reset_password_token: token,
+          reset_password_token: User.hashResetToken(token),
           reset_password_expires: { [Op.gt]: new Date() },
         },
       });
@@ -106,13 +133,13 @@ describe('Event Registration System - Defense Verification Suite', () => {
 
     it('should reject expired tokens', async () => {
       // Simulate expired token
-      user.reset_password_token = 'expired-token-xyz';
+      user.reset_password_token = User.hashResetToken('expired-token-xyz');
       user.reset_password_expires = new Date(Date.now() - 1000 * 60); // 1 minute ago
       await user.save();
 
       const found = await User.findOne({
         where: {
-          reset_password_token: 'expired-token-xyz',
+          reset_password_token: User.hashResetToken('expired-token-xyz'),
           reset_password_expires: { [Op.gt]: new Date() },
         },
       });
@@ -129,7 +156,7 @@ describe('Event Registration System - Defense Verification Suite', () => {
         title: 'Limited Workshop',
         description: 'Testing capacity limits',
         event_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        venue: 'Room 101',
+        venue_id: venue.venue_id,
         max_participants: 2,
       });
     });
@@ -181,7 +208,7 @@ describe('Event Registration System - Defense Verification Suite', () => {
       event = await Event.create({
         title: 'Seminar On Data',
         event_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-        venue: 'Auditorium',
+        venue_id: venue.venue_id,
         max_participants: 10,
       });
 
@@ -240,7 +267,7 @@ describe('Event Registration System - Defense Verification Suite', () => {
       smallEvent = await Event.create({
         title: 'Micro Workshop',
         event_date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-        venue: 'Lab A',
+        venue_id: venue.venue_id,
         max_participants: 1, // capacity of 1
       });
 
@@ -305,6 +332,174 @@ describe('Event Registration System - Defense Verification Suite', () => {
     });
   });
 
+
+  /* ------------------- 7. NORMALISED SCHEMA (v2 tables) ------------------- */
+  describe('7. Venues, Attendance, Status History and Audit Trail', () => {
+    let auditVenue;
+    let auditEvent;
+    let attendee;
+
+    before(async () => {
+      auditVenue = await Venue.create({ name: 'Audit Venue', city: 'Manila' });
+      auditEvent = await Event.create({
+        title: 'Schema v2 Demo',
+        event_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        venue_id: auditVenue.venue_id,
+        max_participants: 5,
+      });
+      attendee = await User.create({
+        full_name: 'Schema Tester',
+        email: 'schema@eventreg.test',
+        password: 'pass',
+      });
+    });
+
+    it('should require every event to reference a venue (3NF: no free-text venue)', async () => {
+      await assert.rejects(async () => {
+        await Event.create({
+          title: 'No venue event',
+          event_date: new Date(Date.now() + 86400000),
+          max_participants: 3,
+        });
+      }, 'An event without venue_id must be rejected');
+    });
+
+    it('should reuse the same venue row for events in the same place', async () => {
+      const second = await Event.create({
+        title: 'Second event at the same venue',
+        event_date: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
+        venue_id: auditVenue.venue_id,
+        max_participants: 10,
+      });
+      const events = await Event.findAll({ where: { venue_id: auditVenue.venue_id } });
+      assert.strictEqual(events.length, 2);
+      assert.strictEqual(second.venue_id, auditEvent.venue_id);
+    });
+
+    it('should record a physical check-in once per registration', async () => {
+      const reg = await Registration.create({
+        user_id: attendee.user_id,
+        event_id: auditEvent.event_id,
+        status: 'confirmed',
+      });
+      const attendance = await Attendance.create({
+        registration_id: reg.registration_id,
+        checked_in_by: attendee.user_id,
+      });
+      assert.ok(attendance.checked_in_at instanceof Date);
+
+      await assert.rejects(
+        async () =>
+          Attendance.create({
+            registration_id: reg.registration_id,
+          }),
+        'UNIQUE(registration_id) must block a second check-in'
+      );
+    });
+
+    it('should append status history rows instead of overwriting the past', async () => {
+      const reg = await Registration.findOne({
+        where: { user_id: attendee.user_id, event_id: auditEvent.event_id },
+      });
+      await logStatusChange({ registrationId: reg.registration_id, from: null, to: 'confirmed' });
+      await logStatusChange({
+        registrationId: reg.registration_id,
+        from: 'confirmed',
+        to: 'cancelled',
+        reason: 'unit test',
+      });
+
+      const history = await RegistrationStatusChange.findAll({
+        where: { registration_id: reg.registration_id },
+        order: [['change_id', 'ASC']],
+      });
+      assert.strictEqual(history.length, 2);
+      assert.strictEqual(history[0].to_status, 'confirmed');
+      assert.strictEqual(history[1].from_status, 'confirmed');
+      assert.strictEqual(history[1].to_status, 'cancelled');
+    });
+
+    it('should write an audit row for administrative actions', async () => {
+      const log = await logAudit({
+        actorId: attendee.user_id,
+        action: 'event.update',
+        entity: 'EVENT',
+        entityId: auditEvent.event_id,
+        detail: { title: 'changed' },
+      });
+      assert.ok(log);
+      const stored = await AuditLog.findByPk(log.log_id);
+      assert.strictEqual(stored.action, 'event.update');
+      assert.strictEqual(stored.entity, 'EVENT');
+      assert.strictEqual(JSON.parse(stored.detail).title, 'changed');
+    });
+
+    it('should soft delete an event and keep its registrations', async () => {
+      const before = await Registration.count({ where: { event_id: auditEvent.event_id } });
+      assert.ok(before > 0);
+
+      await auditEvent.destroy();
+      assert.strictEqual(await Event.count({ where: { event_id: auditEvent.event_id } }), 0);
+      assert.strictEqual(
+        await Event.count({ where: { event_id: auditEvent.event_id }, paranoid: false }),
+        1
+      );
+      assert.strictEqual(await Registration.count({ where: { event_id: auditEvent.event_id } }), before);
+
+      await auditEvent.restore();
+      assert.strictEqual(await Event.count({ where: { event_id: auditEvent.event_id } }), 1);
+    });
+  });
+
+  /* ---------------------------- 8. HARDENING ----------------------------- */
+  describe('8. Rate limiting and persistent sessions', () => {
+    it('should reject requests above the configured limit with HTTP 429', async () => {
+      const limiter = createRateLimiter({ scope: 'unit-test', windowMs: 60000, max: 2 });
+      const req = { ip: '203.0.113.9' };
+      const res = { setHeader: () => {}, on: () => {} };
+
+      await new Promise((resolve, reject) => limiter(req, res, (err) => (err ? reject(err) : resolve())));
+      await new Promise((resolve, reject) => limiter(req, res, (err) => (err ? reject(err) : resolve())));
+
+      const err = await new Promise((resolve) => limiter(req, res, resolve));
+      assert.ok(err, 'third call must be rejected');
+      assert.strictEqual(err.status, 429);
+    });
+
+    it('should lock an account after repeated failed logins and clear on success', async () => {
+      const fakeReq = { body: { email: 'lockme@eventreg.test' }, ip: '203.0.113.10' };
+      for (let i = 0; i < 5; i += 1) accountLoginLockout.fail(fakeReq);
+
+      const fakeRes = { setHeader: () => {} };
+      const err = await new Promise((resolve) => accountLoginLockout.guard(fakeReq, fakeRes, resolve));
+      assert.ok(err, 'account must be locked');
+      assert.strictEqual(err.status, 429);
+
+      accountLoginLockout.succeed(fakeReq);
+      const afterSuccess = await new Promise((resolve) =>
+        accountLoginLockout.guard(fakeReq, fakeRes, (e) => resolve(e || null))
+      );
+      assert.strictEqual(afterSuccess, null);
+    });
+
+    it('should persist sessions in the SESSIONS table', async () => {
+      const store = new SequelizeSessionStore();
+      const data = { cookie: { maxAge: 60000 }, user: { user_id: 7, role: 'participant' } };
+
+      await new Promise((resolve, reject) => store.set('sid-test-1', data, (e) => (e ? reject(e) : resolve())));
+      const loaded = await new Promise((resolve, reject) =>
+        store.get('sid-test-1', (e, s) => (e ? reject(e) : resolve(s)))
+      );
+      assert.deepStrictEqual(loaded.user, { user_id: 7, role: 'participant' });
+
+      await new Promise((resolve, reject) => store.destroy('sid-test-1', (e) => (e ? reject(e) : resolve())));
+      const gone = await new Promise((resolve, reject) =>
+        store.get('sid-test-1', (e, s) => (e ? reject(e) : resolve(s)))
+      );
+      assert.strictEqual(gone, null);
+    });
+  });
+
   /* ------------------- 6. INPUT VALIDATION ROUTINES ------------------- */
   describe('6. Input Validation Routines', () => {
     it('should catch invalid or missing registration data', () => {
@@ -317,13 +512,24 @@ describe('Event Registration System - Defense Verification Suite', () => {
     });
 
     it('should validate event creation inputs', () => {
+      // Venue is validated by resolveVenue() against the VENUES table, so this
+      // validator covers title / date / description / capacity.
       const errs = validateEvent({
         title: '',
         event_date: '',
-        venue: '',
         max_participants: 0,
       });
-      assert.ok(errs.length >= 4);
+      assert.ok(errs.length >= 3);
+
+      const future = validateEvent(
+        {
+          title: 'Past event',
+          event_date: '2020-01-01T09:00',
+          max_participants: 5,
+        },
+        { requireFuture: true }
+      );
+      assert.ok(future.some((e) => e.includes('future')));
     });
 
     it('should validate password length and matching confirmation', () => {

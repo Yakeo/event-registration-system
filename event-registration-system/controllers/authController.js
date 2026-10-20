@@ -4,8 +4,10 @@
  * and academic-defense-grade Forgot / Reset Password workflow.
  */
 const { Op } = require('sequelize');
-const { User, Registration, Event } = require('../models');
-const { normalizeEmail, validatePassword } = require('../middlewares/validate');
+const { User, Registration, Event, eventVenueInclude, logAudit } = require('../models');
+const { normalizeEmail, validatePassword, LIMITS } = require('../middlewares/validate');
+const { safeRedirect, regenerateSession } = require('../middlewares/auth');
+const { accountLoginLockout } = require('../middlewares/rateLimit');
 
 const authController = {
   // GET /register
@@ -29,7 +31,13 @@ const authController = {
 
     const errors = [];
     if (!full_name) errors.push('Full name is required.');
+    else if (full_name.length > LIMITS.full_name) {
+      errors.push(`Full name must not exceed ${LIMITS.full_name} characters.`);
+    }
     if (!email) errors.push('Email is required.');
+    else if (email.length > LIMITS.email) {
+      errors.push(`Email address must not exceed ${LIMITS.email} characters.`);
+    }
     errors.push(...validatePassword(password, confirm_password ? confirm_password : null));
 
     const existing = email ? await User.findOne({ where: { email } }) : null;
@@ -45,6 +53,9 @@ const authController = {
     }
 
     const user = await User.create({ full_name, email, password, role: 'participant' });
+
+    // Rotate the session id on privilege change (blocks session fixation).
+    await regenerateSession(req);
     req.session.user = {
       user_id: user.user_id,
       full_name: user.full_name,
@@ -52,7 +63,7 @@ const authController = {
       role: user.role,
     };
     req.session.flashSuccess = `Welcome, ${user.full_name}! Your account has been created.`;
-    return res.redirect(next || '/my-registrations');
+    return res.redirect(safeRedirect(next, '/my-registrations'));
   },
 
   // GET /login
@@ -78,6 +89,8 @@ const authController = {
     const ok = user ? await user.verifyPassword(password) : false;
 
     if (!ok) {
+      // Count consecutive failures per e-mail address, whatever the IP.
+      accountLoginLockout.fail(req);
       return res.status(401).render('auth/login', {
         title: 'Log in',
         errors: ['Invalid email or password.'],
@@ -86,6 +99,8 @@ const authController = {
       });
     }
 
+    accountLoginLockout.succeed(req);
+    await regenerateSession(req);
     req.session.user = {
       user_id: user.user_id,
       full_name: user.full_name,
@@ -93,7 +108,7 @@ const authController = {
       role: user.role,
     };
     req.session.flashSuccess = `Logged in as ${user.full_name}.`;
-    return res.redirect(next || (user.role === 'admin' ? '/admin' : '/my-registrations'));
+    return res.redirect(safeRedirect(next, user.role === 'admin' ? '/admin' : '/my-registrations'));
   },
 
   // POST /logout
@@ -105,7 +120,7 @@ const authController = {
   async myRegistrations(req, res) {
     const rows = await Registration.findAll({
       where: { user_id: req.session.user.user_id },
-      include: [{ model: Event, as: 'event' }],
+      include: [{ model: Event, as: 'event', include: [eventVenueInclude] }],
       order: [['registration_date', 'DESC']],
     });
     return res.render('my-registrations', { title: 'My registrations', rows });
@@ -137,12 +152,17 @@ const authController = {
     }
 
     const user = await User.findOne({ where: { email } });
+
+    // Account-enumeration guard: the response is identical whether or not the
+    // address exists. Only a development build shows the demo link.
     if (!user) {
-      return res.status(404).render('auth/forgot-password', {
+      return res.render('auth/forgot-password', {
         title: 'Forgot Password',
-        errors: ['No account was found with that email address. Please check and try again.'],
+        errors: [],
         old: { email },
         resetLink: null,
+        targetUser: null,
+        submitted: true,
       });
     }
 
@@ -150,9 +170,11 @@ const authController = {
     const token = await user.generateResetToken();
     const resetUrl = `/reset-password/${token}`;
 
-    console.log(`\n[PASSWORD RESET] Generated reset token for ${user.email}:`);
-    console.log(`  Reset URL: ${resetUrl}`);
-    console.log(`  Expires:   ${user.reset_password_expires}\n`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`\n[PASSWORD RESET] Generated reset token for ${user.email}:`);
+      console.log(`  Reset URL: ${resetUrl}`);
+      console.log(`  Expires:   ${user.reset_password_expires}\n`);
+    }
 
     // In an academic presentation / development environment, we display
     // the simulated reset action directly to make the defense demonstration
@@ -163,6 +185,7 @@ const authController = {
       old: { email },
       resetLink: resetUrl,
       targetUser: { full_name: user.full_name, email: user.email },
+      submitted: true,
     });
   },
 
@@ -170,9 +193,10 @@ const authController = {
   async showResetPassword(req, res) {
     const { token } = req.params;
 
+    // Only the SHA-256 hash is stored, so the URL token is hashed for lookup.
     const user = await User.findOne({
       where: {
-        reset_password_token: token,
+        reset_password_token: User.hashResetToken(token),
         reset_password_expires: { [Op.gt]: new Date() },
       },
     });
@@ -199,9 +223,10 @@ const authController = {
     const password = req.body.password || '';
     const confirm_password = req.body.confirm_password || '';
 
+    // Only the SHA-256 hash is stored, so the URL token is hashed for lookup.
     const user = await User.findOne({
       where: {
-        reset_password_token: token,
+        reset_password_token: User.hashResetToken(token),
         reset_password_expires: { [Op.gt]: new Date() },
       },
     });
@@ -229,6 +254,15 @@ const authController = {
     user.reset_password_token = null;
     user.reset_password_expires = null;
     await user.save();
+
+    await logAudit({
+      req,
+      actorId: user.user_id,
+      action: 'user.password_reset',
+      entity: 'USER',
+      entityId: user.user_id,
+      detail: { email: user.email, via: 'reset-token' },
+    });
 
     req.session.flashSuccess = 'Password reset successful! You can now log in with your new password.';
     return res.redirect('/login');
@@ -264,7 +298,19 @@ const authController = {
     }
 
     user.password = new_password;
+    // Changing the password also invalidates any pending reset link.
+    user.reset_password_token = null;
+    user.reset_password_expires = null;
     await user.save();
+
+    await logAudit({
+      req,
+      actorId: user.user_id,
+      action: 'user.password_change',
+      entity: 'USER',
+      entityId: user.user_id,
+      detail: { email: user.email },
+    });
 
     req.session.flashSuccess = 'Your password has been changed successfully.';
     return res.redirect(user.role === 'admin' ? '/admin' : '/my-registrations');

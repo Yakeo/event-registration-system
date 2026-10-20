@@ -4,8 +4,12 @@
  * - title
  * - description
  * - event_date
- * - venue
+ * - venue_id (FK -> VENUES.venue_id)
  * - max_participants
+ * - deleted_at (soft delete: keeps registrations/attendance history)
+ *
+ * `venue` used to be a free-text column. It is now a foreign key: the venue
+ * name/address belongs to the VENUES row, not to every event that uses it.
  */
 const { DataTypes } = require('sequelize');
 
@@ -32,10 +36,11 @@ module.exports = (sequelize) => {
         allowNull: false,
         validate: { notEmpty: { msg: 'Event date is required.' } },
       },
-      venue: {
-        type: DataTypes.STRING(180),
+      venue_id: {
+        type: DataTypes.INTEGER,
         allowNull: false,
-        validate: { notEmpty: { msg: 'Venue is required.' } },
+        references: { model: 'VENUES', key: 'venue_id' },
+        validate: { notNull: { msg: 'Venue is required.' } },
       },
       max_participants: {
         type: DataTypes.INTEGER,
@@ -46,13 +51,28 @@ module.exports = (sequelize) => {
           isInt: { msg: 'Maximum participants must be a whole number.' },
         },
       },
+      deleted_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
     {
       tableName: 'EVENTS',
-      timestamps: false,
-      scopes: {
-        upcoming: { where: {}, order: [['event_date', 'ASC']] },
-      },
+      // `paranoid` (soft delete) is only honoured by Sequelize when timestamps
+      // are enabled, so enable the flag but switch the two timestamp columns
+      // off - the table only needs `deleted_at`.
+      // Soft delete keeps registrations, attendance and status history when an
+      // event is removed instead of cascading them into oblivion.
+      timestamps: true,
+      createdAt: false,
+      updatedAt: false,
+      paranoid: true,
+      deletedAt: 'deleted_at',
+      indexes: [
+        // Listing/search pages always ORDER BY event_date.
+        { name: 'idx_events_date', fields: ['event_date'] },
+        { name: 'idx_events_venue', fields: ['venue_id'] },
+      ],
     }
   );
 

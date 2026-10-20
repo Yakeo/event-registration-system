@@ -19,7 +19,7 @@
       <tr><th>Email address</th><td><%= participant.email %></td></tr>
       <tr><th>Event</th><td><%= event.title %></td></tr>
       <tr><th>Date &amp; time</th><td><%= fmtDate(event.event_date) %></td></tr>
-      <tr><th>Venue</th><td><%= event.venue %></td></tr>
+      <tr><th>Venue</th><td><%= venueName(event) %></td></tr>
       <tr><th>Status</th><td><span class="badge <%= registration.status === 'confirmed' ? 'badge-success' : 'badge-warn' %>"><%= registration.status %></span></td></tr>
       <tr><th>Registered on</th><td><%= fmtDate(registration.registration_date) %></td></tr>
       <tr><th>Event capacity</th><td><%= capacity.taken %> / <%= capacity.max %> filled</td></tr>

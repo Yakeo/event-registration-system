@@ -8,6 +8,7 @@
 
   <form class="card-form" method="POST"
         action="<%= event ? '/admin/events/' + event.event_id + '?_method=PUT' : '/admin/events' %>">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
     <label>Event title *
       <input type="text" name="title" value="<%= old.title || '' %>" placeholder="Annual IT Convention 2026" required />
     </label>
@@ -22,9 +23,37 @@
                value="<%= old.event_date ? formatDateTimeLocal(old.event_date) : '' %>" />
       </label>
       <label>Venue *
-        <input type="text" name="venue" value="<%= old.venue || '' %>" placeholder="University Gymnasium" required />
+        <select name="venue_id">
+          <option value="">— add a new venue below —</option>
+          <% (venues || []).forEach(function (v) { %>
+            <option value="<%= v.venue_id %>"
+              <%= String(old.venue_id || '') === String(v.venue_id) ? 'selected' : '' %>>
+              <%= v.name %><%= v.city ? ', ' + v.city : '' %>
+            </option>
+          <% }); %>
+        </select>
+        <small class="hint"><a href="/admin/venues">Manage venues</a> · pick an existing venue
+          so its name and address are stored once.</small>
       </label>
     </div>
+
+    <fieldset class="venue-new">
+      <legend>Or create a new venue</legend>
+      <div class="two-col">
+        <label>Venue name
+          <input type="text" name="new_venue_name" maxlength="180"
+                 value="<%= old.new_venue_name || '' %>" placeholder="University Gymnasium" />
+        </label>
+        <label>City
+          <input type="text" name="new_venue_city" maxlength="120"
+                 value="<%= old.new_venue_city || '' %>" placeholder="Cagayan de Oro" />
+        </label>
+      </div>
+      <label>Address (optional)
+        <input type="text" name="new_venue_address" maxlength="255"
+               value="<%= old.new_venue_address || '' %>" placeholder="Corrales Ave." />
+      </label>
+    </fieldset>
 
     <label>Maximum participants *
       <input type="number" name="max_participants" min="1" step="1"

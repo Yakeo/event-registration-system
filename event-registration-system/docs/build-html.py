@@ -112,7 +112,14 @@ files = [
     ('-', 'middlewares/validate.js', 'Required-field, email and event validators'),
     ('-', 'server.js', 'Express app bootstrap: views, session, routes, error pages, DB sync'),
     ('-', 'seeders/seed.js', 'Demo users, 5 events and registrations (npm run seed)'),
-    ('-', 'docs/schema.sql', 'MySQL DDL with the constraints and reporting queries'),
+    ('-', 'models/Venue.js', 'VENUES - venue master data (name, address, city)'),
+    ('-', 'models/Attendance.js', 'ATTENDANCE - physical check-in, UNIQUE(registration_id)'),
+    ('-', 'models/RegistrationStatusChange.js', 'REGISTRATION_STATUS_CHANGES - status timeline'),
+    ('-', 'models/AuditLog.js', 'AUDIT_LOGS - administrator action trail'),
+    ('-', 'models/Session.js', 'SESSIONS - persistent express-session store'),
+    ('-', 'middlewares/rateLimit.js', 'IP rate limiting and per-account login lockout'),
+    ('-', 'docs/schema.sql', 'MySQL DDL (8 tables) with the constraints and reporting queries'),
+    ('-', 'docs/DATABASE-AUDIT.md', 'Normalisation audit, fixes and remaining recommendations'),
 ]
 
 routes = [
@@ -136,6 +143,11 @@ routes = [
     ('POST', '/admin/registrations/:id/status', 'admin', 'adminController.updateStatus', 'Confirm / waitlist / cancel a registration'),
     ('GET', '/admin/events/:id/attendance', 'admin', 'adminController.attendance', 'Generate printable attendance list'),
     ('GET', '/admin/events/:id/attendance.csv', 'admin', 'adminController.attendanceCsv', 'Download attendance list (CSV)'),
+    ('POST', '/admin/attendance/:registrationId', 'admin', 'adminController.toggleAttendance', 'Check in / undo a participant'),
+    ('GET', '/admin/registrations/:id/history', 'admin', 'adminController.registrationHistory', 'Status timeline of one registration'),
+    ('GET', '/admin/audit', 'admin', 'adminController.auditIndex', 'Audit trail browser (filter + paging)'),
+    ('GET/POST', '/admin/venues', 'admin', 'adminController.venues / createVenue', 'Venue master data'),
+    ('GET', '/admin/events/archived', 'admin', 'eventController.archivedIndex', 'Soft-deleted (archived) events'),
 ]
 
 users_fields = [
@@ -144,14 +156,18 @@ users_fields = [
     ('email', 'VARCHAR(160)', 'UNIQUE, NOT NULL', 'Login name; also the duplicate-registration key'),
     ('password', 'VARCHAR(255)', 'NOT NULL', 'Bcrypt hash - never stored in plain text'),
     ('role', 'ENUM(admin, participant)', 'default participant', 'Access level of the account'),
+    ('reset_password_token', 'CHAR(64)', 'UNIQUE, NULL', 'SHA-256 digest of the password-reset token (raw token never stored)'),
+    ('reset_password_expires', 'DATETIME', 'NULL', 'Reset-token expiration (1 hour TTL)'),
 ]
 event_fields = [
     ('event_id', 'INT, auto increment', '<b>PK</b>', 'Surrogate primary key'),
     ('title', 'VARCHAR(180)', 'NOT NULL', 'Event name on the public listing'),
     ('description', 'TEXT', 'NULL', 'Full details of the event'),
     ('event_date', 'DATETIME', 'NOT NULL', 'Date and time of the event'),
-    ('venue', 'VARCHAR(180)', 'NOT NULL', 'Where the event is held'),
+    ('venue_id', 'INT', '<b>FK</b> -> VENUES', 'Where the event is held (normalised venue)'),
+    ('deleted_at', 'DATETIME', 'NULL', 'Soft delete: archived events keep their history'),
     ('max_participants', 'INT', 'NOT NULL, >= 1', 'Slot limit; registration is blocked once reached'),
+    ('(index)', 'INDEX(event_date)', 'index', 'Ordering of the public listing'),
 ]
 reg_fields = [
     ('registration_id', 'INT, auto increment', '<b>PK</b>', 'Surrogate primary key'),
@@ -160,6 +176,7 @@ reg_fields = [
     ('registration_date', 'DATETIME', 'default now', 'Timestamp when the registration was saved'),
     ('status', 'ENUM(confirmed, waitlisted, cancelled)', 'default confirmed', 'Registration state'),
     ('(composite)', 'UNIQUE(event_id, user_id)', 'index', 'Database-level duplicate prevention'),
+    ('(indexes)', 'INDEX(event_id,status) / (user_id,status) / (status,registration_date)', 'index', 'Capacity counts, participant filters, FIFO waitlist promotion'),
 ]
 
 html = f"""<!DOCTYPE html>

@@ -45,14 +45,28 @@
 **Relationship notation (crow's foot)**
 
 ```
-[EVENTS] 1 ──── 0..* [REGISTRATIONS] 0..* ──── 1 [USERS]
+[VENUES] 1 ──── 0..* [EVENTS] 1 ──── 0..* [REGISTRATIONS] 0..* ──── 1 [USERS]
+                                              │
+                        ┌─────────────────────┴─────────────────────┐
+             0..1 [ATTENDANCE]                        0..* [REGISTRATION_STATUS_CHANGES]
 ```
 
 | Relationship | Cardinality | Meaning |
 |--------------|-------------|---------|
+| VENUES → EVENTS | one-to-many (1 : 0..*) | A venue hosts zero or many events; each event has exactly one venue (`EVENTS.venue_id` NOT NULL). The venue name/address is stored once. |
 | EVENTS → REGISTRATIONS | one-to-many (1 : 0..*) | An event may have zero or many registrations; each registration is for exactly one event. |
 | USERS → REGISTRATIONS | one-to-many (1 : 0..*) | A user may have zero or many registrations; each registration belongs to exactly one user. |
-| REGISTRATIONS | associative entity | Resolves many-to-many participant/event relationship; tracks registration status ('confirmed' \| 'waitlisted' \| 'cancelled'). |
+| REGISTRATIONS | associative entity | Resolves the many-to-many participant/event relationship; tracks registration status ('confirmed' \| 'waitlisted' \| 'cancelled'). |
+| REGISTRATIONS → ATTENDANCE | one-to-optional-one (1 : 0..1) | A registration may be checked in once; `UNIQUE(registration_id)` makes a second check-in impossible. |
+| REGISTRATIONS → REGISTRATION_STATUS_CHANGES | one-to-many (1 : 0..*) | Immutable history of every status transition (`changed_by` NULL = automated promotion). |
+| USERS → AUDIT_LOGS | one-to-many (1 : 0..*) | Every administrative action, with a nullable actor so history survives a deleted user. |
+| SESSIONS | standalone | Session store for `express-session`; no foreign key. |
+
+> All relationship lines in the diagram are anchored to the actual key rows
+> (`REGISTRATIONS.user_id`, `REGISTRATIONS.event_id`, `EVENTS.venue_id`, …).
+> For the normal-form analysis, the list of design defects that were fixed and
+> the stricter proposed variant, see **[DATABASE-AUDIT.md](./DATABASE-AUDIT.md)**
+> and **[schema-3nf.sql](./schema-3nf.sql)**.
 
 ---
 
@@ -67,8 +81,10 @@
 | `email` | VARCHAR(160) | UQ | NOT NULL, valid email, unique | Login identifier; duplicate-registration anchor |
 | `password` | VARCHAR(255) | | NOT NULL | Bcrypt hash (10 salt rounds) |
 | `role` | ENUM | | NOT NULL, default `participant` | `admin` (management) or `participant` |
-| `reset_password_token` | VARCHAR(255) | | NULL allowed | Cryptographically secure 64-hexadecimal token |
+| `reset_password_token` | CHAR(64) | UQ | NULL allowed | **SHA-256 digest** of the 64-hex token sent to the user; the raw token is never stored. Unique index; cleared after use or on password change |
 | `reset_password_expires`| DATETIME | | NULL allowed | Expiration timestamp (1 hour TTL) |
+
+*Indexes: `UNIQUE(email)`, `UNIQUE(reset_password_token)`, `(role)`.*
 
 ### 3.2 EVENTS — events created by the organiser
 
@@ -80,6 +96,10 @@
 | `event_date` | DATETIME | | NOT NULL | Date and time of the event |
 | `venue` | VARCHAR(180) | | NOT NULL | Where the event is held |
 | `max_participants` | INT | | NOT NULL, ≥ 1 | Slot limit — registration blocked once reached |
+| `venue_id` | INT | **FK** | → `VENUES.venue_id`, NOT NULL | Where the event is held (normalised) |
+| `deleted_at` | DATETIME | | NULL allowed | Soft delete: archived events keep their registrations and attendance |
+
+*Indexes: `(event_date)` — every listing is ordered by date; `(venue_id)`.*
 
 ### 3.3 REGISTRATIONS — the booking record (associative entity)
 
@@ -91,6 +111,65 @@
 | `registration_date` | DATETIME | | NOT NULL, default now | When the registration was placed |
 | `status` | ENUM | | NOT NULL, default `confirmed` | `confirmed` \| `waitlisted` \| `cancelled` |
 | *(composite index)* | | UQ | `UNIQUE(event_id, user_id)` | Database-level duplicate prevention |
+
+*Indexes: `UNIQUE(event_id, user_id)`, `(event_id, status)`, `(user_id, status)`,
+`(status, registration_date)` — the last one backs FIFO waitlist promotion.*
+
+### 3.4 VENUES — venue master data
+
+| Field | Type | Key | Constraints | Description |
+|-------|------|-----|-------------|-------------|
+| `venue_id` | INT AI | **PK** | auto increment | Surrogate primary key |
+| `name` | VARCHAR(180) | UQ | NOT NULL, unique together with `city` | Venue name |
+| `address` | VARCHAR(255) | | NULL allowed | Street address |
+| `city` | VARCHAR(120) | UQ | NOT NULL, default `''` | City; empty string keeps the composite unique key enforceable |
+
+### 3.5 ATTENDANCE — physical check-in (1:0..1 with REGISTRATIONS)
+
+| Field | Type | Key | Constraints | Description |
+|-------|------|-----|-------------|-------------|
+| `attendance_id` | INT AI | **PK** | auto increment | Surrogate primary key |
+| `registration_id` | INT | **FK/UQ** | → `REGISTRATIONS`, NOT NULL, **UNIQUE**, CASCADE | The registration that was checked in |
+| `checked_in_at` | DATETIME | | NOT NULL, default now | When the participant arrived |
+| `checked_in_by` | INT | **FK** | → `USERS`, NULL allowed, SET NULL | Which admin/staff scanned them in |
+| `remarks` | VARCHAR(255) | | NULL allowed | Free note |
+
+### 3.6 REGISTRATION_STATUS_CHANGES — audit trail of the status machine
+
+| Field | Type | Key | Constraints | Description |
+|-------|------|-----|-------------|-------------|
+| `change_id` | INT AI | **PK** | auto increment | Surrogate primary key |
+| `registration_id` | INT | **FK** | → `REGISTRATIONS`, NOT NULL, CASCADE | Registration whose status changed |
+| `from_status` | ENUM | | NULL allowed | Previous status (`NULL` for the first row) |
+| `to_status` | ENUM | | NOT NULL | New status |
+| `changed_at` | DATETIME | | NOT NULL | When the transition happened |
+| `changed_by` | INT | **FK** | → `USERS`, NULL allowed | `NULL` = automated (waitlist promotion) |
+| `reason` | VARCHAR(255) | | NULL allowed | Human-readable explanation |
+
+### 3.7 AUDIT_LOGS — administrative action log
+
+| Field | Type | Key | Constraints | Description |
+|-------|------|-----|-------------|-------------|
+| `log_id` | BIGINT AI | **PK** | auto increment | Surrogate primary key |
+| `actor_id` | INT | **FK** | → `USERS`, NULL allowed, SET NULL | Who performed the action (`NULL` = anonymous/system) |
+| `action` | VARCHAR(60) | | NOT NULL | e.g. `event.archive`, `user.role_change` |
+| `entity` / `entity_id` | VARCHAR(60) | | NULL allowed | Resource kind and id |
+| `detail` | JSON/TEXT | | NULL allowed | Before/after values |
+| `created_at` | DATETIME | | NOT NULL | Timestamp (indexed) |
+
+### 3.8 SESSIONS — session store
+
+| Field | Type | Key | Constraints | Description |
+|-------|------|-----|-------------|-------------|
+| `sid` | VARCHAR(64) | **PK** | — | Signed session id |
+| `data` | TEXT | | NOT NULL | Serialised session payload |
+| `expires_at` | DATETIME | | NOT NULL, indexed | Expiry; purged by the store's cleanup timer |
+
+### 3.9 EVENTS.deleted_at — soft delete marker
+
+| Field | Type | Key | Constraints | Description |
+|-------|------|-----|-------------|-------------|
+| `deleted_at` | DATETIME | | NULL allowed, indexed via `EVENTS` | `NULL` = active; a timestamp = archived. Archived events are hidden from every listing while their registrations, attendance and status history stay intact. |
 
 ---
 
@@ -214,16 +293,23 @@ End
 1. **Atomic Capacity Limit:** Enforced inside database transactions with parent row locks.
 2. **Strict Duplicate Prohibition:** Guaranteed by unique constraint `(event_id, user_id)`.
 3. **Re-Registration Reactivation:** Cleanly reactivates previously cancelled registrations.
-4. **FIFO Waitlist Promotion:** Automatically fills cancelled slots from earliest waitlisted participant.
-5. **Time-Limited Reset Tokens:** 64-char crypto tokens with 1-hour expiration.
-6. **Past Event Guard:** Blocks registration attempts on events that have already concluded.
-7. **Capacity Floor Guard:** Admins cannot edit event capacity below current confirmed headcount.
+4. **FIFO Waitlist Promotion:** Fills cancelled slots from the earliest waitlisted participant, inside the cancellation transaction, and only when a seat is actually free (no double promotion, no promotion for concluded events).
+5. **Waitlist Only When Full:** The waiting list rejects submissions while seats are still available.
+6. **Time-Limited Reset Tokens:** 64-char crypto tokens with 1-hour expiration; only the SHA-256 digest is stored.
+7. **Past Event Guard:** Blocks registration/waitlist attempts on events that have already concluded; new events must be scheduled in the future.
+8. **Capacity Floor Guard:** Admins cannot edit event capacity below current confirmed headcount, nor confirm a registration that would exceed capacity.
+9. **CSRF Protection:** Every state-changing request must carry the session-bound `_csrf` token.
+10. **Safe Redirects:** `?next=` targets are restricted to local paths.
+11. **Attendance Integrity:** Only confirmed registrations can be checked in, and only once (`UNIQUE(registration_id)`).
+12. **Full Traceability:** every status change, check-in, role change, password reset and event archive writes an `AUDIT_LOGS` row; registrations keep their whole status timeline.
+13. **Soft Delete:** archiving an event never destroys registrations, attendance or history.
+14. **Abuse Limits:** login is rate limited per IP and locked per account after 5 failures; password-reset and public registration endpoints have their own budgets; forgot-password responses do not reveal whether an address exists.
 
 ---
 
 ## 9. Automated Test Suite & Verification
 
-The system includes 16 automated tests in `test/system.test.js`:
+The system includes 25 automated tests in `test/system.test.js` (they run against an in-memory database, so `npm test` never touches the demo data):
 
 ```bash
 npm test
@@ -235,7 +321,9 @@ npm test
 3. **Event Capacity:** Counter calculations, limit blocking on max capacity.
 4. **Duplicate Prevention:** Unique index collision check, re-registration after cancellation.
 5. **Waitlist & Promotion:** Waitlisting overflow registrations, FIFO auto-promotion.
-6. **Input Validation:** Required field checks, regex formats, password lengths.
+6. **Input Validation:** Required field checks, regex formats, password lengths, future-date rule.
+7. **Normalised schema:** venue FK is mandatory, venues are reused, check-in is unique, status history is append-only, audit rows are written, soft delete preserves registrations.
+8. **Hardening:** rate limiter returns 429, account lockout engages/clears, sessions persist in the `SESSIONS` table.
 
 ---
 

@@ -39,6 +39,14 @@ module.exports = (sequelize) => {
         type: DataTypes.ENUM('confirmed', 'waitlisted', 'cancelled'),
         allowNull: false,
         defaultValue: 'confirmed',
+        // SQLite stores ENUM as plain TEXT, so enforce the domain in the model
+        // as well - otherwise any client could write status = 'banana'.
+        validate: {
+          isIn: {
+            args: [['confirmed', 'waitlisted', 'cancelled']],
+            msg: 'Status must be confirmed, waitlisted or cancelled.',
+          },
+        },
       },
     },
     {
@@ -50,6 +58,10 @@ module.exports = (sequelize) => {
           unique: true,
           fields: ['event_id', 'user_id'],
         },
+        // Capacity counts, participant filters and waitlist FIFO lookups.
+        { name: 'idx_reg_event_status', fields: ['event_id', 'status'] },
+        { name: 'idx_reg_user_status', fields: ['user_id', 'status'] },
+        { name: 'idx_reg_status_date', fields: ['status', 'registration_date'] },
       ],
     }
   );

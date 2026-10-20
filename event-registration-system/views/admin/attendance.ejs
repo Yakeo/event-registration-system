@@ -1,9 +1,10 @@
 <%- include('../partials/header') %>
 
+<a class="back" href="/admin/events/<%= event.event_id %>/participants">← Back to participants</a>
+
 <div class="no-print">
-  <a class="back" href="/admin/events/<%= event.event_id %>/participants">← Back to participants</a>
   <div class="btn-row">
-    <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Print attendance sheet</button>
+    <button class="btn btn-primary btn-sm" data-print type="button">🖨️ Print attendance sheet</button>
     <a class="btn btn-outline btn-sm" href="/admin/events/<%= event.event_id %>/attendance.csv">⬇ Download CSV</a>
   </div>
 </div>
@@ -19,8 +20,8 @@
 
   <table class="kv">
     <tr><th>Event</th><td><%= event.title %></td><th>Date &amp; time</th><td><%= fmtDate(event.event_date) %></td></tr>
-    <tr><th>Venue</th><td><%= event.venue %></td><th>Capacity</th><td><%= event.taken %> / <%= event.max %></td></tr>
-    <tr><th>Generated</th><td><%= fmtDate(generatedAt) %></td><th>Total participants</th><td><%= rows.length %></td></tr>
+    <tr><th>Venue</th><td><%= venueName(event) %></td><th>Capacity</th><td><%= event.taken %> / <%= event.max %></td></tr>
+    <tr><th>Generated</th><td><%= fmtDate(generatedAt) %></td><th>Checked in</th><td><%= checkedIn %> of <%= rows.length %></td></tr>
   </table>
 
   <table class="table attendance">
@@ -30,7 +31,8 @@
         <th>Participant name</th>
         <th>Email address</th>
         <th>Registration date</th>
-        <th>Status</th>
+        <th>Checked in at</th>
+        <th class="no-print" style="width:120px">Check-in</th>
         <th style="width:150px">Signature</th>
       </tr>
     </thead>
@@ -41,11 +43,30 @@
           <td><strong><%= r.user.full_name %></strong></td>
           <td><%= r.user.email %></td>
           <td><%= fmtDate(r.registration_date) %></td>
-          <td><%= r.status %></td>
+          <td>
+            <% if (r.attendance) { %>
+              <%= fmtDate(r.attendance.checked_in_at) %>
+              <% if (r.attendance.checkedInBy) { %>
+                <small class="muted">by <%= r.attendance.checkedInBy.full_name %></small>
+              <% } %>
+            <% } else { %>
+              <span class="badge badge-warn">Not checked in</span>
+            <% } %>
+          </td>
+          <td class="no-print">
+            <form action="/admin/attendance/<%= r.registration_id %>" method="POST" class="inline">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+              <% if (r.attendance) { %>
+                <button class="link" type="submit">Undo</button>
+              <% } else { %>
+                <button class="btn btn-outline btn-sm" type="submit">Check in</button>
+              <% } %>
+            </form>
+          </td>
           <td></td>
         </tr>
       <% }); %>
-      <% if (!rows.length) { %><tr><td colspan="6" class="muted">No confirmed registrations yet.</td></tr><% } %>
+      <% if (!rows.length) { %><tr><td colspan="7" class="muted">No confirmed registrations yet.</td></tr><% } %>
     </tbody>
   </table>
 

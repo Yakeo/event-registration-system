@@ -13,13 +13,14 @@
     <table class="kv">
       <tr><th>Event</th><td><%= event.title %></td></tr>
       <tr><th>Date &amp; time</th><td><%= fmtDate(event.event_date) %></td></tr>
-      <tr><th>Venue</th><td><%= event.venue %></td></tr>
+      <tr><th>Venue</th><td><%= venueName(event) %></td></tr>
       <tr><th>Capacity</th><td><%= capacity.taken %> / <%= capacity.max %></td></tr>
     </table>
 
     <% if (joinWaitlist) { %>
       <h3>Join the waiting list</h3>
       <form action="/events/<%= event.event_id %>/waitlist" method="POST">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
         <label>Full name <input type="text" name="full_name" required /></label>
         <label>Email address <input type="email" name="email" required /></label>
         <button class="btn btn-outline btn-block" type="submit">Join waiting list</button>

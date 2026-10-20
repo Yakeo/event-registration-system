@@ -279,3 +279,39 @@ code { background: #eef1f7; padding: 2px 6px; border-radius: 6px; font-size: 0.8
 
 .badge-info { background: #dbeafe; color: #1e40af; }
 .alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+
+/* ------------------------- venues / audit / paging ------------------------ */
+.venue-new {
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: 14px 18px 4px;
+  margin: 4px 0 18px;
+  background: #fbfcff;
+}
+.venue-new legend {
+  padding: 0 8px;
+  color: #33406b;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 22px 0;
+}
+.input-inline {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  max-width: 170px;
+}
+.search select {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-family: inherit;
+  background: #fff;
+}
