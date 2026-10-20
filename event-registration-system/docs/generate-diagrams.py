@@ -371,7 +371,7 @@ DEC_FILL = '#fffdf3'
 DOC_FILL = '#f7f9fc'
 W_SHEET, H_SHEET = 794, 1123        # A4 portrait at 96 dpi
 
-GAP = 11
+GAP = 9
 
 
 def _sheet_open():
@@ -383,7 +383,8 @@ def _sheet_open():
         '.t-term{fill:#fff;font-size:11.5px;font-weight:700;letter-spacing:.03em}',
         f'.t-proc{{fill:{INK};font-size:10.5px;font-weight:600}}',
         f'.t-db{{fill:{DB_EDGE};font-size:9.6px;font-weight:700;letter-spacing:.02em}}',
-        f'.t-ops{{fill:{INK};font-family:{MONO};font-size:8.7px}}',
+        f'.t-ops{{fill:{INK};font-size:8.7px}}',
+        f'.t-tbl{{fill:#6b7a99;font-family:{MONO};font-size:7.4px;letter-spacing:.06em}}',
         f'.t-lab{{fill:{MUTED};font-size:8.8px}}',
         '.t-yes{fill:#0c6b4a;font-size:9px;font-weight:700}',
         '.t-no{fill:#a52a3d;font-size:9px;font-weight:700}',
@@ -439,11 +440,12 @@ def s_io(cx, y, lines, w=300, skew=14):
     return out, h
 
 
-def s_db(cx, y, title, ops, w=300):
-    """Cylinder (stored data): `title` names the table(s), `ops` the statement."""
+def s_db(cx, y, title, ops, tag=None, w=300):
+    """Cylinder (stored data). `title` and `ops` are plain English; `tag` names
+    the table(s) the step touches."""
     titles = [title] if isinstance(title, str) else title
     rx, ry = w / 2, 7
-    h = 20 + 12 * len(titles) + 13 * len(ops) + 12
+    h = 20 + 12 * len(titles) + 13 * len(ops) + 12 + (11 if tag else 0)
     x = cx - rx
     d = (f'M{x} {y+ry} A{rx} {ry} 0 0 1 {x+w} {y+ry} '
          f'L{x+w} {y+h-ry} A{rx} {ry} 0 0 1 {x} {y+h-ry} Z')
@@ -452,9 +454,12 @@ def s_db(cx, y, title, ops, w=300):
            f'stroke="{DB_EDGE}" stroke-width="1.1"/>']
     for i, t in enumerate(titles):
         out.append(f'<text class="t-db" x="{cx}" y="{y+22+i*12}" text-anchor="middle">{t}</text>')
-    top = y + 28 + 12 * (len(titles) - 1) + 8
+    top = y + 28 + 12 * (len(titles) - 1)
+    if tag:
+        out.append(f'<text class="t-tbl" x="{cx}" y="{top+7}" text-anchor="middle">{tag}</text>')
+        top += 11
     for i, op in enumerate(ops):
-        out.append(f'<text class="t-ops" x="{x+14}" y="{top+i*13}">{op}</text>')
+        out.append(f'<text class="t-ops" x="{cx}" y="{top+15+i*13}" text-anchor="middle">{op}</text>')
     return out, h
 
 
@@ -548,8 +553,8 @@ def s_legend(y):
 
 def _footer(parts, letter):
     parts += s_legend(1006)
-    parts.append(f'<circle cx="628" cy="1035" r="9" fill="#ffffff" stroke="{EDGE}" stroke-width="1.4"/>')
-    parts.append(f'<text class="t-leg" x="644" y="1039">off-page connector</text>')
+    parts.append(f'<circle cx="486" cy="1099" r="8" fill="#ffffff" stroke="{EDGE}" stroke-width="1.4"/>')
+    parts.append(f'<text class="t-leg" x="500" y="1102">off-page connector</text>')
     parts.append(f'<text class="t-leg" x="40" y="1102">Online Event Registration System · '
                  f'sheet {letter} of 3 · regenerate with python3 docs/generate-diagrams.py</text>')
     parts.append('</svg>')
@@ -558,184 +563,215 @@ def _footer(parts, letter):
 
 # ------------------------------- sheet A ----------------------------------- #
 def sheet_a():
-    """Participant: browse, register, confirm."""
+    """Participant: browse, register, confirm. Plain English."""
     cx, LANE = 236, 606
     parts = _sheet_open()
     _sheet_title(parts, 'A', 'A · Participant — browse, register, confirm',
-                 'Public pages. No account is needed: the e-mailed link is the credential.')
+                 'What a visitor actually does, and what the system saves as they do it.')
 
     y = 84
-
-    def step(builder):
-        nonlocal y
-        out, h = builder(y)
-        parts.extend(out)
-        parts.append(s_wire([(cx, y + h), (cx, y + h + GAP)]))
-        y += h + GAP
-
     out, h = s_term(cx, y, 'Start')
     parts += out
-    y += h
-    parts.append(s_wire([(cx, y), (cx, y + GAP)]))
-    y += GAP
+    y += h + GAP
+    parts.append(s_wire([(cx, y - GAP), (cx, y)]))
 
-    step(lambda yy: s_io(cx, yy, 'Opens the event list  ( GET / )'))
-    step(lambda yy: s_db(cx, yy, 'EVENTS ⋈ VENUES',
-                         ['SELECT events + venues',
-                          "COUNT(*) WHERE status='confirmed'",
-                          'remaining = max_participants - taken']))
-    step(lambda yy: s_io(cx, yy, 'Selects one event  ( GET /events/:id )'))
-    step(lambda yy: s_db(cx, yy, 'EVENTS / REGISTRATIONS',
-                         ['SELECT event + venue', 'COUNT confirmed seats']))
+    out, h = s_io(cx, y, 'Opens the event list')
+    parts += out
+    y += h + GAP
+    parts.append(s_wire([(cx, y - GAP), (cx, y)]))
+
+    out, h = s_db(cx, y, 'Event list',
+                  ['Shows every event with its venue,',
+                   'and counts the confirmed bookings',
+                   'to work out the seats still free.'],
+                  tag='EVENTS · VENUES')
+    parts += out
+    y += h + GAP
+    parts.append(s_wire([(cx, y - GAP), (cx, y)]))
+
+    out, h = s_io(cx, y, 'Picks one event')
+    parts += out
+    y += h + GAP
+    parts.append(s_wire([(cx, y - GAP), (cx, y)]))
+
+    out, h = s_db(cx, y, 'Event page',
+                  ['Shows the date, the venue and',
+                   'how many seats are already taken.'],
+                  tag='EVENTS · REGISTRATIONS')
+    parts += out
+    y += h + GAP
+    parts.append(s_wire([(cx, y - GAP), (cx, y)]))
 
     dec_y = y
-    out, h = s_dec(cx, dec_y, ['Seats still', 'available?'], w=230)
+    out, h = s_dec(cx, dec_y, ['Any seats', 'left?'], w=230)
     parts += out
-    y += h
+    y = dec_y + h
 
-    # ---- No: waiting list, in the right-hand lane -------------------------
+    # ---- No: waiting list ---------------------------------------------------
     no_y = dec_y + h / 2
-    parts.append(s_wire([(cx + 115, no_y), (LANE - 160, no_y)]))
+    parts.append(s_wire([(cx + 115, no_y), (LANE - 170, no_y)]))
     parts.append(s_lbl(cx + 126, no_y - 6, 'No', 't-no', 'start'))
     wl = no_y - 18
-    out, hh = s_io(LANE, wl, 'Joins the waiting list  ( POST /events/:id/register )', w=340)
+    out, hh = s_io(LANE, wl, 'Asks to join the waiting list', w=340)
     parts += out
-    out, h2 = s_db(LANE, wl + hh + 14, 'REGISTRATIONS',
-                   ["INSERT status = 'waitlisted'",
-                    'INSERT REGISTRATION_STATUS_CHANGES',
-                    "INSERT NOTIFICATIONS ('queued')"], w=320)
+    out, h2 = s_db(LANE, wl + hh + 14, 'Waiting list',
+                   ['Saves the booking as "waiting",',
+                    'notes the status change, and queues',
+                    'a "you are on the list" e-mail.'],
+                   tag='REGISTRATIONS + HISTORY + E-MAIL', w=340)
     parts += [s_wire([(LANE, wl + hh), (LANE, wl + hh + 14)])] + out
     pill = wl + hh + 14 + h2 + 14
     parts.append(s_wire([(LANE, wl + hh + 14 + h2), (LANE, pill)]))
-    out, hp = s_term(LANE, pill, 'On the waiting list', w=280)
+    out, hp = s_term(LANE, pill, 'On the waiting list', w=300)
     parts += out
     parts.append(s_lbl(LANE, pill + hp + 16,
-                       'promoted automatically when a seat frees up (sheet C)'))
+                       'moves up automatically when somebody frees a seat'))
 
-    # ---- Yes: continue down the spine -------------------------------------
+    # ---- Yes: register ------------------------------------------------------
     parts.append(s_wire([(cx, dec_y + h), (cx, dec_y + h + GAP)]))
     parts.append(s_lbl(cx + 6, dec_y + h + 9, 'Yes', 't-yes', 'start'))
     y = dec_y + h + GAP
 
-    step(lambda yy: s_io(cx, yy, 'Enters full name + e-mail address'))
-    step(lambda yy: s_db(cx, yy, 'USERS / REGISTRATIONS',
-                         ['SELECT WHERE (event_id, user_id)',
-                          'validation + duplicate rule']))
-    step(lambda yy: s_db(cx, yy, 'EVENTS / REGISTRATIONS',
-                         ['SELECT event ... FOR UPDATE',
-                          'COUNT confirmed (locked row)']))
+    out, h = s_io(cx, y, 'Types name and e-mail, presses Register')
+    parts += out
+    y += h + GAP
+    parts.append(s_wire([(cx, y - GAP), (cx, y)]))
 
-    out, h = s_db(cx, y, ['REGISTRATIONS', 'STATUS_CHANGES · NOTIFICATIONS'],
-                  ['BEGIN', 'INSERT registration', 'INSERT status history',
-                   "INSERT notification ('queued')", 'COMMIT'])
+    out, h = s_db(cx, y, 'Duplicate check',
+                  ['Checks the form, then looks for a',
+                   'booking with this e-mail on this event.'],
+                  tag='USERS · REGISTRATIONS')
     parts += out
-    y += h
-    parts.append(s_wire([(cx, y), (cx, y + GAP)]))
-    y += GAP
+    y += h + GAP
+    parts.append(s_wire([(cx, y - GAP), (cx, y)]))
 
-    out, h = s_predef(cx, y, 'notifyRegistration()')
+    out, h = s_db(cx, y, 'Capacity check again',
+                  ['Locks the event, recounts the seats,',
+                   'refuses if the last one has gone.'],
+                  tag='EVENTS · REGISTRATIONS')
     parts += out
-    y += h
-    parts.append(s_wire([(cx, y), (cx, y + GAP)]))
-    y += GAP
+    y += h + GAP
+    parts.append(s_wire([(cx, y - GAP), (cx, y)]))
 
-    out, h = s_doc(cx, y, 'Confirmation page + e-mail with /r/:token')
+    out, h = s_db(cx, y, 'Saves the booking',
+                  ['Writes the booking, one line of',
+                   'history and the e-mail to send —',
+                   'all together, or not at all.'],
+                  tag='REGISTRATIONS + HISTORY + E-MAIL')
     parts += out
-    y += h
-    parts.append(s_wire([(cx, y), (cx, y + GAP)]))
-    y += GAP
+    y += h + GAP
+    parts.append(s_wire([(cx, y - GAP), (cx, y)]))
 
-    out, h = s_term(cx, y, 'Registration stored', w=240)
+    out, h = s_predef(cx, y, 'Sends the confirmation e-mail')
     parts += out
-    out, _ = s_conn(cx + 152, y + h / 2, 'C')
+    y += h + GAP
+    parts.append(s_wire([(cx, y - GAP), (cx, y)]))
+
+    out, h = s_doc(cx, y, ['Confirmation page and e-mail,',
+                           'both carrying the manage link'])
     parts += out
-    parts.append(s_lbl(cx + 170, y + h / 2 + 3, 'e-mail path continues on sheet C', 't-lab', 'start'))
+    y += h + GAP
+    parts.append(s_wire([(cx, y - GAP), (cx, y)]))
+
+    out, h = s_term(cx, y, 'Registered', w=240)
+    parts += out
+    out, _ = s_conn(cx + 132, y + h / 2, 'C')
+    parts += out
+    parts.append(s_lbl(cx + 150, y + h / 2 + 3, 'the e-mail goes out on sheet C', 't-lab', 'start'))
 
     return _footer(parts, 'A')
 
 
-# ------------------------------- sheet B ----------------------------------- #
 def sheet_b():
-    """Administration: authentication, event management, attendance, status."""
+    """Administration: sign-in, dashboard, the three day-to-day actions."""
     cx, LANE = 236, 606
     parts = _sheet_open()
-    _sheet_title(parts, 'B', 'B · Administration — authenticated session required',
-                 'requireLogin + requireAdmin. Every branch audits and queues a notification.')
+    _sheet_title(parts, 'B', 'B · Administration — what the organizer does',
+                 'Sign in, read the counters, then edit events, check people in, or change a booking.')
 
     y = 84
-    out, h = s_term(cx, y, 'Admin opens /admin', w=240)
+    out, h = s_term(cx, y, 'Organizer opens the dashboard', w=280)
     parts += out
     y += h + GAP
 
     dec_y = y
     parts.append(s_wire([(cx, dec_y - GAP), (cx, dec_y)]))
-    out, h = s_dec(cx, dec_y, ['Signed in with', 'an admin role?'], w=230)
+    out, h = s_dec(cx, dec_y, ['Already signed in', 'as an organizer?'], w=240)
     parts += out
     y = dec_y + h
 
-    # ---- No: login, in the right-hand lane --------------------------------
+    # ---- No: sign in --------------------------------------------------------
     no_y = dec_y + h / 2
-    parts.append(s_wire([(cx + 115, no_y), (LANE - 160, no_y)]))
-    parts.append(s_lbl(cx + 126, no_y - 6, 'No', 't-no', 'start'))
+    parts.append(s_wire([(cx + 120, no_y), (LANE - 170, no_y)]))
+    parts.append(s_lbl(cx + 131, no_y - 6, 'No', 't-no', 'start'))
     ly = no_y - 20
-    out, h1 = s_io(LANE, ly, 'Login form  ( POST /login )', w=320)
+    out, h1 = s_io(LANE, ly, 'Types e-mail and password', w=340)
     parts += out
-    out, h2 = s_db(LANE, ly + h1 + 12, 'USERS',
-                   ['SELECT WHERE email = ?', 'bcrypt.compare(password, hash)'], w=320)
+    out, h2 = s_db(LANE, ly + h1 + 12, 'Password check',
+                   ['Finds the account by e-mail and',
+                    'compares the password with the',
+                    'stored hash.'],
+                   tag='USERS', w=340)
     parts += [s_wire([(LANE, ly + h1), (LANE, ly + h1 + 12)])] + out
-    out, h3 = s_db(LANE, ly + h1 + h2 + 24, 'SESSIONS',
-                   ['INSERT / UPDATE session row'], w=320)
+    out, h3 = s_db(LANE, ly + h1 + h2 + 24, 'Keeps them signed in',
+                   ['Remembers the session so the',
+                    'next page does not ask again.'],
+                   tag='SESSIONS', w=340)
     parts += [s_wire([(LANE, ly + h1 + h2 + 12), (LANE, ly + h1 + h2 + 24)])] + out
     tail = ly + h1 + h2 + h3 + 24
     parts.append(s_wire([(LANE, tail), (LANE, tail + 12)]))
-    out, h4 = s_term(LANE, tail + 12, 'Redirects to /admin', w=280)
+    out, h4 = s_term(LANE, tail + 12, 'Lands on the dashboard', w=300)
     parts += out
-    parts.append(s_lbl(LANE, tail + 12 + h4 + 14,
-                       'the session row carries the login from here on', 't-lab'))
 
-    # ---- Yes: dashboard ----------------------------------------------------
+    # ---- Yes: dashboard -----------------------------------------------------
     parts.append(s_wire([(cx, dec_y + h), (cx, dec_y + h + GAP)]))
     parts.append(s_lbl(cx + 6, dec_y + h + 9, 'Yes', 't-yes', 'start'))
     y = dec_y + h + GAP
 
-    out, h = s_io(cx, y, 'Dashboard  ( GET /admin )')
+    out, h = s_io(cx, y, 'Reads the dashboard')
     parts += out
     y += h + GAP
     parts.append(s_wire([(cx, y - GAP), (cx, y)]))
-    out, h = s_db(cx, y, 'EVENTS / REGISTRATIONS',
-                  ['SELECT aggregates:', 'events · confirmed · waitlisted',
-                   'check-ins · users'])
+
+    out, h = s_db(cx, y, 'Summary counters',
+                  ['Counts the events, the confirmed',
+                   'bookings, the waiting list and',
+                   'who has been checked in.'],
+                  tag='EVENTS · REGISTRATIONS')
     parts += out
     y += h + GAP
 
     dec_y = y
     parts.append(s_wire([(cx, dec_y - GAP), (cx, dec_y)]))
-    out, h = s_dec(cx, dec_y, ['Which action?'], w=230)
+    out, h = s_dec(cx, dec_y, ['What does the', 'organizer do?'], w=240)
     parts += out
     y = dec_y + h
 
-    # ---- three alternatives, stacked in the right-hand lane ----------------
+    # ---- three day-to-day actions -------------------------------------------
     def g_event(yy):
-        return s_db(LANE, yy, 'EVENTS / VENUES',
-                    ['INSERT / UPDATE EVENTS', 'INSERT / UPDATE VENUES',
-                     'UPDATE deleted_at (archive)'], w=320)
+        return s_db(LANE, yy, 'Edits an event',
+                    ['Saves a new or changed event and',
+                     'its venue — or archives it, which',
+                     'hides it from the public list.'],
+                    tag='EVENTS · VENUES', w=340)
 
     def g_checkin(yy):
-        return s_db(LANE, yy, 'ATTENDANCE / AUDIT_LOGS',
-                    ['INSERT ATTENDANCE', 'INSERT AUDIT_LOGS'], w=320)
+        return s_db(LANE, yy, 'Checks someone in',
+                    ['Marks the participant as arrived',
+                     'and records who did the check-in.'],
+                    tag='ATTENDANCE · AUDIT LOG', w=340)
 
     def g_cancel(yy):
-        out, hh = s_predef(LANE, yy, 'cancelRegistration()', w=320)
-        o, h2 = s_db(LANE, yy + hh + 10, 'REGISTRATIONS / STATUS_CHANGES',
-                     ['UPDATE status', 'INSERT status change',
-                      'promote next waitlisted (FIFO)', "INSERT NOTIFICATIONS ('queued')"], w=320)
-        out += [s_wire([(LANE, yy + hh), (LANE, yy + hh + 10)])] + o
-        return out, hh + 10 + h2
+        return s_db(LANE, yy, 'Cancels or changes a booking',
+                    ['Cancels or moves the booking, notes',
+                     'the change, and offers the freed seat',
+                     'to the next person waiting.'],
+                    tag='REGISTRATIONS + HISTORY + E-MAIL', w=340)
 
     groups = [
-        ('creates / edits / archives an event', 'event', g_event),
-        ('checks a participant in', 'check-in', g_checkin),
-        ('cancels or changes a status', 'status', g_cancel),
+        ('works on an event', 'event', g_event),
+        ('works on attendance', 'check-in', g_checkin),
+        ('works on a booking', 'booking', g_cancel),
     ]
 
     cursor = y + 46
@@ -749,128 +785,141 @@ def sheet_b():
     term_y = last_bottom + 30
     parts.append(s_wire([(cx, dec_y + h), (cx, term_y)]))
     for tap_y, top, caption, tag, build, gh in taps:
-        parts.append(s_wire([(cx, tap_y), (LANE - 162, tap_y)]))
+        parts.append(s_wire([(cx, tap_y), (LANE - 172, tap_y)]))
         out, _ = build(top)
         parts += out
-        parts.append(s_lbl(LANE - 168, tap_y - 5, tag, 't-lab', 'end'))
-        parts.append(s_lbl(LANE - 160, top - 7, caption, 't-lab', 'start'))
+        parts.append(s_lbl(LANE - 172, tap_y - 5, tag, 't-lab', 'end'))
+        parts.append(s_lbl(LANE - 158, top - 7, caption, 't-lab', 'start'))
 
-    out, ht = s_term(cx, term_y, 'Action committed', w=230)
+    out, ht = s_term(cx, term_y, 'Change saved', w=230)
     parts += out
     parts.append(s_lbl(cx, term_y + ht + 18,
-                       'every path above writes AUDIT_LOGS and queues NOTIFICATIONS', 't-lab'))
+                       'every change above is also written to the audit log and queues its e-mail',
+                       't-lab'))
 
     return _footer(parts, 'B')
 
 
 def sheet_c():
-    """Worker delivery loop and passwordless guest self-service."""
+    """The e-mail worker, and what happens when a guest opens the link."""
     cx, LANE, g = 236, 606, 7
     parts = _sheet_open()
-    _sheet_title(parts, 'C', 'C · Notification worker and guest self-service',
-                 'Delivery runs out of band, so an SMTP failure can never roll back a booking.')
+    _sheet_title(parts, 'C', 'C · E-mail worker and the guest manage link',
+                 'Mail goes out in the background, so a broken mailbox never breaks a booking.')
 
     y = 84
-    out, h = s_term(cx, y, 'Worker timer fires (every 15 s)', w=300)
+    out, h = s_term(cx, y, 'E-mail worker wakes up (every 15 s)', w=330)
     parts += out
     y += h + g
 
     parts.append(s_wire([(cx, y - g), (cx, y)]))
-    out, h = s_db(cx, y, 'NOTIFICATIONS',
-                  ["SELECT WHERE status = 'queued'", 'ORDER BY created_at LIMIT 20'])
+    out, h = s_db(cx, y, 'E-mails waiting to go out',
+                  ['Picks up the next batch of messages',
+                   'that are still queued.'],
+                  tag='NOTIFICATIONS')
     parts += out
     y += h + g
 
     parts.append(s_wire([(cx, y - g), (cx, y)]))
-    out, h = s_proc(cx, y, ['Renders the e-mail template, then sends it',
-                            'through the transport (console .eml / SMTP)'])
+    out, h = s_proc(cx, y, ['Fills in the message template, then hands it',
+                            'to the mail transport (files or SMTP)'])
     parts += out
     y += h + g
 
     dec_y = y
     parts.append(s_wire([(cx, dec_y - g), (cx, dec_y)]))
-    out, h = s_dec(cx, dec_y, ['Delivered?'], w=230)
+    out, h = s_dec(cx, dec_y, ['Did it go out?'], w=240)
     parts += out
     y = dec_y + h
 
-    # ---- No: retry, in the right-hand lane --------------------------------
+    # ---- No: retry ----------------------------------------------------------
     no_y = dec_y + h / 2
-    parts.append(s_wire([(cx + 115, no_y), (LANE - 160, no_y)]))
-    parts.append(s_lbl(cx + 126, no_y - 6, 'No', 't-no', 'start'))
-    out, h2 = s_db(LANE, no_y - 28, 'NOTIFICATIONS',
-                   ['attempts = attempts + 1', 'requeue while attempts &lt; 3',
-                    "then status = 'failed'", '+ last_error (shown in /admin)'], w=320)
+    parts.append(s_wire([(cx + 120, no_y), (LANE - 170, no_y)]))
+    parts.append(s_lbl(cx + 131, no_y - 6, 'No', 't-no', 'start'))
+    out, h2 = s_db(LANE, no_y - 30, 'Try again later',
+                   ['Counts the attempt and retries up to',
+                    'three times, then marks it failed and',
+                    'keeps the reason for the organizer.'],
+                   tag='NOTIFICATIONS', w=340)
     parts += out
-    parts.append(s_lbl(LANE, no_y + 76, 'Requeue button drains it immediately', 't-lab'))
+    parts.append(s_lbl(LANE, no_y + 80, 'the Requeue button sends it again at once'))
 
     # ---- Yes ---------------------------------------------------------------
     y = dec_y + h + 22
     parts.append(s_wire([(cx, dec_y + h), (cx, y)]))
     parts.append(s_lbl(cx - 8, dec_y + h + 15, 'Yes', 't-yes', 'end'))
 
-    out, h = s_db(cx, y, 'NOTIFICATIONS',
-                  ["UPDATE status = 'sent'", 'SET sent_at = NOW()'])
+    out, h = s_db(cx, y, 'Marks it as sent',
+                  ['Notes that the message went out,',
+                   'and when.'],
+                  tag='NOTIFICATIONS')
     parts += out
     y += h + g
 
     parts.append(s_wire([(cx, y - g), (cx, y)]))
     io_y = y
-    out, h = s_io(cx, io_y, 'Recipient opens /r/:token', w=300)
+    out, h = s_io(cx, io_y, 'Participant clicks the link in the e-mail', w=330)
     parts += out
-    out, _ = s_conn(cx + 152, io_y + h / 2, 'A')
+    out, _ = s_conn(cx + 165, io_y + h / 2, 'A')
     parts += out
-    parts.append(s_lbl(cx + 170, io_y + h / 2 + 3, 'from sheet A', 't-lab', 'start'))
+    parts.append(s_lbl(cx + 183, io_y + h / 2 + 3, 'that link came from sheet A', 't-lab', 'start'))
     y += h + g
 
     parts.append(s_wire([(cx, y - g), (cx, y)]))
-    out, h = s_db(cx, y, 'MANAGE_TOKENS',
-                  ['SELECT by token_hash = SHA-256(token)', 'JOIN USERS, REGISTRATIONS'])
+    out, h = s_db(cx, y, 'Looks the link up',
+                  ['Finds the link by its fingerprint,',
+                   'then the person and the booking',
+                   'it belongs to.'],
+                  tag='MANAGE TOKENS · USERS')
     parts += out
     y += h + g
 
     dec_y = y
     parts.append(s_wire([(cx, dec_y - g), (cx, dec_y)]))
-    out, h = s_dec(cx, dec_y, ['What does the', 'guest do?'], w=230)
+    out, h = s_dec(cx, dec_y, ['What do they', 'want to do?'], w=240)
     parts += out
     y = dec_y + h
 
     def g_view(yy):
-        return s_doc(LANE, yy, 'Booking page: event, venue, seats', w=320)
+        return s_doc(LANE, yy, 'Sees the booking: event, date, venue, seats left', w=340)
 
     def g_cancel(yy):
-        return s_db(LANE, yy, 'REGISTRATIONS / STATUS_CHANGES',
-                    ['cancelRegistration()', "UPDATE status = 'cancelled'",
-                     'INSERT status change', 'promote next waitlisted (FIFO)',
-                     "INSERT NOTIFICATIONS ('queued')"], w=320)
+        return s_db(LANE, yy, 'Cancels the booking',
+                    ['Same cancellation as the signed-in',
+                     'page: frees the seat, offers it to the',
+                     'next person waiting, queues the e-mail.'],
+                    tag='REGISTRATIONS + HISTORY + E-MAIL', w=340)
 
     def g_claim(yy):
-        return s_db(LANE, yy, 'USERS / MANAGE_TOKENS',
-                    ['UPDATE password + claimed_at', 'UPDATE used_at (consume link)'], w=320)
+        return s_db(LANE, yy, 'Sets a password',
+                    ['Saves it, notes the claim date,',
+                     'marks the link as used.'],
+                    tag='USERS · MANAGE TOKENS', w=340)
 
     groups = [
-        ('views the booking', 'view', g_view),
-        ('cancels it · promotes the next waitlisted participant', 'cancel', g_cancel),
-        ('sets a password (optional)', 'claim', g_claim),
+        ('just looks', 'look', g_view),
+        ('cancels', 'cancel', g_cancel),
+        ('turns the guest into an account', 'claim', g_claim),
     ]
 
-    cursor = y + 22
+    cursor = y + 26
     taps = []
     for caption, tag, build in groups:
         _, gh = build(0)
         taps.append((cursor + gh / 2, cursor, caption, tag, build, gh))
-        cursor += gh + 16
+        cursor += gh + 12
 
     last_bottom = taps[-1][1] + taps[-1][5]
-    term_y = last_bottom + 22
+    term_y = last_bottom + 16
     parts.append(s_wire([(cx, dec_y + h), (cx, term_y)]))
     for tap_y, top, caption, tag, build, gh in taps:
-        parts.append(s_wire([(cx, tap_y), (LANE - 162, tap_y)]))
+        parts.append(s_wire([(cx, tap_y), (LANE - 174, tap_y)]))
         out, _ = build(top)
         parts += out
-        parts.append(s_lbl(LANE - 168, tap_y - 4, tag, 't-lab', 'end'))
-        parts.append(s_lbl(LANE - 160, top - 7, caption, 't-lab', 'start'))
+        parts.append(s_lbl(LANE - 172, tap_y - 5, tag, 't-lab', 'end'))
+        parts.append(s_lbl(LANE - 158, top - 7, caption, 't-lab', 'start'))
 
-    out, ht = s_term(cx, term_y, 'End', w=200)
+    out, ht = s_term(cx, term_y, 'Done', w=200)
     parts += out
 
     return _footer(parts, 'C')
