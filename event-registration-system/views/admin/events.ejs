@@ -9,10 +9,21 @@
   </div>
 </section>
 
+<p class="muted sort-note">Sorted by <strong><%= sortLabel(sort.key) %></strong> (<%= sort.dir === 'asc' ? 'ascending' : 'descending' %>).
+  Click a column heading to re-sort.</p>
+
 <div class="table-wrap">
   <table class="table">
     <thead>
-      <tr><th>#</th><th>Title</th><th>Date &amp; time</th><th>Venue</th><th>Max</th><th>Registered</th><th>Status</th><th>Actions</th></tr>
+      <tr>
+        <th>#</th>
+        <th><a class="sort-link" href="<%= sortHref('title') %>">Title<span class="sort-arrow"><%= sortArrow('title') %></span></a></th>
+        <th><a class="sort-link" href="<%= sortHref('date') %>">Date &amp; time<span class="sort-arrow"><%= sortArrow('date') %></span></a></th>
+        <th><a class="sort-link" href="<%= sortHref('venue') %>">Venue<span class="sort-arrow"><%= sortArrow('venue') %></span></a></th>
+        <th>Max</th>
+        <th><a class="sort-link" href="<%= sortHref('registered') %>">Registered<span class="sort-arrow"><%= sortArrow('registered') %></span></a></th>
+        <th>Status</th><th>Actions</th>
+      </tr>
     </thead>
     <tbody>
       <% events.forEach(function (e) { %>

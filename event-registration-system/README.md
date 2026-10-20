@@ -174,8 +174,34 @@ See [`docs/NOTIFICATIONS.md`](./docs/NOTIFICATIONS.md).
 | View registered participants | `GET /admin/events/:id/participants` | `adminController.participants` | `admin/participants.ejs` |
 | Printable attendance sheet (A4) | `GET /admin/events/:id/attendance` | `adminController.attendance` | `admin/attendance.ejs` |
 | Download attendance list (CSV) | `GET /admin/events/:id/attendance.csv` | `adminController.attendanceCsv` | — |
+| Sortable lists (see below) | `?sort=…&dir=asc\|desc` on the lists above | `services/sorting.js` | — |
 | **User Administration & Role Management** | `GET /admin/users` | `adminController.users` | `admin/users.ejs` |
 | **Admin Password Reset for Users** | `POST /admin/users/:id/reset-password` | `adminController.adminResetPassword` | — |
+
+### Sorting every list
+
+Participants, the attendance sheet, the CSV download, the public event listing and
+the admin event table all accept two query parameters:
+
+| Parameter | Values | Default |
+|-----------|--------|---------|
+| `sort` | `name`/`email`/`date`/`status`/`attendance` (participants) · `name`/`email`/`date`/`attendance` (attendance) · `title`/`date`/`venue`/`registered` (admin events) · `date`/`name`/`seats` (public listing) | order shown below |
+| `dir` | `asc`, `desc` | `asc` |
+
+The defaults are unchanged except for the attendance sheet, which now opens
+alphabetically (`sort=name`) because a signature sheet is worked through from the
+top; participants stay in arrival order (`sort=date`), the public listing stays
+soonest-first, and the admin event table stays newest-first.
+
+`services/sorting.js` does the work in one place. Every list declares the keys it
+accepts, so an unknown or hand-typed `?sort=` value is ignored and can never reach
+Sequelize's `order` as SQL — the unit tests cover that whitelist, the direction
+check, and the flip-on-click link builder. "Seats left" and "registered" are
+computed after the capacity counts load, so those two sort in JavaScript.
+
+Clicking a column heading (or a chip on the public listing) re-sorts, clicking the
+active one reverses it, status/search filters are carried along, and the CSV
+download follows whatever order the sheet is currently showing.
 
 ---
 

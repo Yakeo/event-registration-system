@@ -18,6 +18,7 @@ const {
   logAudit,
 } = require('../models');
 const { validateEvent } = require('../middlewares/validate');
+const sorting = require('../services/sorting');
 const { queueEventCancellation } = require('../services/notifications');
 
 /**
@@ -150,18 +151,37 @@ const eventController = {
       ];
     }
 
+    // Sortable listing: soonest first by default, plus A-Z by title and by
+    // "most seats left" (which is computed after the capacity counts load, so
+    // it is sorted in JavaScript rather than in SQL).
+    const sortKeys = ['date', 'name', 'seats'];
+    const sortState = sorting.resolve(req.query, sortKeys, { key: 'date', dir: 'asc' });
+
     const events = await Event.findAll({
       where,
       include,
-      order: [['event_date', 'ASC']],
+      order: sorting.orderFor({ date: ['event_date'], name: ['title'] }, sortState),
       subQuery: false,
     });
-    const decorated = await decorateWithCapacity(events);
+    let decorated = await decorateWithCapacity(events);
+    if (sortState.key === 'seats') {
+      decorated = sorting.sortRows(
+        decorated,
+        sortState,
+        (e, key) => (key === 'seats' ? e.remaining : new Date(e.event_date).getTime()),
+        'date'
+      );
+    }
 
     return res.render('events/index', {
       title: 'Upcoming Events',
       events: decorated,
       q,
+      ...sorting.locals('/', req.query, sortKeys, { key: 'date', dir: 'asc' }, {
+        date: 'event date',
+        name: 'event title',
+        seats: 'seats left',
+      }),
       stats: {
         total: decorated.length,
         open: decorated.filter((e) => !e.isFull && !e.isPast).length,
@@ -196,16 +216,42 @@ const eventController = {
 
   // GET  /admin/events     -> admin event management table
   async adminIndex(req, res) {
+    // Same whitelisted keys as the public list plus venue and registered count.
+    const sortKeys = ['title', 'date', 'venue', 'registered'];
+    const sortState = sorting.resolve(req.query, sortKeys, { key: 'date', dir: 'desc' });
+
     const events = await Event.findAll({
       include: [eventVenueInclude],
-      order: [['event_date', 'DESC']],
+      order: sorting.orderFor(
+        {
+          title: ['title'],
+          date: ['event_date'],
+          venue: [{ model: Venue, as: 'venue' }, 'name'],
+        },
+        sortState
+      ),
     });
-    const decorated = await decorateWithCapacity(events);
+    let decorated = await decorateWithCapacity(events);
+    if (sortState.key === 'registered') {
+      decorated = sorting.sortRows(
+        decorated,
+        sortState,
+        (e, key) =>
+          key === 'registered' ? e.taken : new Date(e.event_date).getTime(),
+        'date'
+      );
+    }
     const archivedCount = await Event.count({ paranoid: false, where: { deleted_at: { [Op.ne]: null } } });
     return res.render('admin/events', {
       title: 'Manage events',
       events: decorated,
       archivedCount,
+      ...sorting.locals('/admin/events', req.query, sortKeys, { key: 'date', dir: 'desc' }, {
+        title: 'title',
+        date: 'event date',
+        venue: 'venue',
+        registered: 'registered count',
+      }),
     });
   },
 

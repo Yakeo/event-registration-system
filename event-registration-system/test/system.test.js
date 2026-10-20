@@ -46,6 +46,7 @@ const {
 const { NotificationWorker } = require('../services/notificationWorker');
 const mailer = require('../services/mailer');
 const manageTokens = require('../services/manageTokens');
+const sorting = require('../services/sorting');
 const { ManageToken } = require('../models');
 
 describe('Event Registration System - Defense Verification Suite', () => {
@@ -947,5 +948,66 @@ describe('Event Registration System - Defense Verification Suite', () => {
       assert.match(view.heading, /waiting list/i);
       assert.doesNotMatch(view.intro, /is confirmed/);
     });
+  });
+});
+
+describe('Sortable lists', () => {
+  const keys = ['name', 'date'];
+
+  it('falls back to the default column for an unknown or missing sort key', () => {
+    assert.deepStrictEqual(sorting.resolve({}, keys, { key: 'date', dir: 'asc' }), { key: 'date', dir: 'asc' });
+    assert.deepStrictEqual(
+      sorting.resolve({ sort: 'password', dir: 'asc' }, keys, { key: 'date', dir: 'asc' }),
+      { key: 'date', dir: 'asc' },
+      'the whitelist must reject a column that is not part of the list'
+    );
+  });
+
+  it('only accepts asc or desc as a direction', () => {
+    for (const dir of ['desc', 'DESC']) {
+      assert.strictEqual(sorting.resolve({ sort: 'name', dir }, keys, { key: 'date' }).dir, 'desc');
+    }
+    assert.strictEqual(
+      sorting.resolve({ sort: 'name', dir: 'asc; DROP TABLE users' }, keys, { key: 'date' }).dir,
+      'asc',
+      'an injected direction falls back instead of reaching the query'
+    );
+  });
+
+  it('turns a key into a Sequelize order clause, including joined columns', () => {
+    const map = { name: [{ model: User, as: 'user' }, 'full_name'], date: ['registration_date'] };
+    assert.deepStrictEqual(sorting.orderFor(map, { key: 'name', dir: 'desc' }), [
+      [{ model: User, as: 'user' }, 'full_name', 'DESC'],
+    ]);
+    assert.deepStrictEqual(sorting.orderFor(map, { key: 'date', dir: 'asc' }), [
+      ['registration_date', 'ASC'],
+    ]);
+    assert.deepStrictEqual(sorting.orderFor(map, { key: 'nope', dir: 'asc' }), []);
+  });
+
+  it('sorts computed rows, keeping the order stable for equal values', () => {
+    const rows = [
+      { title: 'B', seats: 5 },
+      { title: 'A', seats: 5 },
+      { title: 'C', seats: 1 },
+    ];
+    const asc = sorting.sortRows(rows, { key: 'seats', dir: 'asc' }, (r) => r.seats);
+    assert.deepStrictEqual(asc.map((r) => r.title), ['C', 'B', 'A']);
+    const desc = sorting.sortRows(rows, { key: 'seats', dir: 'desc' }, (r) => r.seats);
+    assert.deepStrictEqual(desc.map((r) => r.title), ['B', 'A', 'C']);
+  });
+
+  it('flips the direction of the active column and preserves other filters', () => {
+    const current = { key: 'name', dir: 'asc' };
+    assert.strictEqual(sorting.href('/admin/events', {}, 'name', current), '/admin/events?sort=name&dir=desc');
+    assert.strictEqual(sorting.href('/admin/events', {}, 'date', current), '/admin/events?sort=date&dir=asc');
+    assert.strictEqual(
+      sorting.href('/admin/events/1/participants', { status: 'confirmed', sort: 'name', dir: 'asc' }, 'email', current),
+      '/admin/events/1/participants?status=confirmed&sort=email&dir=asc'
+    );
+    assert.strictEqual(
+      sorting.href('/', { q: 'summit' }, 'date', current),
+      '/?q=summit&sort=date&dir=asc'
+    );
   });
 });

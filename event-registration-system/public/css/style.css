@@ -170,6 +170,13 @@ select { width: auto; padding: 7px 9px; font-size: 0.85rem; }
 .chip:hover { text-decoration: none; border-color: var(--primary); color: var(--primary); }
 .chip-active { background: var(--primary); border-color: var(--primary); color: #fff; }
 
+/* ------------------------------ sortable lists ---------------------------- */
+.sort-note { margin: 18px 0 10px; font-size: 0.84rem; }
+.sort-link { color: inherit; background: none; }
+.sort-link:hover { color: var(--primary); text-decoration: none; }
+.sort-arrow { font-size: 0.78rem; opacity: 0.75; margin-left: 2px; }
+.table th a.sort-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
 /* ------------------------------- narrow panel ----------------------------- */
 .narrow { width: min(620px, 100%); margin: 34px auto 60px; }
 .center { text-align: center; }

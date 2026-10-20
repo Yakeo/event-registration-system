@@ -25,6 +25,7 @@ const { queue, payloadFor, render } = require('../services/notifications');
 const { Notification } = require('../models');
 const mailer = require('../services/mailer');
 const { getNotificationWorker } = require('../services/notificationWorker');
+const sorting = require('../services/sorting');
 
 /**
  * CSV escaping that also neutralises spreadsheet formula injection:
@@ -98,13 +99,25 @@ const adminController = {
     const where = { event_id: event.event_id };
     if (status !== 'all') where.status = status;
 
+    // Sorting keys are whitelisted (services/sorting.js) so a hand-typed
+    // ?sort= value can never reach the query builder as SQL.
+    const sortKeys = ['name', 'email', 'date', 'status', 'attendance'];
+    const sortState = sorting.resolve(req.query, sortKeys, { key: 'date', dir: 'asc' });
+    const orderMap = {
+      name: [{ model: User, as: 'user' }, 'full_name'],
+      email: [{ model: User, as: 'user' }, 'email'],
+      date: ['registration_date'],
+      status: ['status'],
+      attendance: [{ model: Attendance, as: 'attendance' }, 'checked_in_at'],
+    };
+
     const rows = await Registration.findAll({
       where,
       include: [
         { model: User, as: 'user', attributes: ['user_id', 'full_name', 'email'] },
         { model: Attendance, as: 'attendance', required: false },
       ],
-      order: [['registration_date', 'ASC']],
+      order: sorting.orderFor(orderMap, sortState),
     });
 
     const [decorated] = await decorateWithCapacity([event]);
@@ -115,6 +128,19 @@ const adminController = {
       rows,
       status,
       checkedIn,
+      ...sorting.locals(
+        `/admin/events/${event.event_id}/participants`,
+        req.query,
+        sortKeys,
+        { key: 'date', dir: 'asc' },
+        {
+          name: 'participant name',
+          email: 'email address',
+          date: 'registration date',
+          status: 'status',
+          attendance: 'check-in time',
+        }
+      ),
     });
   },
 
@@ -240,13 +266,22 @@ const adminController = {
         message: 'That event does not exist.',
       });
     }
+    // A signing sheet is worked through from the top, so the default here is
+    // alphabetical by name (participants keeps its arrival-order default).
+    const sortKeys = ['name', 'email', 'date', 'attendance'];
+    const sortState = sorting.resolve(req.query, sortKeys, { key: 'name', dir: 'asc' });
     const rows = await Registration.findAll({
       where: { event_id: event.event_id, status: 'confirmed' },
       include: [
         { model: User, as: 'user', attributes: ['full_name', 'email'] },
         { model: Attendance, as: 'attendance', required: false, include: [{ model: User, as: 'checkedInBy', attributes: ['full_name'], required: false }] },
       ],
-      order: [['registration_date', 'ASC']],
+      order: sorting.orderFor({
+        name: [{ model: User, as: 'user' }, 'full_name'],
+        email: [{ model: User, as: 'user' }, 'email'],
+        date: ['registration_date'],
+        attendance: [{ model: Attendance, as: 'attendance' }, 'checked_in_at'],
+      }, sortState),
     });
     const [decorated] = await decorateWithCapacity([event]);
     const checkedIn = rows.filter((r) => r.attendance).length;
@@ -257,6 +292,18 @@ const adminController = {
       rows,
       checkedIn,
       generatedAt: new Date(),
+      ...sorting.locals(
+        `/admin/events/${event.event_id}/attendance`,
+        req.query,
+        sortKeys,
+        { key: 'name', dir: 'asc' },
+        {
+          name: 'participant name',
+          email: 'email address',
+          date: 'registration date',
+          attendance: 'check-in time',
+        }
+      ),
     });
   },
 
@@ -270,13 +317,21 @@ const adminController = {
         message: 'That event does not exist.',
       });
     }
+    // The download matches whatever order the screen is currently using, so the
+    // CSV link carries ?sort= and ?dir= through from the attendance page.
+    const sortState = sorting.resolve(req.query, ['name', 'email', 'date', 'attendance'], { key: 'name', dir: 'asc' });
     const rows = await Registration.findAll({
       where: { event_id: event.event_id, status: 'confirmed' },
       include: [
         { model: User, as: 'user', attributes: ['full_name', 'email'] },
         { model: Attendance, as: 'attendance', required: false },
       ],
-      order: [['registration_date', 'ASC']],
+      order: sorting.orderFor({
+        name: [{ model: User, as: 'user' }, 'full_name'],
+        email: [{ model: User, as: 'user' }, 'email'],
+        date: ['registration_date'],
+        attendance: [{ model: Attendance, as: 'attendance' }, 'checked_in_at'],
+      }, sortState),
     });
 
     const header = [
