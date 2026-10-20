@@ -11,15 +11,18 @@ import os
 
 OUT = os.path.dirname(os.path.abspath(__file__))
 
-FONT = "'Segoe UI',Arial,Helvetica,sans-serif"
-MONO = "'Consolas','Courier New',monospace"
+# A locally-installed fallback is listed explicitly: the PNG is rendered with
+# resvg, which does not synthesise a generic "sans-serif" and would otherwise
+# draw an empty diagram.
+FONT = "'Segoe UI','DejaVu Sans',Arial,Helvetica,sans-serif"
+MONO = "'Consolas','DejaVu Sans Mono','Courier New',monospace"
 
 
 # --------------------------------------------------------------------------- #
 #                                ERD                                          #
 # --------------------------------------------------------------------------- #
 def erd():
-    """Crow's-foot ERD for the CURRENT schema (8 tables).
+    """Crow's-foot ERD for the CURRENT schema (10 tables).
 
     Improvements over the original diagram:
       * one row per real column, including the new tables (VENUES, ATTENDANCE,
@@ -33,9 +36,9 @@ def erd():
         diagram instead of a separate paragraph.
     """
     HEAD, ROW, BOX_W = 44, 30, 360
-    W, H = 1500, 1470
+    W, H = 1500, 1850
     XA, XB, XC = 40, 560, 1080
-    Y1, Y2, Y3 = 132, 480, 800
+    Y1, Y2, Y3, Y4 = 132, 480, 800, 1170
 
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
@@ -63,8 +66,8 @@ def erd():
         '</defs>',
         f'<rect width="{W}" height="{H}" fill="#f5f7fb"/>',
         '<text class="h1" x="40" y="48">Entity Relationship Diagram — Event Registration System</text>',
-        '<text class="sub" x="40" y="72">8 tables · crow&#8217;s-foot notation · solid = enforced foreign key, '
-        'dashed = nullable audit reference</text>',
+        '<text class="sub" x="40" y="72">10 tables &#183; crow&#8217;s-foot notation &#183; solid = enforced '
+        'foreign key, dashed = nullable reference (audit trail and outbox)</text>',
     ]
 
     def entity(x, y, name, rows):
@@ -100,7 +103,8 @@ def erd():
         ('user_id', 'INT AI', 'PK', False),
         ('full_name', 'VARCHAR(120)', None, False),
         ('email', 'VARCHAR(160)', 'UQ', False),
-        ('password', 'VARCHAR(255) bcrypt', None, False),
+        ('password', 'VARCHAR(255) bcrypt &#183; NULL', None, True),
+        ('claimed_at', 'DATETIME', None, True),
         ('role', "ENUM('admin','participant')", None, False),
         ('reset_password_token', 'CHAR(64) sha256', None, True),
         ('reset_password_expires', 'DATETIME', None, True),
@@ -145,10 +149,33 @@ def erd():
         ('address', 'VARCHAR(255)', None, True),
         ('city', 'VARCHAR(120)', 'UQ', False),
     ])
-    sessions_svg, SS, _ = entity(XC, Y3, 'SESSIONS', [
+    sessions_svg, SS, _ = entity(XA, Y4, 'SESSIONS', [
         ('sid', 'VARCHAR(64)', 'PK', False),
         ('data', 'TEXT (session JSON)', None, False),
         ('expires_at', 'DATETIME', None, False),
+    ])
+    manage_svg, MT, _ = entity(XA, Y3, 'MANAGE_TOKENS', [
+        ('token_id', 'INT AI', 'PK', False),
+        ('token_hash', 'CHAR(64) sha256', 'UQ', False),
+        ('user_id', 'INT &#8594; USERS', 'FK', False),
+        ('registration_id', 'INT &#8594; REGISTRATIONS', 'FK', True),
+        ('expires_at', 'DATETIME', None, False),
+        ('used_at', 'DATETIME', None, True),
+        ('created_at', 'DATETIME', None, False),
+    ])
+    notif_svg, N, _ = entity(XC, Y3, 'NOTIFICATIONS', [
+        ('notification_id', 'INT AI', 'PK', False),
+        ('user_id', 'INT &#8594; USERS', 'FK', True),
+        ('email', 'VARCHAR(160)', None, False),
+        ('kind', "VARCHAR(40) enum-ish", None, False),
+        ('registration_id', 'INT &#8594; REGISTRATIONS', 'FK', True),
+        ('event_id', 'INT &#8594; EVENTS', 'FK', True),
+        ('payload', 'TEXT json', None, True),
+        ('status', "VARCHAR(10) queued/sent/failed", None, False),
+        ('attempts', 'INT default 0', None, False),
+        ('last_error', 'VARCHAR(255)', None, True),
+        ('created_at', 'DATETIME', None, False),
+        ('sent_at', 'DATETIME', None, True),
     ])
     att_svg, AT, _ = entity(XB, Y3, 'ATTENDANCE', [
         ('attendance_id', 'INT AI', 'PK', False),
@@ -194,8 +221,9 @@ def erd():
         return f'<text class="{cls}" x="{x}" y="{y}" text-anchor="{anchor}">{text}</text>'
 
     A_RIGHT, B_LEFT, B_RIGHT, C_LEFT = XA + BOX_W, XB, XB + BOX_W, XC
-    BOX_BOTTOM_1 = Y1 + HEAD + ROW * 7
-    lines = []
+    # USERS now has 8 rows (guest accounts carry claimed_at)
+    USERS_BOTTOM = Y1 + HEAD + ROW * 8
+    lines, notes = [], []
 
     # 1. USERS (1) ---< REGISTRATIONS (0..*), anchored on user_id
     rail = 462
@@ -203,7 +231,7 @@ def erd():
     lines.append(bar_v(A_RIGHT + 14, U['user_id']))
     lines.append(crow_h(B_LEFT, R['user_id'], -1))
     lines.append(label(A_RIGHT + 22, U['user_id'] - 12, '1'))
-    lines.append(label(B_LEFT - 34, R['user_id'] - 13, '0..*'))
+    lines.append(label(rail + 16, R['user_id'] - 11, '0..*', 'start'))
 
     # 2. EVENTS (1) ---< REGISTRATIONS (0..*), anchored on event_id
     rail2 = 962
@@ -211,7 +239,7 @@ def erd():
     lines.append(bar_h(C_LEFT - 14, E['event_id']))
     lines.append(crow_h(B_RIGHT, R['event_id'], 1))
     lines.append(label(C_LEFT - 22, E['event_id'] - 12, '1', 'end'))
-    lines.append(label(B_RIGHT + 34, R['event_id'] - 13, '0..*', 'start'))
+    lines.append(label(B_RIGHT + 26, R['event_id'] - 11, '0..*', 'start'))
 
     # 3. VENUES (1) ---< EVENTS (0..*), vertical inside column C
     vx = XC + 150
@@ -241,21 +269,60 @@ def erd():
 
     # 6. USERS (1) ---< AUDIT_LOGS (0..*), vertical inside column A
     ax = XA + 120
-    lines.append(line([(ax, Y1 + HEAD + ROW * 7), (ax, Y2)]))
-    lines.append(bar_h(ax, Y1 + HEAD + ROW * 7 + 12))
+    lines.append(line([(ax, USERS_BOTTOM), (ax, Y2)]))
+    lines.append(bar_h(ax, USERS_BOTTOM + 12))
     lines.append(crow_v(ax, Y2, -1))
-    lines.append(label(ax + 14, Y1 + HEAD + ROW * 7 + 32, '1', 'start'))
+    lines.append(label(ax + 14, USERS_BOTTOM + 32, '1', 'start'))
     lines.append(label(ax + 14, Y2 - 22, '0..*', 'start'))
 
     # 7. USERS (1) ---< REGISTRATION_STATUS_CHANGES (changed_by, dashed)
     rail3 = 500
-    lines.append(line([(A_RIGHT, 372), (rail3, 372), (rail3, S['changed_by']), (B_LEFT, S['changed_by'])], dashed=True))
+    changed_by_y = U['reset_password_expires']
+    lines.append(line([(A_RIGHT, changed_by_y), (rail3, changed_by_y), (rail3, S['changed_by']),
+                       (B_LEFT, S['changed_by'])], dashed=True))
     lines.append(crow_h(B_LEFT, S['changed_by'], -1))
-    lines.append(bar_v(A_RIGHT + 14, 372))
+    lines.append(bar_v(A_RIGHT + 14, changed_by_y))
+
+    # 8. USERS (1) ---< MANAGE_TOKENS (0..*), down the A/B corridor
+    mt_u = MT['user_id']
+    corridor_a = 440
+    lines.append(line([(A_RIGHT, mt_u), (corridor_a, mt_u), (corridor_a, U['claimed_at']),
+                       (A_RIGHT, U['claimed_at'])]))
+    lines.append(bar_v(A_RIGHT + 14, U['claimed_at']))
+    lines.append(crow_h(A_RIGHT, mt_u, 1))
+    lines.append(label(corridor_a - 12, U['claimed_at'] + 22, '1', 'end'))
+    lines.append(label(A_RIGHT + 14, mt_u - 13, '0..*', 'start'))
+
+    # 9. REGISTRATIONS (1) ---< MANAGE_TOKENS (0..*), nullable registration_id
+    mt_r = MT['registration_id']
+    corridor_b = 512
+    lines.append(line([(A_RIGHT, mt_r), (corridor_b, mt_r), (corridor_b, R['status']),
+                       (B_LEFT, R['status'])], dashed=True))
+    lines.append(crow_h(B_LEFT, R['status'], -1))
+    lines.append(label(corridor_b + 12, mt_r - 11, '0..1', 'start'))
+    lines.append(label(corridor_b + 12, R['status'] + 22, '0..*', 'start'))
+
+    # 10. REGISTRATIONS (1) ---< NOTIFICATIONS (0..*), dashed: nullable FK
+    nf_r = N['registration_id']
+    corridor_c = 1044
+    lines.append(line([(C_LEFT, nf_r), (corridor_c, nf_r), (corridor_c, R['registration_id']),
+                       (B_RIGHT, R['registration_id'])], dashed=True))
+    lines.append(crow_h(B_RIGHT, R['registration_id'], 1))
+    lines.append(label(corridor_c - 12, nf_r - 11, '0..*', 'end'))
+
+    # USERS / EVENTS are also nullable references from the outbox: a short note
+    # next to the box keeps the diagram readable instead of adding two long rails.
+    notes.append(f'<text class="card" x="{XC}" y="{Y3 + HEAD + ROW*12 + 26}">dashed FK: '
+                 f'user_id &#8594; USERS, event_id &#8594; EVENTS (both nullable)</text>')
 
 
-    notes = []
-    parts += lines + users_svg + reg_svg + events_svg + audit_svg + rsc_svg + venues_svg + sessions_svg + att_svg
+    notes += [f'<text class="card" x="{XA + BOX_W + 24}" y="{Y4 + 60}">express-session payload</text>',
+              f'<text class="card" x="{XA + BOX_W + 24}" y="{Y4 + 82}">purged on expiry &#183; '
+              f'no foreign key</text>',
+              f'<text class="card" x="{XA + BOX_W + 24}" y="{Y4 + 104}">(table kept for the '
+              f'session store)</text>']
+    parts += lines + users_svg + reg_svg + events_svg + audit_svg + rsc_svg + venues_svg
+    parts += sessions_svg + att_svg + manage_svg + notif_svg
     parts += notes
 
     # ------------------------------- legend -------------------------------- #
@@ -275,13 +342,13 @@ def erd():
         f'<text class="legend" x="{W-80}" y="{ly+25}">1</text>',
         f'<text class="legend" x="{W-64}" y="{ly+25}">bar</text>',
         f'<text class="legend" x="{W-456}" y="{ly+44}">0..* = zero or many &#183; 0..1 = optional one &#183; '
-        'dashed = nullable audit reference</text>',
+        'dashed = nullable reference</text>',
     ]
 
     # --------------------------- constraints ------------------------------- #
-    ny = 1010
+    ny = 1332
     parts += [
-        f'<rect x="40" y="{ny}" width="{W-80}" height="382" rx="14" fill="#e8eeff" stroke="#c6d3fb"/>',
+        f'<rect x="40" y="{ny}" width="{W-80}" height="416" rx="14" fill="#e8eeff" stroke="#c6d3fb"/>',
         f'<text class="note-b" x="66" y="{ny+30}">Keys, constraints and rules enforced by the schema</text>',
         f'<text class="note" x="66" y="{ny+56}"><tspan font-weight="700">Duplicate rule:</tspan> '
         'UNIQUE (event_id, user_id) on REGISTRATIONS &#8212; one registration per participant per event.</text>',
@@ -307,12 +374,18 @@ def erd():
         '(status,registration_date) &#8212; the FIFO waitlist queue; ATTENDANCE(registration_id UQ);</text>',
         f'<text class="note" x="66" y="{ny+260}">REGISTRATION_STATUS_CHANGES(registration_id, changed_at); '
         'AUDIT_LOGS(entity, entity_id), (created_at); SESSIONS(expires_at).</text>',
-        f'<text class="note" x="66" y="{ny+286}"><tspan font-weight="700">SESSIONS:</tspan> '
+        f'<text class="note" x="66" y="{ny+286}"><tspan font-weight="700">Outbox:</tspan> '
+        'NOTIFICATIONS is written in the same transaction as the change it describes, then drained '
+        'by the worker and retried up to 3 times.</text>',
+        f'<text class="note" x="66" y="{ny+310}"><tspan font-weight="700">Guest access:</tspan> '
+        'MANAGE_TOKENS stores only the SHA-256 of the link token; USERS.password is NULL until the '
+        'account is claimed (claimed_at), so a guest never needs a password to cancel.</text>',
+        f'<text class="note" x="66" y="{ny+334}"><tspan font-weight="700">SESSIONS:</tspan> '
         'no foreign key &#8212; it stores the serialised express-session payload and is purged by expiry.</text>',
-        f'<text class="note" x="66" y="{ny+318}" fill="#8a3b12"><tspan font-weight="700">Normalisation:</tspan> '
+        f'<text class="note" x="66" y="{ny+366}" fill="#8a3b12"><tspan font-weight="700">Normalisation:</tspan> '
         '1NF/2NF/3NF are satisfied for every table shown; the one remaining 3NF exception is the single-use '
         'reset token on USERS.</text>',
-        f'<text class="note" x="66" y="{ny+344}" fill="#8a3b12">'
+        f'<text class="note" x="66" y="{ny+390}" fill="#8a3b12">'
         'A stricter variant (PASSWORD_RESET_TOKENS, lookup tables, NOTIFICATIONS) is proposed in '
         'docs/schema-3nf.sql.</text>',
     ]
@@ -325,98 +398,337 @@ def erd():
 #                             FLOWCHART                                       #
 # --------------------------------------------------------------------------- #
 def flowchart():
-    W = 1180
-    bw, box_h, gap = 400, 56, 42
-    cx = 70                      # left edge of the main column
-    ccx = cx + bw / 2            # centre of the main column
-    scx = 680                    # centre of the "No" branch column
-    sw = 320
+    """Complete system flowchart - three bands, three columns.
 
-    parts = []
-    head = [
+    Columns: the actor's step, the database work it triggers, and the "No"
+    branch / failure path. Every read and write is drawn explicitly.
+
+    Bands
+      A  participant      - browse, register, confirm (+ waiting-list branch)
+      B  administration   - login, dashboard, event / attendance / status changes
+      C  worker + guest   - e-mail delivery, retries, and /r/:token self-service
+    """
+    W = 1600
+    MCX, MW = 350, 380       # process column
+    DCX, DW = 830, 470       # database column
+    SCX, SW = 1345, 470      # No / failure column
+
+    # ---- vertical plan (computed once so the bands cannot overlap) ----------
+    A0 = 96
+    ay = 170
+    A_BOTTOM = 1210
+
+    B0 = A_BOTTOM + 24       # 1234
+    byy = B0 + 76
+    B_BOTTOM = B0 + 528
+
+    C0 = B_BOTTOM + 24
+    cyy = C0 + 82
+    C_BOTTOM = 2628 + 46
+    H = C_BOTTOM + 40
+
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
+        f'font-family="{FONT}">',
         '<defs>',
-        '<style>'
-        '.box{fill:#fff;stroke:#2f5bff;stroke-width:1.8}'
-        '.proc{fill:#15203a;font-size:15px;font-weight:600}'
-        '.term{fill:#fff;font-size:15px;font-weight:700;letter-spacing:.05em}'
-        '.arr{stroke:#46527a;stroke-width:2;fill:none}'
-        '.yes{fill:#10a36b;font-size:14px;font-weight:700}'
-        '.no{fill:#e0425f;font-size:14px;font-weight:700}'
-        '.h1{fill:#15203a;font-size:23px;font-weight:700}'
-        '.sub{fill:#6b7691;font-size:13px}'
+        '<style>',
+        '.box{fill:#fff;stroke:#2f5bff;stroke-width:1.8}',
+        '.proc{fill:#15203a;font-size:14px;font-weight:600}',
+        '.proc-s{fill:#15203a;font-size:12.5px;font-weight:600}',
+        '.term{fill:#fff;font-size:14px;font-weight:700;letter-spacing:.04em}',
+        '.arr{stroke:#46527a;stroke-width:1.9;fill:none}',
+        '.yes{fill:#0c7a52;font-size:12.5px;font-weight:700}',
+        '.no{fill:#e0425f;font-size:12.5px;font-weight:700}',
+        '.h1{fill:#15203a;font-size:24px;font-weight:700}',
+        '.sub{fill:#6b7691;font-size:13px}',
+        '.sec{fill:#15203a;font-size:16px;font-weight:700}',
+        '.secs{fill:#6b7691;font-size:12px}',
+        '.colhead{fill:#2440a8;font-size:11.5px;font-weight:700;letter-spacing:.14em}',
+        '.db{fill:#eef4ff;stroke:#2440a8;stroke-width:1.4}',
+        '.dbn{fill:#f7f2fb;stroke:#5b4b8a;stroke-width:1.4}',
+        '.dbt{fill:#15203a;font-family:' + MONO + ';font-size:11.5px}',
+        '.dbn-t{fill:#3f3268;font-family:' + MONO + ';font-size:11.5px}',
+        '.rw{fill:#0c7a52;font-size:10px;font-weight:700;letter-spacing:.1em}',
+        '.ww{fill:#b42b45;font-size:10px;font-weight:700;letter-spacing:.1em}',
+        '.note{fill:#5a6584;font-size:11.5px}',
         '</style>',
         '<marker id="ah" markerWidth="11" markerHeight="9" refX="9" refY="4.5" orient="auto">'
         '<path d="M0 0 L11 4.5 L0 9 z" fill="#46527a"/></marker>',
-        '<filter id="sh2" x="-20%" y="-20%" width="140%" height="140%">'
-        '<feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#15203a" flood-opacity="0.12"/></filter>',
+        '<marker id="ahs" markerWidth="11" markerHeight="9" refX="2" refY="4.5" orient="auto">'
+        '<path d="M11 0 L0 4.5 L11 9 z" fill="#46527a"/></marker>',
+        '<filter id="sh" x="-20%" y="-30%" width="140%" height="160%">'
+        '<feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#15203a" flood-opacity="0.10"/></filter>',
         '</defs>',
+        f'<rect width="{W}" height="{H}" fill="#f5f7fb"/>',
+        '<text class="h1" x="40" y="50">System Flowchart &#8212; Online Event Registration</text>',
+        '<text class="sub" x="40" y="74">Participant registration, administration, and the '
+        'notification worker &#8212; with every database read and write shown in order.</text>',
     ]
 
-    def rect_box(y, label, centre=ccx, width=bw):
-        return [f'<g filter="url(#sh2)"><rect class="box" x="{centre-width/2}" y="{y}" width="{width}" height="{box_h}" rx="10"/></g>',
-                f'<text class="proc" x="{centre}" y="{y+box_h/2+5.5}" text-anchor="middle">{label}</text>']
+    # ------------------------------------------------------------------ helpers
+    def box(y, lines, cx=MCX, w=MW, h=None, small=False):
+        if isinstance(lines, str):
+            lines = [lines]
+        h = h or (34 + 19 * (len(lines) - 1) + 28)
+        out = [f'<g filter="url(#sh)"><rect class="box" x="{cx-w/2}" y="{y}" width="{w}" height="{h}" '
+               f'rx="10"/></g>']
+        first = y + h / 2 - (len(lines) - 1) * 9.5 + 4.5
+        for i, line in enumerate(lines):
+            cls = 'proc-s' if (small or len(lines) > 1) else 'proc'
+            out.append(f'<text class="{cls}" x="{cx}" y="{first + i*19}" text-anchor="middle">{line}</text>')
+        return out, h
 
-    def stadium(y, label, centre=ccx, width=170, fill='#26407a'):
-        return [f'<g filter="url(#sh2)"><rect x="{centre-width/2}" y="{y}" width="{width}" height="52" rx="26" fill="{fill}"/></g>',
-                f'<text class="term" x="{centre}" y="{y+32}" text-anchor="middle">{label}</text>']
+    def stadium(y, label, cx=MCX, w=250, fill='#26407a', h=46):
+        return [f'<g filter="url(#sh)"><rect x="{cx-w/2}" y="{y}" width="{w}" height="{h}" rx="{h/2}" '
+                f'fill="{fill}"/></g>',
+                f'<text class="term" x="{cx}" y="{y+h/2+5}" text-anchor="middle">{label}</text>'], h
 
-    def arrow(x1, y1, x2, y2):
-        return f'<line class="arr" x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" marker-end="url(#ah)"/>'
+    def dbox_h(lines):
+        return 20 + 17 * len(lines) + 8
+
+    def dbox(y, lines, cx=DCX, w=DW, kind='db'):
+        h = dbox_h(lines)
+        cls = 'db' if kind == 'db' else 'dbn'
+        accent = '#2440a8' if kind == 'db' else '#5b4b8a'
+        tcls = 'dbt' if kind == 'db' else 'dbn-t'
+        out = [f'<g filter="url(#sh)"><rect class="{cls}" x="{cx-w/2}" y="{y}" width="{w}" height="{h}" '
+               f'rx="8"/></g>',
+               f'<rect x="{cx-w/2}" y="{y}" width="5" height="{h}" rx="2.5" fill="{accent}"/>']
+        for i, line in enumerate(lines):
+            out.append(f'<text class="{tcls}" x="{cx-w/2+18}" y="{y+24+i*17}">{line}</text>')
+        return out
+
+    def diamond(cx, y, w, h, lines):
+        out = [f'<g filter="url(#sh)"><path d="M{cx} {y} L{cx+w/2} {y+h/2} L{cx} {y+h} '
+               f'L{cx-w/2} {y+h/2} Z" fill="#fff" stroke="#2f5bff" stroke-width="1.8"/></g>']
+        first = y + h / 2 - (len(lines) - 1) * 9 + 5
+        for i, line in enumerate(lines):
+            out.append(f'<text class="proc" x="{cx}" y="{first + i*18}" text-anchor="middle">{line}</text>')
+        return out
+
+    def path(pts, both=False):
+        d = ' '.join(('M' if i == 0 else 'L') + f'{x} {y}' for i, (x, y) in enumerate(pts))
+        start = ' marker-start="url(#ahs)"' if both else ''
+        return f'<path class="arr" d="{d}" marker-end="url(#ah)"{start} fill="none"/>'
+
+    def tag(x, y, text, cls='rw', anchor='middle'):
+        return f'<text class="{cls}" x="{x}" y="{y}" text-anchor="{anchor}">{text}</text>'
+
+    def row(y, lines, ops=None, h=None, kind='read', cx=MCX, w=MW, small=False):
+        """Process box with an optional database box centred beside it."""
+        out, hh = box(y, lines, cx=cx, w=w, h=h, small=small)
+        if ops:
+            dh = dbox_h(ops)
+            dy = y + (hh - dh) / 2
+            out += dbox(dy, ops)
+            mid = y + hh / 2
+            out += [path([(cx + w/2, mid), (DCX - DW/2 - 3, mid)], both=True),
+                    tag((cx + w/2 + DCX - DW/2) / 2, mid - 8,
+                        'READ' if kind == 'read' else 'WRITE', 'rw' if kind == 'read' else 'ww')]
+        return out, y + hh
 
     body = []
-    y = 112
-    body += stadium(y, 'Start')
-    y += 52
-    body.append(arrow(ccx, y, ccx, y + gap - 8)); y += gap
 
-    for label in ['User views event list', 'Select event']:
-        body += rect_box(y, label)
-        y += box_h
-        body.append(arrow(ccx, y, ccx, y + gap - 8)); y += gap
+    # ================================================================ BAND A
+    body.append(f'<rect x="24" y="{A0}" width="{W-48}" height="{A_BOTTOM-A0}" rx="16" '
+                f'fill="#ffffff" stroke="#dbe2f0"/>')
+    body += ['<text class="sec" x="48" y="128">A &#183; Participant &#8212; browse, register, '
+             'confirm</text>',
+             '<text class="secs" x="48" y="148">Public pages. No login: the e-mailed link is the '
+             'credential, so a guest never has to invent a password.</text>',
+             f'<text class="colhead" x="{DCX}" y="128" text-anchor="middle">DATABASE</text>',
+             f'<text class="colhead" x="{SCX}" y="128" text-anchor="middle">WAITING LIST</text>']
 
-    # ------------------------------ decision ------------------------------- #
-    dw, dh = 330, 140
-    dx, dy = ccx - dw / 2, y
-    body += [
-        f'<g filter="url(#sh2)"><path d="M{ccx} {dy} L{dx+dw} {dy+dh/2} L{ccx} {dy+dh} L{dx} {dy+dh/2} Z" '
-        f'fill="#fff" stroke="#2f5bff" stroke-width="1.8"/></g>',
-        f'<text class="proc" x="{ccx}" y="{dy+dh/2-6}" text-anchor="middle">Event has</text>',
-        f'<text class="proc" x="{ccx}" y="{dy+dh/2+16}" text-anchor="middle">available slots?</text>',
-    ]
+    y = ay
+    st, h = stadium(y, 'Start')
+    body += st
+    y += h
+    body += [path([(MCX, y), (MCX, 242)])]
 
-    # --------------------------- No -> Event full -------------------------- #
-    no_y = dy + 12
-    body += [f'<line class="arr" x1="{dx+dw}" y1="{dy+dh/2}" x2="{scx-sw/2}" y2="{dy+dh/2}" marker-end="url(#ah)"/>',
-             f'<text class="no" x="{dx+dw+16}" y="{dy+dh/2-14}">No</text>']
-    body += rect_box(no_y, 'Show &#8220;Event full&#8221;', centre=scx, width=sw)
-    body.append(arrow(scx, no_y + box_h, scx, no_y + box_h + 41))
-    body += stadium(no_y + box_h + 45, 'End', centre=scx, width=150, fill='#e0425f')
+    r, y = row(242, 'Opens the event list  ( GET / )',
+               ['SELECT EVENTS &#10227; VENUES',
+                "COUNT(*) WHERE status='confirmed'",
+                'remaining = max_participants - taken'])
+    body += r
+    body += [path([(MCX, y), (MCX, 340)])]
 
-    # ---------------------------- Yes -> continue -------------------------- #
-    y = dy + dh
-    body += [arrow(ccx, y, ccx, y + gap - 8),
-             f'<text class="yes" x="{ccx+14}" y="{y+28}">Yes</text>']
-    y += gap
+    r, y = row(340, 'Selects one event  ( GET /events/:id )',
+               ['SELECT event + venue', 'COUNT confirmed seats'])
+    body += r
+    body += [path([(MCX, y), (MCX, 438)])]
 
-    for label in ['Enter participant details',
-                  'Validate email and required fields',
-                  'Save registration',
-                  'Recompute confirmed count (COUNT)',
-                  'Show confirmation']:
-        body += rect_box(y, label)
-        y += box_h
-        body.append(arrow(ccx, y, ccx, y + gap - 8)); y += gap
+    body += diamond(MCX, 438, 260, 108, ['Seats still', 'available?'])
 
-    body += stadium(y, 'End')
-    y += 52
+    # ---- No -> waiting list
+    body += [path([(MCX + 130, 492), (SCX - SW/2 - 3, 492)]),
+             tag(MCX + 168, 482, 'No', 'no', 'start')]
+    r, hh = box(466, 'Joins the waiting list', cx=SCX, w=SW)
+    body += r
+    body += [path([(SCX, 466 + hh), (SCX, 558)])]
+    body += dbox(558, ["INSERT REGISTRATIONS", "  status = 'waitlisted'",
+                       'INSERT REGISTRATION_STATUS_CHANGES', "INSERT NOTIFICATIONS  ('queued')"],
+                 cx=SCX, w=SW)
+    body += [tag(SCX + SW/2 - 44, 548, 'WRITE', 'ww', 'start'),
+             path([(SCX, 558 + dbox_h([0, 0, 0, 0])), (SCX, 682)])]
+    st, _ = stadium(682, 'End &#8212; on the waiting list', cx=SCX, w=320, fill='#5a6584')
+    body += st
+    body += [f'<text class="note" x="{SCX}" y="752" text-anchor="middle">Promoted to confirmed '
+             f'automatically when a seat frees up</text>',
+             f'<text class="note" x="{SCX}" y="770" text-anchor="middle">(band C: FIFO by '
+             f'registration_date)</text>']
 
-    H = int(y + 56)
-    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" font-family="{FONT}">']
-    parts += head
-    parts += [f'<rect width="{W}" height="{H}" fill="#f5f7fb"/>',
-              '<text class="h1" x="30" y="52">System Flowchart &#8212; Online Event Registration</text>',
-              '<text class="sub" x="30" y="76">Start &#8594; view event list &#8594; select event &#8594; '
-              'slot check &#8594; validate &#8594; save registration &#8594; confirm &#8594; End</text>']
+    # ---- Yes -> continue
+    body += [path([(MCX, 546), (MCX, 580)]), tag(MCX + 10, 570, 'Yes', 'yes', 'start')]
+    r, y = row(580, 'Enters full name + e-mail address')
+    body += r
+    body += [f'<text class="note" x="{DCX}" y="{y-14}" text-anchor="middle">no write yet &#8212; '
+             f'nothing is stored before validation</text>']
+    body += [path([(MCX, y), (MCX, 676)])]
+
+    r, y = row(676, 'Server validates fields and the duplicate rule',
+               ['SELECT USERS, REGISTRATIONS', 'WHERE (event_id, user_id)'])
+    body += r
+    body += [path([(MCX, y), (MCX, 772)])]
+
+    r, y = row(772, 'Re-checks capacity inside a transaction',
+               ['SELECT event ... FOR UPDATE', 'COUNT confirmed (locked row)'])
+    body += r
+    body += [path([(MCX, y), (MCX, 868)])]
+
+    body += box(868, ['BEGIN &#8594; INSERT registration',
+                      '+ status history + notification',
+                      '&#8594; COMMIT  (rollback on error)'], h=86)[0]
+    body += dbox(864, ['BEGIN', 'INSERT REGISTRATIONS', 'INSERT REGISTRATION_STATUS_CHANGES',
+                       "INSERT NOTIFICATIONS ('queued')", 'COMMIT'])
+    body += [path([(MCX + MW/2, 911), (DCX - DW/2 - 3, 911)]),
+             tag((MCX + MW/2 + DCX - DW/2) / 2, 903, 'WRITE', 'ww'),
+             f'<text class="note" x="{DCX}" y="986" text-anchor="middle">one atomic unit: the '
+             f'booking, its history and the e-mail are all-or-nothing</text>']
+    body += [path([(MCX, 954), (MCX, 1004)])]
+
+    r, y = row(1004, 'Renders the confirmation page',
+               ['SELECT COUNT confirmed (fresh)',
+                'reference = HMAC(registration_id)',
+                'shown as REG-00049-7F3A9C'])
+    body += r
+    body += [path([(MCX, y), (MCX, 1100)])]
+
+    st, _ = stadium(1100, 'End &#8212; registration stored', w=340)
+    body += st
+    body += [f'<text class="note" x="{MCX}" y="1174" text-anchor="middle">the queued e-mail '
+             f'carries /r/:token &#8594; band C</text>']
+
+    # ================================================================ BAND B
+    body.append(f'<rect x="24" y="{B0}" width="{W-48}" height="{B_BOTTOM-B0}" rx="16" '
+                f'fill="#ffffff" stroke="#dbe2f0"/>')
+    body += [f'<text class="sec" x="48" y="{B0+34}">B &#183; Administration &#8212; authenticated '
+             f'session required</text>',
+             f'<text class="secs" x="48" y="{B0+54}">requireLogin + requireAdmin guard every route. '
+             f'Each action writes AUDIT_LOGS and queues a notification.</text>',
+             f'<text class="colhead" x="{DCX}" y="{B0+34}" text-anchor="middle">DATABASE</text>']
+
+    y = byy
+    st, h = stadium(y, 'Admin logs in  ( POST /login )', w=310)
+    body += st
+    body += dbox(y - 12, ['SELECT USERS WHERE email = ?',
+                          'bcrypt.compare(password, hash)',
+                          'INSERT / UPDATE SESSIONS'])
+    body += [path([(MCX + 155, y + 23), (DCX - DW/2 - 3, y + 37)]),
+             tag((MCX + 155 + DCX - DW/2) / 2, y + 18, 'WRITE', 'ww')]
+    y += h
+    body += [path([(MCX, y), (MCX, 1386)])]
+
+    r, y = row(1386, 'Dashboard  ( GET /admin )',
+               ['SELECT aggregates:',
+                'events &#183; confirmed &#183; waitlisted',
+                'check-ins &#183; users'])
+    body += r
+    body += [path([(MCX, y), (MCX, 1482)])]
+
+    acts = [(300, ['Creates / edits /', 'archives an event'],
+             ['INSERT / UPDATE EVENTS', 'INSERT / UPDATE VENUES', 'UPDATE deleted_at (archive)']),
+            (800, ['Checks a participant in'],
+             ['INSERT ATTENDANCE', 'UNIQUE(registration_id)', 'INSERT AUDIT_LOGS']),
+            (1300, ['Cancels or changes', 'a status'],
+             ['UPDATE REGISTRATIONS', 'INSERT STATUS_CHANGES', 'promote waitlist (FIFO)'])]
+    for cx, label, ops in acts:
+        body += box(1482, label, cx=cx, w=420)[0]
+        body += [path([(cx, 1542), (cx, 1570)])]
+        body += dbox(1570, ops, cx=cx, w=420)
+        body += [tag(cx, 1678, 'WRITE', 'ww')]
+
+    body += [f'<rect x="48" y="1696" width="{W-96}" height="46" rx="9" fill="#fdf2f5" '
+             f'stroke="#f3c9d4"/>',
+             f'<text class="note" x="68" y="1724">Every branch also writes '
+             f'<tspan font-weight="700">AUDIT_LOGS</tspan> (actor, action, entity, before/after) and '
+             f'queues <tspan font-weight="700">NOTIFICATIONS</tspan> rows &#8212; archiving an event '
+             f'queues one cancellation e-mail per affected participant.</text>']
+
+    # ================================================================ BAND C
+    body.append(f'<rect x="24" y="{C0}" width="{W-48}" height="{C_BOTTOM-C0}" rx="16" '
+                f'fill="#ffffff" stroke="#dbe2f0"/>')
+    body += [f'<text class="sec" x="48" y="{C0+34}">C &#183; Notification worker and guest '
+             f'self-service  ( /r/:token )</text>',
+             f'<text class="secs" x="48" y="{C0+54}">Delivery happens out of band, so an SMTP outage '
+             f'can never fail a registration; failures stay visible and retryable.</text>',
+             f'<text class="colhead" x="{DCX}" y="{C0+34}" text-anchor="middle">DATABASE</text>',
+             f'<text class="colhead" x="{SCX}" y="{C0+34}" text-anchor="middle">ON FAILURE</text>']
+
+    y = cyy
+    st, h = stadium(y, 'Worker timer fires (every 15 s)', w=340, fill='#0f4c5c')
+    body += st
+    body += dbox(y - 12, ["SELECT NOTIFICATIONS", "WHERE status = 'queued'",
+                          'ORDER BY created_at LIMIT 20'])
+    body += [path([(MCX + 170, y + 23), (DCX - DW/2 - 3, y + 34)]),
+             tag((MCX + 170 + DCX - DW/2) / 2, y + 18, 'READ', 'rw')]
+    y += h
+    body += [path([(MCX, y), (MCX, 1944)])]
+
+    r, y = row(1944, ['Renders the EJS e-mail template',
+                      '(subject + HTML + text alternative)'], h=72)
+    body += r
+    body += [path([(MCX, y), (MCX, 2046)])]
+
+    r, y = row(2046, 'Sends through the transport (console .eml / SMTP)')
+    body += r
+    body += [path([(MCX, y), (MCX, 2140)])]
+
+    body += diamond(MCX, 2140, 260, 104, ['Delivered?'])
+    body += [path([(MCX + 130, 2192), (SCX - SW/2 - 3, 2192)]),
+             tag(MCX + 168, 2182, 'No', 'no', 'start')]
+    body += dbox(2146, ['attempts = attempts + 1',
+                        'requeue while attempts &lt; 3',
+                        "then status = 'failed'",
+                        '+ last_error (shown in the UI)'], cx=SCX, w=SW, kind='note')
+    body += [tag(SCX - SW/2 + 58, 2182, 'WRITE', 'ww'),
+             f'<text class="note" x="{SCX}" y="2272" text-anchor="middle">the Requeue button in '
+             f'/admin/notifications drains it immediately</text>']
+
+    body += [path([(MCX, 2244), (MCX, 2282)]), tag(MCX + 10, 2270, 'Yes', 'yes', 'start')]
+    body += dbox(2282, ['UPDATE NOTIFICATIONS',
+                        "SET status = 'sent', sent_at = NOW()"], cx=MCX, w=430)
+    body += [path([(MCX, 2282 + dbox_h([0, 0])), (MCX, 2372)])]
+
+    r, y = row(2372, 'Participant receives the e-mail')
+    body += r
+    body += [path([(MCX, y), (MCX, 2464)])]
+
+    r, y = row(2464, 'Opens /r/:token &#8212; no password required',
+               ['SELECT MANAGE_TOKENS', 'WHERE token_hash = SHA-256(token)',
+                'JOIN USERS, REGISTRATIONS'])
+    body += r
+    body += [path([(MCX, y), (MCX, 2556)])]
+
+    body += box(2556, ['Views the booking, cancels it,',
+                       'or optionally sets a password'], w=340, h=72)[0]
+    body += dbox(2552, ["UPDATE status = 'cancelled'", 'INSERT STATUS_CHANGES',
+                        'promote next waitlisted (FIFO)',
+                        "INSERT NOTIFICATIONS ('queued')"])
+    body += [path([(MCX + 170, 2592), (DCX - DW/2 - 3, 2592)]),
+             tag((MCX + 170 + DCX - DW/2) / 2, 2582, 'WRITE', 'ww')]
+    body += [f'<text class="note" x="{MCX}" y="2660" text-anchor="middle">same engine as the '
+             f'logged-in cancel &#8212; cancelRegistration()</text>']
+
     parts += body
     parts.append('</svg>')
     return '\n'.join(parts)

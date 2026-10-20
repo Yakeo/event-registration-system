@@ -24,9 +24,9 @@ const {
   logStatusChange,
 } = require('../models');
 const { validateRegistration, normalizeEmail } = require('../middlewares/validate');
-const crypto = require('crypto');
 const { Op } = require('sequelize');
 const { queue, payloadFor, link } = require('../services/notifications');
+const manageTokens = require('../services/manageTokens');
 
 /**
  * The account that triggered a public registration action, when it is a
@@ -99,11 +99,13 @@ async function waitlistPosition(registration, transaction = null) {
  * the status-history row all commit together, so a crash can never produce a
  * booking whose e-mail was silently skipped.
  *
- * A brand-new participant gets 'account_claim' instead of a plain receipt: the
- * account was created with a random password nobody saw, so this is the only
- * way they can ever log in. The token is written through the transaction (not
- * user.generateResetToken(), which saves on its own connection and would block
- * behind the row we are holding).
+ * Every message carries a `/r/:token` manage link, which is the credential for
+ * a guest: it authorises view/cancel/claim without a password. The token row is
+ * written through the caller's transaction (not user.generateResetToken(),
+ * which saves on its own connection and would block behind the row we hold).
+ *
+ * A brand-new participant gets 'account_claim' rather than a plain receipt,
+ * because for them the same link is also the way to become a real account.
  */
 async function notifyRegistration({
   transaction,
@@ -118,16 +120,17 @@ async function notifyRegistration({
     extra.waitlist_position = await waitlistPosition(registration, transaction);
   }
 
-  let kind = registration.status === 'waitlisted' ? 'waitlisted' : 'registration_confirmed';
+  // Passwordless self-service: the link IS the credential. Issued inside the
+  // transaction so a committed registration always has a usable link.
+  const rawToken = await manageTokens.issue({
+    userId: user.user_id,
+    registrationId: registration.registration_id,
+    transaction,
+  });
+  extra.manage_url = manageTokens.url(rawToken);
 
-  if (isNewAccount) {
-    const rawToken = crypto.randomBytes(32).toString('hex');
-    user.reset_password_token = User.hashResetToken(rawToken);
-    user.reset_password_expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-    await user.save({ transaction });
-    extra.claim_url = link(`/reset-password/${rawToken}`);
-    kind = 'account_claim';
-  }
+  let kind = registration.status === 'waitlisted' ? 'waitlisted' : 'registration_confirmed';
+  if (isNewAccount) kind = 'account_claim';
 
   return queue({
     kind,
@@ -208,6 +211,69 @@ async function promoteFromWaitlist(eventId, transaction) {
   });
 
   return next;
+}
+
+/**
+ * Cancels a registration and promotes the next waitlisted person.
+ *
+ * Shared by the logged-in flow (POST /registrations/:id/cancel) and by the
+ * passwordless `/r/:token` link, so the rules - history row, cancellation
+ * e-mail, FIFO promotion - cannot drift between the two entry points.
+ *
+ * @returns {{notFound?: boolean, alreadyCancelled?: boolean, promoted?: object,
+ *            previousStatus?: string, registration?: object}}
+ */
+async function cancelRegistration({ registrationId, actorId = null, reason }) {
+  return sequelize.transaction(async (t) => {
+    const registration = await Registration.findByPk(registrationId, {
+      transaction: t,
+      lock: lockOption(t),
+    });
+    if (!registration) return { notFound: true };
+    if (registration.status === 'cancelled') return { alreadyCancelled: true, registration };
+
+    const previousStatus = registration.status;
+    await registration.update({ status: 'cancelled' }, { transaction: t });
+    await logStatusChange({
+      registrationId: registration.registration_id,
+      from: previousStatus,
+      to: 'cancelled',
+      actorId,
+      reason,
+      transaction: t,
+    });
+
+    // Confirm the cancellation to whoever asked for it.
+    const owner = await User.findByPk(registration.user_id, { transaction: t });
+    if (owner) {
+      const cancelEvent = await Event.findByPk(registration.event_id, {
+        include: [eventVenueInclude],
+        transaction: t,
+      });
+      await queue({
+        kind: 'registration_cancelled',
+        email: owner.email,
+        userId: owner.user_id,
+        registrationId: registration.registration_id,
+        eventId: registration.event_id,
+        payload: payloadFor({
+          event: cancelEvent,
+          participant: owner,
+          registration,
+          extra: { reason },
+        }),
+        transaction: t,
+      });
+    }
+
+    // Promote the earliest person on the waiting list into the freed slot
+    let promoted = null;
+    if (previousStatus === 'confirmed') {
+      promoted = await promoteFromWaitlist(registration.event_id, t);
+    }
+
+    return { promoted, previousStatus, registration };
+  });
 }
 
 const registrationController = {
@@ -301,11 +367,16 @@ const registrationController = {
         let createdUser = false;
         if (!user) {
           createdUser = true;
+          // A guest account: no password at all. The person proves who they are
+          // by possession of the emailed `/r/:token` link, and can optionally
+          // claim the account (set a password) from that page. The old code
+          // invented a random password nobody ever saw, which looked like a
+          // credential but could never be used.
           user = await User.create(
             {
               full_name,
               email,
-              password: Math.random().toString(36).slice(-10) + 'Aa1!',
+              password: null,
               role: 'participant',
             },
             { transaction: t }
@@ -484,11 +555,12 @@ const registrationController = {
       let user = await User.findOne({ where: { email }, transaction: t });
       const isNewAccount = !user;
       if (!user) {
+        // Guest account - see the note in store(): no password until claimed.
         user = await User.create(
           {
             full_name,
             email,
-            password: Math.random().toString(36).slice(-10) + 'Aa1!',
+            password: null,
             role: 'participant',
           },
           { transaction: t }
@@ -611,58 +683,10 @@ const registrationController = {
         ? `/admin/events/${preview.event_id}/participants`
         : '/my-registrations';
 
-    const outcome = await sequelize.transaction(async (t) => {
-      const registration = await Registration.findByPk(req.params.id, {
-        transaction: t,
-        lock: lockOption(t),
-      });
-      if (!registration) return { notFound: true };
-      if (registration.status === 'cancelled') return { alreadyCancelled: true };
-
-      const previousStatus = registration.status;
-      await registration.update({ status: 'cancelled' }, { transaction: t });
-      await logStatusChange({
-        registrationId: registration.registration_id,
-        from: previousStatus,
-        to: 'cancelled',
-        actorId: req.session.user ? req.session.user.user_id : null,
-        reason: isAdmin && !isOwner ? 'Cancelled by an administrator' : 'Cancelled by the participant',
-        transaction: t,
-      });
-
-      // Confirm the cancellation to whoever asked for it.
-      const owner = await User.findByPk(registration.user_id, { transaction: t });
-      if (owner) {
-        const cancelEvent = await Event.findByPk(registration.event_id, {
-          include: [eventVenueInclude],
-          transaction: t,
-        });
-        await queue({
-          kind: 'registration_cancelled',
-          email: owner.email,
-          userId: owner.user_id,
-          registrationId: registration.registration_id,
-          eventId: registration.event_id,
-          payload: payloadFor({
-            event: cancelEvent,
-            participant: owner,
-            registration,
-            extra: {
-              reason: isAdmin && !isOwner
-                ? 'Cancelled by an administrator'
-                : 'Cancelled by the participant',
-            },
-          }),
-          transaction: t,
-        });
-      }
-
-      // Promote the earliest person on the waiting list into the freed slot
-      let promoted = null;
-      if (previousStatus === 'confirmed') {
-        promoted = await promoteFromWaitlist(registration.event_id, t);
-      }
-      return { promoted, previousStatus };
+    const outcome = await cancelRegistration({
+      registrationId: req.params.id,
+      actorId: req.session.user ? req.session.user.user_id : null,
+      reason: isAdmin && !isOwner ? 'Cancelled by an administrator' : 'Cancelled by the participant',
     });
 
     if (outcome.notFound) {
@@ -686,3 +710,4 @@ const registrationController = {
 
 module.exports = registrationController;
 module.exports.promoteFromWaitlist = promoteFromWaitlist;
+module.exports.cancelRegistration = cancelRegistration;

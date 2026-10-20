@@ -140,6 +140,57 @@ CREATE TABLE IF NOT EXISTS SESSIONS (
 
 CREATE INDEX idx_sessions_expires ON SESSIONS (expires_at);
 
+-- ----------------------------------------------------------- NOTIFICATIONS ---
+-- Transactional outbox: the row is written in the SAME transaction as the state
+-- change it describes, so a crash between COMMIT and send cannot lose an e-mail.
+-- A worker drains 'queued' rows, retries up to 3 times, then leaves the row
+-- visible as 'failed' with last_error.
+CREATE TABLE IF NOT EXISTS NOTIFICATIONS (
+  notification_id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id         INT NULL,                                        -- NULL when the account does not exist yet
+  email           VARCHAR(160) NOT NULL,                           -- snapshot of the address at queue time
+  kind            VARCHAR(40) NOT NULL,                            -- registration_confirmed, waitlisted, promoted, ...
+  registration_id INT NULL,
+  event_id        INT NULL,
+  payload         TEXT NULL,                                       -- JSON values already rendered into the template
+  status          VARCHAR(20) NOT NULL DEFAULT 'queued',           -- queued | sent | failed
+  attempts        INT NOT NULL DEFAULT 0,
+  last_error      VARCHAR(255) NULL,
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  sent_at         DATETIME NULL,
+  CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES USERS(user_id)
+      ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_notifications_registration FOREIGN KEY (registration_id) REFERENCES REGISTRATIONS(registration_id)
+      ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_notifications_event FOREIGN KEY (event_id) REFERENCES EVENTS(event_id)
+      ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_notifications_status       ON NOTIFICATIONS (status, created_at);
+CREATE INDEX idx_notifications_registration ON NOTIFICATIONS (registration_id);
+
+-- ------------------------------------------------------------ MANAGE_TOKENS ---
+-- Passwordless guest self-service: the /r/:token link in the e-mail. Only the
+-- SHA-256 digest is stored, so a database leak cannot be replayed. Rendering the
+-- page does not consume the token; a state-changing action sets used_at.
+CREATE TABLE IF NOT EXISTS MANAGE_TOKENS (
+  token_id        INT AUTO_INCREMENT PRIMARY KEY,
+  token_hash      CHAR(64) NOT NULL,                                -- SHA-256 hex of the URL token
+  user_id         INT NOT NULL,
+  registration_id INT NULL,                                         -- NULL = token valid for every booking of the user
+  expires_at      DATETIME NOT NULL,
+  used_at         DATETIME NULL,                                    -- set when cancel/claim consumes the link
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT uq_manage_token_hash UNIQUE (token_hash),
+  CONSTRAINT fk_manage_token_user FOREIGN KEY (user_id) REFERENCES USERS(user_id)
+      ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_manage_token_registration FOREIGN KEY (registration_id) REFERENCES REGISTRATIONS(registration_id)
+      ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_manage_tokens_user   ON MANAGE_TOKENS (user_id, expires_at);
+CREATE INDEX idx_manage_tokens_expiry ON MANAGE_TOKENS (expires_at);
+
 -- ============================================================================
 --  Application queries (kept in sync with the Sequelize controllers)
 -- ============================================================================

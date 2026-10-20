@@ -3,7 +3,8 @@
  * - user_id (PK)
  * - full_name
  * - email (unique)
- * - password (bcrypt hash)
+ * - password (bcrypt hash, NULL for guest accounts that were never claimed)
+ * - claimed_at (when a guest took ownership of the account, else NULL)
  * - role ('admin' | 'participant')
  * - reset_password_token (string, nullable) - for secure forgot-password flows
  * - reset_password_expires (datetime, nullable) - token TTL (1 hour)
@@ -36,8 +37,18 @@ module.exports = (sequelize) => {
         },
       },
       password: {
+        // NULL is a real state: a guest account created by a public
+        // registration has no password at all until the person claims it from
+        // the link in their confirmation e-mail. Storing a random hash nobody
+        // knows (the previous behaviour) was dead weight that also looked like
+        // a working credential.
         type: DataTypes.STRING(255),
-        allowNull: false,
+        allowNull: true,
+      },
+      claimed_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null,
       },
       role: {
         type: DataTypes.ENUM('admin', 'participant'),
@@ -74,7 +85,9 @@ module.exports = (sequelize) => {
       ],
       hooks: {
         beforeSave: async (user) => {
-          if (user.changed('password')) {
+          // A guest account has password = NULL until it is claimed; hashing
+          // null would throw, and there is nothing to hash.
+          if (user.changed('password') && user.password) {
             // Only hash if not already a bcrypt hash (starts with $2a$ or $2b$)
             const isHashed = typeof user.password === 'string' && /^\$2[abxy]\$\d{2}\$/.test(user.password);
             if (!isHashed) {
@@ -88,7 +101,22 @@ module.exports = (sequelize) => {
 
   // instance helpers
   User.prototype.verifyPassword = function (plain) {
+    // A guest account has no password, so nothing can match it. Returning false
+    // (rather than throwing) keeps the login response identical to a wrong
+    // password, which is what stops account enumeration.
+    if (!this.password) return Promise.resolve(false);
     return bcrypt.compare(plain, this.password);
+  };
+
+  /** True when the account can be used to log in. */
+  User.prototype.hasPassword = function hasPassword() {
+    return Boolean(this.password);
+  };
+
+  /** Marks a guest account as taken over by its owner. */
+  User.prototype.markClaimed = async function markClaimed(options = {}) {
+    if (!this.claimed_at) this.claimed_at = new Date();
+    return this.save(options);
   };
 
   User.prototype.isAdmin = function () {

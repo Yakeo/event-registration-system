@@ -25,6 +25,7 @@ const {
   AuditLog,
   Notification,
 } = require('../models');
+const manageTokens = require('../services/manageTokens');
 
 const day = 24 * 60 * 60 * 1000;
 
@@ -426,6 +427,14 @@ async function seed() {
     }),
   ]);
 
+  /* --------------------------- MANAGE LINK (DEMO) ------------------------ */
+  // A ready-made guest link so the passwordless flow can be shown without
+  // digging through tmp/outbox. Prints the URL below.
+  const demoRawToken = await manageTokens.issue({
+    userId: regs['bootcamp|1'].user_id,
+    registrationId: regs['bootcamp|1'].registration_id,
+  });
+
   /* ------------------------------- SUMMARY ------------------------------- */
   const [u, v, e, r, a, h, log, notifications] = await Promise.all([
     User.count(), Venue.count(), Event.count(), Registration.count(),
@@ -450,6 +459,9 @@ async function seed() {
   console.log('  Organiser    organizer@eventreg.test / organizer123');
   console.log('  Participant  maria@email.com / maria123');
   console.log('  Others       juan@email.com … ella@email.com / password123\n');
+  console.log('  Guest manage link (no password needed):');
+  console.log(`    /r/${demoRawToken}`);
+  console.log('    -> open it on the running app to view or cancel that registration\n');
 
   await sequelize.close();
 }

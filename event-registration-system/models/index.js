@@ -21,6 +21,7 @@ const RegistrationStatusChange = require('./RegistrationStatusChange')(sequelize
 const AuditLog = require('./AuditLog')(sequelize);
 const Session = require('./Session')(sequelize);
 const Notification = require('./Notification')(sequelize);
+const ManageToken = require('./ManageToken')(sequelize);
 
 /* ------------------------------- ASSOCIATIONS ------------------------------ */
 // VENUES (1) ---- (0..*) EVENTS
@@ -101,6 +102,23 @@ User.hasMany(AuditLog, {
 AuditLog.belongsTo(User, {
   foreignKey: 'actor_id',
   as: 'actor',
+});
+
+// USERS / REGISTRATIONS (0..*) ---- (0..*) MANAGE_TOKENS
+// Guest self-service links: possession of `/r/:token` authorises view/cancel/
+// claim without a password. Only the SHA-256 digest is stored.
+User.hasMany(ManageToken, {
+  foreignKey: 'user_id',
+  as: 'manageTokens',
+  onDelete: 'CASCADE',
+});
+ManageToken.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
+});
+ManageToken.belongsTo(Registration, {
+  foreignKey: 'registration_id',
+  as: 'registration',
 });
 
 // USERS / REGISTRATIONS / EVENTS (0..*) ---- (0..*) NOTIFICATIONS
@@ -232,6 +250,7 @@ module.exports = {
   AuditLog,
   Session,
   Notification,
+  ManageToken,
   eventVenueInclude,
   getEventCapacity,
   logStatusChange,
