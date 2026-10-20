@@ -42,9 +42,9 @@
 <text class="t-tbl" x="236" y="343" text-anchor="middle">one event and its bookings</text>
 <text class="t-ops" x="236" y="362" text-anchor="middle">That one event, and how full it is.</text>
 <path d="M236 376 L236 384" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
-<path d="M236 384 L351.0 417.0 L236 450 L121.0 417.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
-<text class="t-proc" x="236" y="414.5" text-anchor="middle">Any seats</text>
-<text class="t-proc" x="236" y="426.5" text-anchor="middle">left?</text>
+<path d="M236 384 L356.0 417.0 L236 450 L116.0 417.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="414.5" text-anchor="middle">Fewer booked</text>
+<text class="t-proc" x="236" y="426.5" text-anchor="middle">than the cap?</text>
 <path d="M351 417.0 L436 417.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
 <text class="t-no" x="362" y="411.0" text-anchor="start">No</text>
 <path d="M450.0 399.0 L776.0 399.0 L762.0 443.0 L436.0 443.0 Z" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
