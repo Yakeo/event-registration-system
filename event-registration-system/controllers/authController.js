@@ -1,0 +1,274 @@
+/**
+ * controllers/authController.js
+ * User authentication, account registration, password change,
+ * and academic-defense-grade Forgot / Reset Password workflow.
+ */
+const { Op } = require('sequelize');
+const { User, Registration, Event } = require('../models');
+const { normalizeEmail, validatePassword } = require('../middlewares/validate');
+
+const authController = {
+  // GET /register
+  showRegister(req, res) {
+    if (req.session.user) return res.redirect('/my-registrations');
+    return res.render('auth/register', {
+      title: 'Create an account',
+      errors: [],
+      old: {},
+      next: req.query.next || '',
+    });
+  },
+
+  // POST /register
+  async register(req, res) {
+    const full_name = (req.body.full_name || '').trim();
+    const email = normalizeEmail(req.body.email);
+    const password = req.body.password || '';
+    const confirm_password = req.body.confirm_password || '';
+    const next = req.body.next || '';
+
+    const errors = [];
+    if (!full_name) errors.push('Full name is required.');
+    if (!email) errors.push('Email is required.');
+    errors.push(...validatePassword(password, confirm_password ? confirm_password : null));
+
+    const existing = email ? await User.findOne({ where: { email } }) : null;
+    if (existing) errors.push('An account with that email address already exists.');
+
+    if (errors.length) {
+      return res.status(422).render('auth/register', {
+        title: 'Create an account',
+        errors,
+        old: { full_name, email },
+        next,
+      });
+    }
+
+    const user = await User.create({ full_name, email, password, role: 'participant' });
+    req.session.user = {
+      user_id: user.user_id,
+      full_name: user.full_name,
+      email: user.email,
+      role: user.role,
+    };
+    req.session.flashSuccess = `Welcome, ${user.full_name}! Your account has been created.`;
+    return res.redirect(next || '/my-registrations');
+  },
+
+  // GET /login
+  showLogin(req, res) {
+    if (req.session.user) {
+      return res.redirect(req.session.user.role === 'admin' ? '/admin' : '/my-registrations');
+    }
+    return res.render('auth/login', {
+      title: 'Log in',
+      errors: [],
+      old: {},
+      next: req.query.next || '',
+    });
+  },
+
+  // POST /login
+  async login(req, res) {
+    const email = normalizeEmail(req.body.email);
+    const password = req.body.password || '';
+    const next = req.body.next || '';
+
+    const user = await User.findOne({ where: { email } });
+    const ok = user ? await user.verifyPassword(password) : false;
+
+    if (!ok) {
+      return res.status(401).render('auth/login', {
+        title: 'Log in',
+        errors: ['Invalid email or password.'],
+        old: { email },
+        next,
+      });
+    }
+
+    req.session.user = {
+      user_id: user.user_id,
+      full_name: user.full_name,
+      email: user.email,
+      role: user.role,
+    };
+    req.session.flashSuccess = `Logged in as ${user.full_name}.`;
+    return res.redirect(next || (user.role === 'admin' ? '/admin' : '/my-registrations'));
+  },
+
+  // POST /logout
+  logout(req, res) {
+    req.session.destroy(() => res.redirect('/'));
+  },
+
+  // GET /my-registrations
+  async myRegistrations(req, res) {
+    const rows = await Registration.findAll({
+      where: { user_id: req.session.user.user_id },
+      include: [{ model: Event, as: 'event' }],
+      order: [['registration_date', 'DESC']],
+    });
+    return res.render('my-registrations', { title: 'My registrations', rows });
+  },
+
+  /* ---------------------- FORGOT / RESET PASSWORD FLOW ---------------------- */
+
+  // GET /forgot-password
+  showForgotPassword(req, res) {
+    return res.render('auth/forgot-password', {
+      title: 'Forgot Password',
+      errors: [],
+      old: {},
+      resetLink: null,
+    });
+  },
+
+  // POST /forgot-password
+  async forgotPassword(req, res) {
+    const email = normalizeEmail(req.body.email);
+
+    if (!email) {
+      return res.status(422).render('auth/forgot-password', {
+        title: 'Forgot Password',
+        errors: ['Please enter your registered email address.'],
+        old: { email },
+        resetLink: null,
+      });
+    }
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).render('auth/forgot-password', {
+        title: 'Forgot Password',
+        errors: ['No account was found with that email address. Please check and try again.'],
+        old: { email },
+        resetLink: null,
+      });
+    }
+
+    // Generate secure token and set 1-hour expiration
+    const token = await user.generateResetToken();
+    const resetUrl = `/reset-password/${token}`;
+
+    console.log(`\n[PASSWORD RESET] Generated reset token for ${user.email}:`);
+    console.log(`  Reset URL: ${resetUrl}`);
+    console.log(`  Expires:   ${user.reset_password_expires}\n`);
+
+    // In an academic presentation / development environment, we display
+    // the simulated reset action directly to make the defense demonstration
+    // seamless, transparent, and 100% testable without third-party mailer delays.
+    return res.render('auth/forgot-password', {
+      title: 'Reset link generated',
+      errors: [],
+      old: { email },
+      resetLink: resetUrl,
+      targetUser: { full_name: user.full_name, email: user.email },
+    });
+  },
+
+  // GET /reset-password/:token
+  async showResetPassword(req, res) {
+    const { token } = req.params;
+
+    const user = await User.findOne({
+      where: {
+        reset_password_token: token,
+        reset_password_expires: { [Op.gt]: new Date() },
+      },
+    });
+
+    if (!user) {
+      return res.status(400).render('error', {
+        title: 'Invalid or Expired Link',
+        status: 400,
+        message: 'This password reset link is invalid or has expired. Please request a new one.',
+      });
+    }
+
+    return res.render('auth/reset-password', {
+      title: 'Reset your password',
+      errors: [],
+      token,
+      email: user.email,
+    });
+  },
+
+  // POST /reset-password/:token
+  async resetPassword(req, res) {
+    const { token } = req.params;
+    const password = req.body.password || '';
+    const confirm_password = req.body.confirm_password || '';
+
+    const user = await User.findOne({
+      where: {
+        reset_password_token: token,
+        reset_password_expires: { [Op.gt]: new Date() },
+      },
+    });
+
+    if (!user) {
+      return res.status(400).render('error', {
+        title: 'Invalid or Expired Link',
+        status: 400,
+        message: 'This password reset link is invalid or has expired. Please request a new one.',
+      });
+    }
+
+    const errors = validatePassword(password, confirm_password);
+    if (errors.length) {
+      return res.status(422).render('auth/reset-password', {
+        title: 'Reset your password',
+        errors,
+        token,
+        email: user.email,
+      });
+    }
+
+    // Update password and clear reset token fields
+    user.password = password;
+    user.reset_password_token = null;
+    user.reset_password_expires = null;
+    await user.save();
+
+    req.session.flashSuccess = 'Password reset successful! You can now log in with your new password.';
+    return res.redirect('/login');
+  },
+
+  // GET /change-password (for authenticated users)
+  showChangePassword(req, res) {
+    return res.render('auth/change-password', {
+      title: 'Change password',
+      errors: [],
+    });
+  },
+
+  // POST /change-password
+  async changePassword(req, res) {
+    const current_password = req.body.current_password || '';
+    const new_password = req.body.new_password || '';
+    const confirm_password = req.body.confirm_password || '';
+
+    const user = await User.findByPk(req.session.user.user_id);
+    if (!user) return res.redirect('/login');
+
+    const ok = await user.verifyPassword(current_password);
+    const errors = [];
+    if (!ok) errors.push('Current password is incorrect.');
+    errors.push(...validatePassword(new_password, confirm_password));
+
+    if (errors.length) {
+      return res.status(422).render('auth/change-password', {
+        title: 'Change password',
+        errors,
+      });
+    }
+
+    user.password = new_password;
+    await user.save();
+
+    req.session.flashSuccess = 'Your password has been changed successfully.';
+    return res.redirect(user.role === 'admin' ? '/admin' : '/my-registrations');
+  },
+};
+
+module.exports = authController;

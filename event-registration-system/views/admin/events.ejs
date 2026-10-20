@@ -1,0 +1,51 @@
+<%- include('../partials/header') %>
+
+<section class="section-head">
+  <h1>Manage events</h1>
+  <div class="btn-row">
+    <a class="btn btn-outline" href="/admin/users">Manage users</a>
+    <a class="btn btn-primary" href="/admin/events/new">+ Create event</a>
+  </div>
+</section>
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr><th>#</th><th>Title</th><th>Date &amp; time</th><th>Venue</th><th>Max</th><th>Registered</th><th>Status</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+      <% events.forEach(function (e) { %>
+        <tr>
+          <td><%= e.event_id %></td>
+          <td><strong><%= e.title %></strong></td>
+          <td><%= fmtDate(e.event_date) %></td>
+          <td><%= e.venue %></td>
+          <td><%= e.max %></td>
+          <td><%= e.taken %></td>
+          <td>
+            <% if (e.isPast) { %>
+              <span class="badge badge-muted">Concluded</span>
+            <% } else if (e.isFull) { %>
+              <span class="badge badge-danger">Full</span>
+            <% } else { %>
+              <span class="badge badge-success">Open</span>
+            <% } %>
+          </td>
+          <td class="actions">
+            <a class="link" href="/events/<%= e.event_id %>">View</a>
+            <a class="link" href="/admin/events/<%= e.event_id %>/participants">Participants</a>
+            <a class="link" href="/admin/events/<%= e.event_id %>/attendance">Attendance</a>
+            <a class="link" href="/admin/events/<%= e.event_id %>/edit">Edit</a>
+            <form action="/admin/events/<%= e.event_id %>?_method=DELETE" method="POST" class="inline"
+                  onsubmit="return confirm('Delete this event and all of its registrations?');">
+              <button class="link danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!events.length) { %><tr><td colspan="8" class="muted">No events yet. Create your first event.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

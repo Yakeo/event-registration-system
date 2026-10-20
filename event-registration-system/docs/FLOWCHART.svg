@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 1182" width="1180" height="1182" font-family="'Segoe UI',Arial,Helvetica,sans-serif">
+<defs>
+<style>.box{fill:#fff;stroke:#2f5bff;stroke-width:1.8}.proc{fill:#15203a;font-size:15px;font-weight:600}.term{fill:#fff;font-size:15px;font-weight:700;letter-spacing:.05em}.arr{stroke:#46527a;stroke-width:2;fill:none}.yes{fill:#10a36b;font-size:14px;font-weight:700}.no{fill:#e0425f;font-size:14px;font-weight:700}.h1{fill:#15203a;font-size:23px;font-weight:700}.sub{fill:#6b7691;font-size:13px}</style>
+<marker id="ah" markerWidth="11" markerHeight="9" refX="9" refY="4.5" orient="auto"><path d="M0 0 L11 4.5 L0 9 z" fill="#46527a"/></marker>
+<filter id="sh2" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#15203a" flood-opacity="0.12"/></filter>
+</defs>
+<rect width="1180" height="1182" fill="#f5f7fb"/>
+<text class="h1" x="30" y="52">System Flowchart &#8212; Online Event Registration</text>
+<text class="sub" x="30" y="76">Start &#8594; view event list &#8594; select event &#8594; slot check &#8594; validate &#8594; save registration &#8594; confirm &#8594; End</text>
+<g filter="url(#sh2)"><rect x="185.0" y="112" width="170" height="52" rx="26" fill="#26407a"/></g>
+<text class="term" x="270.0" y="144" text-anchor="middle">Start</text>
+<line class="arr" x1="270.0" y1="164" x2="270.0" y2="198" marker-end="url(#ah)"/>
+<g filter="url(#sh2)"><rect class="box" x="70.0" y="206" width="400" height="56" rx="10"/></g>
+<text class="proc" x="270.0" y="239.5" text-anchor="middle">User views event list</text>
+<line class="arr" x1="270.0" y1="262" x2="270.0" y2="296" marker-end="url(#ah)"/>
+<g filter="url(#sh2)"><rect class="box" x="70.0" y="304" width="400" height="56" rx="10"/></g>
+<text class="proc" x="270.0" y="337.5" text-anchor="middle">Select event</text>
+<line class="arr" x1="270.0" y1="360" x2="270.0" y2="394" marker-end="url(#ah)"/>
+<g filter="url(#sh2)"><path d="M270.0 402 L435.0 472.0 L270.0 542 L105.0 472.0 Z" fill="#fff" stroke="#2f5bff" stroke-width="1.8"/></g>
+<text class="proc" x="270.0" y="466.0" text-anchor="middle">Event has</text>
+<text class="proc" x="270.0" y="488.0" text-anchor="middle">available slots?</text>
+<line class="arr" x1="435.0" y1="472.0" x2="520.0" y2="472.0" marker-end="url(#ah)"/>
+<text class="no" x="451.0" y="458.0">No</text>
+<g filter="url(#sh2)"><rect class="box" x="520.0" y="414" width="320" height="56" rx="10"/></g>
+<text class="proc" x="680" y="447.5" text-anchor="middle">Show &#8220;Event full&#8221; (Waitlist option)</text>
+<line class="arr" x1="680" y1="470" x2="680" y2="511" marker-end="url(#ah)"/>
+<g filter="url(#sh2)"><rect x="605.0" y="515" width="150" height="52" rx="26" fill="#e0425f"/></g>
+<text class="term" x="680" y="547" text-anchor="middle">End</text>
+<line class="arr" x1="270.0" y1="542" x2="270.0" y2="576" marker-end="url(#ah)"/>
+<text class="yes" x="284.0" y="570">Yes</text>
+<g filter="url(#sh2)"><rect class="box" x="70.0" y="584" width="400" height="56" rx="10"/></g>
+<text class="proc" x="270.0" y="617.5" text-anchor="middle">Enter participant details</text>
+<line class="arr" x1="270.0" y1="640" x2="270.0" y2="674" marker-end="url(#ah)"/>
+<g filter="url(#sh2)"><rect class="box" x="70.0" y="682" width="400" height="56" rx="10"/></g>
+<text class="proc" x="270.0" y="715.5" text-anchor="middle">Validate email and required fields</text>
+<line class="arr" x1="270.0" y1="738" x2="270.0" y2="772" marker-end="url(#ah)"/>
+<g filter="url(#sh2)"><rect class="box" x="70.0" y="780" width="400" height="56" rx="10"/></g>
+<text class="proc" x="270.0" y="813.5" text-anchor="middle">Save registration (or reactivate cancelled)</text>
+<line class="arr" x1="270.0" y1="836" x2="270.0" y2="870" marker-end="url(#ah)"/>
+<g filter="url(#sh2)"><rect class="box" x="70.0" y="878" width="400" height="56" rx="10"/></g>
+<text class="proc" x="270.0" y="911.5" text-anchor="middle">Increase registered participant count</text>
+<line class="arr" x1="270.0" y1="934" x2="270.0" y2="968" marker-end="url(#ah)"/>
+<g filter="url(#sh2)"><rect class="box" x="70.0" y="976" width="400" height="56" rx="10"/></g>
+<text class="proc" x="270.0" y="1009.5" text-anchor="middle">Show confirmation & account notice</text>
+<line class="arr" x1="270.0" y1="1032" x2="270.0" y2="1066" marker-end="url(#ah)"/>
+<g filter="url(#sh2)"><rect x="185.0" y="1074" width="170" height="52" rx="26" fill="#26407a"/></g>
+<text class="term" x="270.0" y="1106" text-anchor="middle">End</text>
+</svg>

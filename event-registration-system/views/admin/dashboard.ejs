@@ -1,0 +1,84 @@
+<%- include('../partials/header') %>
+
+<section class="section-head">
+  <div>
+    <h1>Admin dashboard</h1>
+    <p class="muted">System metrics, event capacity monitoring, and quick administrative actions.</p>
+  </div>
+  <div class="btn-row">
+    <a class="btn btn-outline" href="/admin/users">Manage users</a>
+    <a class="btn btn-primary" href="/admin/events/new">+ Create event</a>
+  </div>
+</section>
+
+<div class="tiles">
+  <div class="tile"><span class="tile-num"><%= stats.totalEvents %></span><span class="tile-label">Events</span></div>
+  <div class="tile"><span class="tile-num"><%= stats.confirmed %></span><span class="tile-label">Confirmed registrations</span></div>
+  <div class="tile"><span class="tile-num"><%= stats.waitlisted %></span><span class="tile-label">On waiting list</span></div>
+  <div class="tile"><span class="tile-num"><%= stats.seatsTaken %>/<%= stats.seatsOffered %></span><span class="tile-label">Slots filled</span></div>
+  <a class="tile tile-link" href="/admin/users" title="Click to manage user accounts">
+    <span class="tile-num"><%= stats.totalUsers %></span>
+    <span class="tile-label">User accounts →</span>
+  </a>
+</div>
+
+<h2>Events &amp; capacity</h2>
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr><th>#</th><th>Event</th><th>Date</th><th>Venue</th><th>Registered</th><th>Status</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+      <% events.forEach(function (e) { %>
+        <tr>
+          <td><%= e.event_id %></td>
+          <td><a href="/events/<%= e.event_id %>"><strong><%= e.title %></strong></a></td>
+          <td><%= fmtDate(e.event_date) %></td>
+          <td><%= e.venue %></td>
+          <td><strong><%= e.taken %></strong> / <%= e.max %> <small class="muted">(<%= e.remaining %> left)</small></td>
+          <td>
+            <% if (e.isPast) { %>
+              <span class="badge badge-muted">Concluded</span>
+            <% } else if (e.isFull) { %>
+              <span class="badge badge-danger">Full</span>
+            <% } else { %>
+              <span class="badge badge-success">Open</span>
+            <% } %>
+          </td>
+          <td class="actions">
+            <a class="link" href="/admin/events/<%= e.event_id %>/participants">Participants</a>
+            <a class="link" href="/admin/events/<%= e.event_id %>/attendance">Attendance</a>
+            <a class="link" href="/admin/events/<%= e.event_id %>/edit">Edit</a>
+            <form action="/admin/events/<%= e.event_id %>?_method=DELETE" method="POST" class="inline"
+                  onsubmit="return confirm('Delete this event and all of its registrations?');">
+              <button class="link danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!events.length) { %><tr><td colspan="7" class="muted">No events yet.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+
+<h2>Latest registrations</h2>
+<div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Ref</th><th>Participant</th><th>Email</th><th>Event</th><th>Registered on</th><th>Status</th></tr></thead>
+    <tbody>
+      <% latest.forEach(function (r) { %>
+        <tr>
+          <td>REG-<%= String(r.registration_id).padStart(5, '0') %></td>
+          <td><%= r.user.full_name %></td>
+          <td><%= r.user.email %></td>
+          <td><%= r.event.title %></td>
+          <td><%= fmtDate(r.registration_date) %></td>
+          <td><span class="badge <%= r.status === 'confirmed' ? 'badge-success' : r.status === 'waitlisted' ? 'badge-warn' : 'badge-muted' %>"><%= r.status %></span></td>
+        </tr>
+      <% }); %>
+      <% if (!latest.length) { %><tr><td colspan="6" class="muted">No registrations yet.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

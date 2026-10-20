@@ -1,0 +1,68 @@
+<%- include('../partials/header') %>
+
+<section class="hero">
+  <div>
+    <h1>Discover and register for upcoming events</h1>
+    <p>Browse the public event list, reserve your slot online, and get instant confirmation.
+       Slots are limited, so registration closes automatically once an event is full.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#events">Browse events</a>
+      <% if (currentUser && currentUser.role === 'admin') { %>
+        <a class="btn btn-outline" href="/admin/events/new">+ Create event</a>
+      <% } %>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><span class="stat-num"><%= stats.total %></span><span class="stat-label">Total events</span></div>
+    <div class="stat"><span class="stat-num"><%= stats.open %></span><span class="stat-label">Open for registration</span></div>
+    <div class="stat"><span class="stat-num"><%= stats.openSlots %></span><span class="stat-label">Slots available</span></div>
+  </div>
+</section>
+
+<section id="events" class="section">
+  <div class="section-head">
+    <h2>Event listing</h2>
+    <form class="search" action="/" method="GET">
+      <input type="search" name="q" value="<%= q %>" placeholder="Search title, venue or description..." />
+      <button class="btn btn-outline btn-sm" type="submit">Search</button>
+      <% if (q) { %><a class="btn btn-ghost btn-sm" href="/">Clear</a><% } %>
+    </form>
+  </div>
+
+  <% if (!events.length) { %>
+    <p class="empty">No events found. <% if (q) { %>Try a different search term.<% } %></p>
+  <% } else { %>
+  <div class="card-grid">
+    <% events.forEach(function (event) { %>
+      <article class="event-card">
+        <div class="event-card-top">
+          <% if (event.isPast) { %>
+            <span class="badge badge-muted">Event concluded</span>
+          <% } else if (event.isFull) { %>
+            <span class="badge badge-danger">Event full</span>
+          <% } else { %>
+            <span class="badge badge-success"><%= event.remaining %> slot(s) left</span>
+          <% } %>
+          <span class="event-id">#<%= event.event_id %></span>
+        </div>
+        <h3><a href="/events/<%= event.event_id %>"><%= event.title %></a></h3>
+        <p class="event-meta">📅 <%= fmtDate(event.event_date) %></p>
+        <p class="event-meta">📍 <%= event.venue %></p>
+        <p class="event-desc"><%= (event.description || '').slice(0, 130) %><%= (event.description || '').length > 130 ? '…' : '' %></p>
+
+        <div class="capacity">
+          <div class="capacity-bar"><span style="width:<%= event.percent %>%"></span></div>
+          <small><%= event.taken %> / <%= event.max %> registered (<%= event.percent %>%)</small>
+        </div>
+
+        <a class="btn <%= event.isPast ? 'btn-ghost' : event.isFull ? 'btn-outline' : 'btn-primary' %> btn-block"
+           href="/events/<%= event.event_id %>">
+          <%= event.isPast ? 'View details (concluded)' : event.isFull ? 'View details (full / waitlist)' : 'Register now' %>
+        </a>
+      </article>
+    <% }); %>
+  </div>
+  <% } %>
+</section>
+
+<%- include('../partials/footer') %>

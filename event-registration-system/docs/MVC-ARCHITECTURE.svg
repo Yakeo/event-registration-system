@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1250 610" width="1250" height="610" font-family="'Segoe UI',Arial,Helvetica,sans-serif">
+<defs><style>.t{fill:#15203a;font-size:16px;font-weight:700}.s{fill:#46527a;font-size:12.5px}.h1{fill:#15203a;font-size:23px;font-weight:700}.sub{fill:#6b7691;font-size:13px}.lab{fill:#46527a;font-size:12px;font-weight:600}.seq{fill:#33406b;font-size:13px}</style><marker id="a3" markerWidth="11" markerHeight="9" refX="9" refY="4.5" orient="auto"><path d="M0 0 L11 4.5 L0 9 z" fill="#46527a"/></marker><filter id="sh3" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#15203a" flood-opacity="0.12"/></filter></defs>
+<rect width="1250" height="610" fill="#f5f7fb"/>
+<text class="h1" x="30" y="52">MVC Architecture</text>
+<text class="sub" x="30" y="76">Express request lifecycle &#8212; Model &#183; View &#183; Controller</text>
+<g filter="url(#sh3)"><rect x="30" y="150" width="260" height="158" rx="12" fill="#fff" stroke="#dbe2f0"/></g>
+<rect x="30" y="150" width="6" height="158" rx="3" fill="#6b7691"/>
+<text class="t" x="52" y="180">Browser (Client)</text>
+<text class="s" x="52" y="206">EJS-rendered HTML + CSS</text>
+<text class="s" x="52" y="225">GET  /  &#8594; event list</text>
+<text class="s" x="52" y="244">GET  /events/:id</text>
+<text class="s" x="52" y="263">POST /events/:id/register</text>
+<text class="s" x="52" y="282">public/js/main.js  (client validation)</text>
+<g filter="url(#sh3)"><rect x="330" y="150" width="260" height="158" rx="12" fill="#fff" stroke="#dbe2f0"/></g>
+<rect x="330" y="150" width="6" height="158" rx="3" fill="#e79a12"/>
+<text class="t" x="352" y="180">Router</text>
+<text class="s" x="352" y="206">routes/index.js</text>
+<text class="s" x="352" y="225">Maps URL + HTTP verb</text>
+<text class="s" x="352" y="244">to a controller action,</text>
+<text class="s" x="352" y="263">then applies auth / role /</text>
+<text class="s" x="352" y="282">asyncHandler guards</text>
+<g filter="url(#sh3)"><rect x="630" y="150" width="260" height="158" rx="12" fill="#fff" stroke="#dbe2f0"/></g>
+<rect x="630" y="150" width="6" height="158" rx="3" fill="#2f5bff"/>
+<text class="t" x="652" y="180">Controller</text>
+<text class="s" x="652" y="206">eventController</text>
+<text class="s" x="652" y="225">registrationController</text>
+<text class="s" x="652" y="244">adminController / authController</text>
+<text class="s" x="652" y="263">Validates input, enforces</text>
+<text class="s" x="652" y="282">capacity, duplicate + reset tokens</text>
+<g filter="url(#sh3)"><rect x="630" y="360" width="260" height="158" rx="12" fill="#fff" stroke="#dbe2f0"/></g>
+<rect x="630" y="360" width="6" height="158" rx="3" fill="#10a36b"/>
+<text class="t" x="652" y="390">Model (Sequelize)</text>
+<text class="s" x="652" y="416">User   &#8594; USERS</text>
+<text class="s" x="652" y="435">Event  &#8594; EVENTS</text>
+<text class="s" x="652" y="454">Registration &#8594; REGISTRATIONS</text>
+<text class="s" x="652" y="473">Associations, validations,</text>
+<text class="s" x="652" y="492">transactions, unique index</text>
+<g filter="url(#sh3)"><rect x="950" y="360" width="260" height="158" rx="12" fill="#fff" stroke="#dbe2f0"/></g>
+<rect x="950" y="360" width="6" height="158" rx="3" fill="#2440a8"/>
+<text class="t" x="972" y="390">Database</text>
+<text class="s" x="972" y="416">MySQL / PostgreSQL</text>
+<text class="s" x="972" y="435">(SQLite for demo/local)</text>
+<text class="s" x="972" y="454">Tables: USERS &#183; EVENTS</text>
+<text class="s" x="972" y="473">&#183; REGISTRATIONS</text>
+<text class="s" x="972" y="492">Seeded via npm run seed</text>
+<g filter="url(#sh3)"><rect x="330" y="360" width="260" height="158" rx="12" fill="#fff" stroke="#dbe2f0"/></g>
+<rect x="330" y="360" width="6" height="158" rx="3" fill="#8b5cf6"/>
+<text class="t" x="352" y="390">View (EJS)</text>
+<text class="s" x="352" y="416">views/events/*.ejs</text>
+<text class="s" x="352" y="435">views/admin/*.ejs</text>
+<text class="s" x="352" y="454">views/auth/*.ejs</text>
+<text class="s" x="352" y="473">Attendance, full, duplicate,</text>
+<text class="s" x="352" y="492">and password-reset views</text>
+<path d="M290 229 L322 229" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#a3)"/>
+<text class="lab" x="306" y="218" text-anchor="middle">request</text>
+<path d="M590 229 L622 229" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#a3)"/>
+<text class="lab" x="618" y="218" text-anchor="end">dispatch</text>
+<path d="M760 308 L760 352" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#a3)"/>
+<text class="lab" x="772" y="336" text-anchor="start">query / save</text>
+<path d="M890 415 L942 415" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#a3)"/>
+<text class="lab" x="916" y="404" text-anchor="middle">SQL</text>
+<path d="M950 455 L898 455" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#a3)"/>
+<text class="lab" x="924" y="478" text-anchor="middle">rows</text>
+<path d="M650 308 L650 334 L470 334 L470 352" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#a3)"/>
+<text class="lab" x="578" y="326" text-anchor="middle">render</text>
+<path d="M330 440 L160 440 L160 314" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#a3)"/>
+<text class="lab" x="236" y="462" text-anchor="middle">rendered HTML response</text>
+<rect x="30" y="548" width="1190" height="40" rx="10" fill="#e8eeff" stroke="#c6d3fb"/>
+<text class="seq" x="50" y="573"><tspan font-weight="700">Request sequence:  </tspan>Browser &#8594; Router &#8594; Controller &#8594; Model &#8594; Database &#8594; Model &#8594; Controller &#8594; View (EJS) &#8594; Browser</text>
+</svg>

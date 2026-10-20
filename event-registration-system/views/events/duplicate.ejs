@@ -1,0 +1,28 @@
+<%- include('../partials/header') %>
+
+<section class="narrow">
+  <div class="panel center">
+    <div class="warn">i</div>
+    <h1>You are already registered</h1>
+    <p class="muted">
+      The email <strong><%= participant.email %></strong> already has a registration for
+      <strong><%= event.title %></strong>. Duplicate registrations for the same event are not allowed.
+    </p>
+
+    <table class="kv">
+      <tr><th>Participant</th><td><%= participant.full_name %></td></tr>
+      <tr><th>Event</th><td><%= event.title %></td></tr>
+      <% if (typeof registration !== 'undefined' && registration) { %>
+        <tr><th>Reference no.</th><td>REG-<%= String(registration.registration_id).padStart(5, '0') %></td></tr>
+        <tr><th>Status</th><td><span class="badge badge-info"><%= registration.status %></span></td></tr>
+      <% } %>
+    </table>
+
+    <div class="btn-row">
+      <a class="btn btn-primary" href="/">Back to event list</a>
+      <a class="btn btn-outline" href="/events/<%= event.event_id %>">Back to event</a>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

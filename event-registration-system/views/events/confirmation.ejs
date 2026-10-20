@@ -1,0 +1,49 @@
+<%- include('../partials/header') %>
+
+<section class="narrow">
+  <div class="panel center">
+    <div class="tick">✓</div>
+    <h1><%= registration.status === 'confirmed' ? 'Registration confirmed' : 'Added to waiting list' %></h1>
+    <p class="muted">
+      <% if (registration.status === 'confirmed') { %>
+        Your slot has been successfully reserved. Please keep this reference number for verification upon entry.
+      <% } else { %>
+        The event is currently at full capacity, so you were placed on the official waiting list.
+        You will be automatically promoted to confirmed if any registered participant cancels their slot.
+      <% } %>
+    </p>
+
+    <table class="kv">
+      <tr><th>Reference no.</th><td><strong>REG-<%= String(registration.registration_id).padStart(5, '0') %></strong></td></tr>
+      <tr><th>Participant</th><td><%= participant.full_name %></td></tr>
+      <tr><th>Email address</th><td><%= participant.email %></td></tr>
+      <tr><th>Event</th><td><%= event.title %></td></tr>
+      <tr><th>Date &amp; time</th><td><%= fmtDate(event.event_date) %></td></tr>
+      <tr><th>Venue</th><td><%= event.venue %></td></tr>
+      <tr><th>Status</th><td><span class="badge <%= registration.status === 'confirmed' ? 'badge-success' : 'badge-warn' %>"><%= registration.status %></span></td></tr>
+      <tr><th>Registered on</th><td><%= fmtDate(registration.registration_date) %></td></tr>
+      <tr><th>Event capacity</th><td><%= capacity.taken %> / <%= capacity.max %> filled</td></tr>
+    </table>
+
+    <% if (typeof isNewAccount !== 'undefined' && isNewAccount && !currentUser) { %>
+      <div class="alert alert-info" style="text-align: left; margin: 20px 0;">
+        <strong>💡 Account Notice:</strong>
+        <p style="margin: 6px 0 0 0; font-size: 0.9rem;">
+          A participant profile was created for <code><%= participant.email %></code>.
+          You can set a personal password at any time via <a href="/forgot-password"><strong>Forgot Password</strong></a> to log in and manage your registrations.
+        </p>
+      </div>
+    <% } %>
+
+    <div class="btn-row">
+      <a class="btn btn-primary" href="/">Back to event list</a>
+      <% if (currentUser) { %>
+        <a class="btn btn-outline" href="/my-registrations">View my registrations</a>
+      <% } else { %>
+        <a class="btn btn-outline" href="/events/<%= event.event_id %>">View event page</a>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

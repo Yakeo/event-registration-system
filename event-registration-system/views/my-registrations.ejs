@@ -1,0 +1,37 @@
+<%- include('partials/header') %>
+
+<section class="section-head">
+  <h1>My registrations</h1>
+  <a class="btn btn-outline" href="/">Browse events</a>
+</section>
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr><th>Ref</th><th>Event</th><th>Date &amp; time</th><th>Venue</th><th>Registered on</th><th>Status</th><th>Action</th></tr>
+    </thead>
+    <tbody>
+      <% rows.forEach(function (r) { %>
+        <tr>
+          <td>REG-<%= String(r.registration_id).padStart(5, '0') %></td>
+          <td><a href="/events/<%= r.event.event_id %>"><%= r.event.title %></a></td>
+          <td><%= fmtDate(r.event.event_date) %></td>
+          <td><%= r.event.venue %></td>
+          <td><%= fmtDate(r.registration_date) %></td>
+          <td><span class="badge <%= r.status === 'confirmed' ? 'badge-success' : r.status === 'waitlisted' ? 'badge-warn' : 'badge-muted' %>"><%= r.status %></span></td>
+          <td>
+            <% if (r.status !== 'cancelled') { %>
+              <form action="/registrations/<%= r.registration_id %>/cancel" method="POST" class="inline"
+                    onsubmit="return confirm('Cancel this registration?');">
+                <button class="link danger" type="submit">Cancel</button>
+              </form>
+            <% } else { %><span class="muted">—</span><% } %>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!rows.length) { %><tr><td colspan="7" class="muted">You have no registrations yet.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('partials/footer') %>

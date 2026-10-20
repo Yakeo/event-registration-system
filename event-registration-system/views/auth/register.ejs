@@ -1,0 +1,30 @@
+<%- include('../partials/header') %>
+
+<section class="narrow">
+  <div class="panel">
+    <h1>Create an account</h1>
+    <p class="muted">An account lets you track your event registrations in one place.</p>
+    <%- include('../partials/errors') %>
+
+    <form method="POST" action="/register">
+      <label>Full name
+        <input type="text" name="full_name" value="<%= old.full_name || '' %>" placeholder="Juan Dela Cruz" required />
+      </label>
+      <label>Email address
+        <input type="email" name="email" value="<%= old.email || '' %>" placeholder="juan@email.com" required />
+      </label>
+      <label>Password
+        <input type="password" name="password" minlength="6" placeholder="At least 6 characters" required />
+      </label>
+      <label>Confirm password
+        <input type="password" name="confirm_password" minlength="6" placeholder="Re-enter your password" required />
+      </label>
+      <input type="hidden" name="next" value="<%= next %>" />
+      <button class="btn btn-primary btn-block" style="margin-top: 14px;" type="submit">Sign up</button>
+    </form>
+
+    <p class="hint center">Already have an account? <a href="/login">Log in</a></p>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,63 @@
+<%- include('../partials/header') %>
+
+<section class="section-head">
+  <div>
+    <h1>System User Accounts</h1>
+    <p class="muted">Manage user roles, review registration counts, and administer account credentials.</p>
+  </div>
+  <a class="btn btn-outline" href="/admin">← Back to dashboard</a>
+</section>
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Full Name</th>
+        <th>Email Address</th>
+        <th>Current Role</th>
+        <th>Total Regs</th>
+        <th>Confirmed</th>
+        <th>Role Action</th>
+        <th>Reset Password</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% users.forEach(function (u) { %>
+        <tr>
+          <td><%= u.user_id %></td>
+          <td><strong><%= u.full_name %></strong></td>
+          <td><code><%= u.email %></code></td>
+          <td>
+            <span class="badge <%= u.role === 'admin' ? 'badge-info' : 'badge-muted' %>">
+              <%= u.role %>
+            </span>
+          </td>
+          <td><%= u.totalRegistrations %></td>
+          <td><%= u.confirmedCount %></td>
+          <td>
+            <form action="/admin/users/<%= u.user_id %>/role" method="POST" class="inline"
+                  onsubmit="return confirm('Change role of <%= u.full_name %> to <%= u.role === 'admin' ? 'participant' : 'admin' %>?');">
+              <input type="hidden" name="role" value="<%= u.role === 'admin' ? 'participant' : 'admin' %>" />
+              <button class="link <%= u.role === 'admin' ? 'danger' : '' %>" type="submit">
+                <%= u.role === 'admin' ? 'Demote to Participant' : 'Promote to Admin' %>
+              </button>
+            </form>
+          </td>
+          <td>
+            <form action="/admin/users/<%= u.user_id %>/reset-password" method="POST" class="inline"
+                  onsubmit="return confirm('Reset password for <%= u.full_name %> to default temp password?');">
+              <input type="hidden" name="new_password" value="password123" />
+              <button class="btn btn-outline btn-sm" type="submit">Reset to "password123"</button>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!users.length) { %>
+        <tr><td colspan="8" class="muted">No user accounts found.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

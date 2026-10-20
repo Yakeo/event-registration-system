@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Event Registration System — System Documentation</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#eef1f7; color:#15203a;
+         font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+         font-size:15px; line-height:1.6; }
+  .page { max-width:1200px; margin:0 auto; background:#fff; padding:0 0 60px;
+           box-shadow:0 0 40px rgba(21,32,58,.10); }
+  .cover { background:linear-gradient(135deg,#15203a,#2f5bff); color:#fff; padding:56px 60px 48px; }
+  .cover .kicker { letter-spacing:.28em; font-size:11.5px; text-transform:uppercase; color:#b9c8f2; }
+  .cover h1 { margin:10px 0 8px; font-size:2.35rem; line-height:1.15; }
+  .cover p { color:#cdd8f5; margin:0; max-width:70ch; }
+  .meta { display:flex; flex-wrap:wrap; gap:10px; margin-top:24px; }
+  .meta span { background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.25);
+                padding:6px 13px; border-radius:999px; font-size:12.5px; }
+  main { padding:0 60px; }
+  h2 { font-size:1.5rem; margin:52px 0 6px; padding-bottom:10px; border-bottom:3px solid #eef1f7; }
+  h2 .num { color:#2f5bff; }
+  h3 { font-size:1.06rem; margin:30px 0 8px; }
+  h4 { margin:20px 0 6px; font-size:.95rem; color:#33406b; }
+  p, li { color:#2c3757; }
+  code { background:#eef1f7; padding:2px 6px; border-radius:6px; font-size:.86em;
+          font-family:Consolas,"Courier New",monospace; color:#1c2a52; }
+  table { width:100%; border-collapse:collapse; margin:14px 0 24px; font-size:.9rem; }
+  th, td { border:1px solid #e3e8f2; padding:10px 12px; text-align:left; vertical-align:top; }
+  th { background:#f5f7fc; font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; color:#5b678a; }
+  tbody tr:nth-child(even) { background:#fafbff; }
+  .diagram { border:1px solid #e3e8f2; border-radius:14px; padding:14px; margin:18px 0 8px;
+              background:#fbfcff; overflow:hidden; }
+  .diagram svg { display:block; width:100%; height:auto; max-width:100%; }
+  .caption { color:#6b7691; font-size:.82rem; margin:6px 0 22px; }
+  pre { background:#15203a; color:#dbe4ff; padding:20px 22px; border-radius:12px;
+         overflow:auto; font-size:.82rem; line-height:1.55;
+         font-family:Consolas,"Courier New",monospace; }
+  .callout { border-left:4px solid #2f5bff; background:#f2f6ff; padding:14px 18px; border-radius:0 10px 10px 0;
+              margin:18px 0; }
+  .callout.warn { border-color:#e79a12; background:#fdf8ee; }
+  .callout.ok { border-color:#10a36b; background:#eefaf4; }
+  .pill { display:inline-block; padding:2px 9px; border-radius:999px; font-size:.74rem; font-weight:700; }
+  .pill.m { background:#e8eeff; color:#2440a8; }
+  .pill.v { background:#f3ecff; color:#6d28d9; }
+  .pill.c { background:#e3f7ee; color:#0a7d52; }
+  .pill.o { background:#eef1f7; color:#5b678a; }
+  footer { margin-top:60px; padding:22px 60px; background:#15203a; color:#9fb0d8; font-size:.82rem; }
+  @media print {
+    body { background:#fff; } .page { box-shadow:none; max-width:none; }
+    .cover { padding:30px; } main { padding:0 26px; }
+    h2 { page-break-after:avoid; } table, pre, .diagram { page-break-inside:avoid; }
+    footer { display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="cover">
+    <div class="kicker">System Documentation</div>
+    <h1>Event Registration System</h1>
+    <p>A web-based system for creating events and allowing participants to register online,
+       built on the MVC pattern with Node.js, Express.js, Sequelize and EJS over
+       MySQL or PostgreSQL.</p>
+    <div class="meta">
+      <span>Entity Relationship Diagram</span>
+      <span>System Flowchart</span>
+      <span>Feature Specification</span>
+      <span>System Requirements</span>
+      <span>MVC Architecture</span>
+    </div>
+  </header>
+
+  <main>
+
+    <h2><span class="num">1.</span> System Requirements</h2>
+    <table>
+      <thead><tr><th style="width:22%">Requirement</th><th style="width:30%">Version</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><b>Node.js</b></td><td><code>18 or later (tested on 20 LTS)</code></td><td>JavaScript runtime for the server</td></tr><tr><td><b>Express.js</b></td><td><code>^4.19</code></td><td>HTTP server, routing and middleware</td></tr><tr><td><b>Sequelize</b></td><td><code>^6.37</code></td><td>ORM: models, associations, validations, transactions</td></tr><tr><td><b>MySQL or PostgreSQL</b></td><td><code>MySQL 8 / PostgreSQL 14+</code></td><td>Relational database management system</td></tr><tr><td><b>Database driver</b></td><td><code>mysql2  or  pg + pg-hstore</code></td><td>Sequelize dialect driver</td></tr><tr><td><b>EJS / HTML / CSS / JS</b></td><td><code>EJS ^3.1</code></td><td>Server-side templating and the browser UI</td></tr><tr><td><b>Modern web browser</b></td><td><code>Chrome, Edge, Firefox, Safari</code></td><td>Client access</td></tr><tr><td><b>Supporting packages</b></td><td><code>express-session, method-override, bcryptjs, dotenv</code></td><td>Sessions, PUT/DELETE from forms, hashing, config</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <b>Install &amp; run:</b> <code>npm install</code> &rarr; <code>cp .env.example .env</code> &rarr;
+      <code>npm run seed</code> &rarr; <code>npm start</code>, then open
+      <code>http://localhost:3000</code>. Default admin: <code>admin@eventreg.test / admin123</code>.
+      SQLite is the default dialect so the app runs with no database server; switch to MySQL or
+      PostgreSQL with two lines in <code>.env</code>.
+    </div>
+
+    <h2><span class="num">2.</span> Entity Relationship Diagram (ERD)</h2>
+    <div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1460 720" width="1460" height="720" font-family="'Segoe UI',Arial,Helvetica,sans-serif">
+<defs>
+<linearGradient id="e_hd" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#26407a"/><stop offset="100%" stop-color="#2f5bff"/></linearGradient>
+<style>.e_ent-title{fill:#fff;font-size:18px;font-weight:700;letter-spacing:.06em}.e_fld{fill:#15203a;font-size:13.5px}.e_typ{fill:#6b7691;font-size:11px}.e_pk{fill:#b42b45;font-size:11px;font-weight:700}.e_fk{fill:#2440a8;font-size:11px;font-weight:700}.e_rel{fill:#15203a;font-size:14px;font-weight:700}.e_card{fill:#46527a;font-size:12.5px}.e_note{fill:#33406b;font-size:12.5px}.e_h1{fill:#15203a;font-size:23px;font-weight:700}.e_sub{fill:#6b7691;font-size:13px}</style>
+<filter id="e_sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#15203a" flood-opacity="0.13"/></filter>
+</defs>
+<rect width="1460" height="720" fill="#f5f7fb"/>
+<text class="e_h1" x="30" y="52">Entity Relationship Diagram</text>
+<text class="e_sub" x="30" y="76">Event Registration System &#183; USERS / EVENTS / REGISTRATIONS &#183; crow&#8217;s foot notation</text>
+<g filter="url(#e_sh)">
+<rect x="30" y="118" width="340" height="258" rx="12" fill="#fff" stroke="#dbe2f0"/>
+<path d="M30 130 a12 12 0 0 1 12-12 h316 a12 12 0 0 1 12 12 v36 h-340 z" fill="url(#e_hd)"/>
+<text class="e_ent-title" x="48" y="150">USERS</text>
+</g>
+<rect x="44" y="174" width="26" height="15" rx="4" fill="#fdeaee"/><text class="e_pk" x="51" y="185">PK</text>
+<text class="e_fld" x="80" y="186">user_id</text>
+<text class="e_typ" x="356" y="186" text-anchor="end">INT</text>
+<line x1="30" y1="196" x2="370" y2="196" stroke="#eef1f8"/>
+<text class="e_fld" x="80" y="216">full_name</text>
+<text class="e_typ" x="356" y="216" text-anchor="end">VARCHAR(120)</text>
+<line x1="30" y1="226" x2="370" y2="226" stroke="#eef1f8"/>
+<text class="e_fld" x="80" y="246">email</text>
+<text class="e_typ" x="356" y="246" text-anchor="end">VARCHAR(160) UNIQUE</text>
+<line x1="30" y1="256" x2="370" y2="256" stroke="#eef1f8"/>
+<text class="e_fld" x="80" y="276">password</text>
+<text class="e_typ" x="356" y="276" text-anchor="end">VARCHAR(255) hashed</text>
+<line x1="30" y1="286" x2="370" y2="286" stroke="#eef1f8"/>
+<text class="e_fld" x="80" y="306">role</text>
+<text class="e_typ" x="356" y="306" text-anchor="end">ENUM(admin|participant)</text>
+<line x1="30" y1="316" x2="370" y2="316" stroke="#eef1f8"/>
+<text class="e_fld" x="80" y="336">reset_password_token</text>
+<text class="e_typ" x="356" y="336" text-anchor="end">VARCHAR(255) NULL</text>
+<line x1="30" y1="346" x2="370" y2="346" stroke="#eef1f8"/>
+<text class="e_fld" x="80" y="366">reset_password_expires</text>
+<text class="e_typ" x="356" y="366" text-anchor="end">DATETIME NULL</text>
+<g filter="url(#e_sh)">
+<rect x="570" y="118" width="340" height="198" rx="12" fill="#fff" stroke="#dbe2f0"/>
+<path d="M570 130 a12 12 0 0 1 12-12 h316 a12 12 0 0 1 12 12 v36 h-340 z" fill="url(#e_hd)"/>
+<text class="e_ent-title" x="588" y="150">REGISTRATIONS</text>
+</g>
+<rect x="584" y="174" width="26" height="15" rx="4" fill="#fdeaee"/><text class="e_pk" x="591" y="185">PK</text>
+<text class="e_fld" x="620" y="186">registration_id</text>
+<text class="e_typ" x="896" y="186" text-anchor="end">INT</text>
+<line x1="570" y1="196" x2="910" y2="196" stroke="#eef1f8"/>
+<rect x="584" y="204" width="26" height="15" rx="4" fill="#e8eeff"/><text class="e_fk" x="591" y="215">FK</text>
+<text class="e_fld" x="620" y="216">user_id</text>
+<text class="e_typ" x="896" y="216" text-anchor="end">INT &#8594; USERS</text>
+<line x1="570" y1="226" x2="910" y2="226" stroke="#eef1f8"/>
+<rect x="584" y="234" width="26" height="15" rx="4" fill="#e8eeff"/><text class="e_fk" x="591" y="245">FK</text>
+<text class="e_fld" x="620" y="246">event_id</text>
+<text class="e_typ" x="896" y="246" text-anchor="end">INT &#8594; EVENTS</text>
+<line x1="570" y1="256" x2="910" y2="256" stroke="#eef1f8"/>
+<text class="e_fld" x="620" y="276">registration_date</text>
+<text class="e_typ" x="896" y="276" text-anchor="end">DATETIME</text>
+<line x1="570" y1="286" x2="910" y2="286" stroke="#eef1f8"/>
+<text class="e_fld" x="620" y="306">status</text>
+<text class="e_typ" x="896" y="306" text-anchor="end">ENUM(confirmed|waitlisted|cancelled)</text>
+<g filter="url(#e_sh)">
+<rect x="1110" y="118" width="340" height="228" rx="12" fill="#fff" stroke="#dbe2f0"/>
+<path d="M1110 130 a12 12 0 0 1 12-12 h316 a12 12 0 0 1 12 12 v36 h-340 z" fill="url(#e_hd)"/>
+<text class="e_ent-title" x="1128" y="150">EVENTS</text>
+</g>
+<rect x="1124" y="174" width="26" height="15" rx="4" fill="#fdeaee"/><text class="e_pk" x="1131" y="185">PK</text>
+<text class="e_fld" x="1160" y="186">event_id</text>
+<text class="e_typ" x="1436" y="186" text-anchor="end">INT</text>
+<line x1="1110" y1="196" x2="1450" y2="196" stroke="#eef1f8"/>
+<text class="e_fld" x="1160" y="216">title</text>
+<text class="e_typ" x="1436" y="216" text-anchor="end">VARCHAR(180)</text>
+<line x1="1110" y1="226" x2="1450" y2="226" stroke="#eef1f8"/>
+<text class="e_fld" x="1160" y="246">description</text>
+<text class="e_typ" x="1436" y="246" text-anchor="end">TEXT</text>
+<line x1="1110" y1="256" x2="1450" y2="256" stroke="#eef1f8"/>
+<text class="e_fld" x="1160" y="276">event_date</text>
+<text class="e_typ" x="1436" y="276" text-anchor="end">DATETIME</text>
+<line x1="1110" y1="286" x2="1450" y2="286" stroke="#eef1f8"/>
+<text class="e_fld" x="1160" y="306">venue</text>
+<text class="e_typ" x="1436" y="306" text-anchor="end">VARCHAR(180)</text>
+<line x1="1110" y1="316" x2="1450" y2="316" stroke="#eef1f8"/>
+<text class="e_fld" x="1160" y="336">max_participants</text>
+<text class="e_typ" x="1436" y="336" text-anchor="end">INT</text>
+<line x1="370" y1="211.0" x2="570" y2="211.0" stroke="#46527a" stroke-width="1.8"/>
+<line x1="377" y1="200.0" x2="377" y2="222.0" stroke="#46527a" stroke-width="2"/>
+<line x1="570" y1="198.0" x2="550" y2="211.0" stroke="#46527a" stroke-width="1.8"/>
+<line x1="570" y1="224.0" x2="550" y2="211.0" stroke="#46527a" stroke-width="1.8"/>
+<line x1="570" y1="211.0" x2="550" y2="211.0" stroke="#46527a" stroke-width="1.8"/>
+<text class="e_rel" x="388" y="195.0">1</text>
+<text class="e_rel" x="540" y="195.0" text-anchor="end">0..*</text>
+<text class="e_card" x="470.0" y="243.0" text-anchor="middle">one user places</text>
+<text class="e_card" x="470.0" y="259.0" text-anchor="middle">many registrations</text>
+<line x1="910" y1="241.0" x2="1110" y2="241.0" stroke="#46527a" stroke-width="1.8"/>
+<line x1="910" y1="228.0" x2="930" y2="241.0" stroke="#46527a" stroke-width="1.8"/>
+<line x1="910" y1="254.0" x2="930" y2="241.0" stroke="#46527a" stroke-width="1.8"/>
+<line x1="910" y1="241.0" x2="930" y2="241.0" stroke="#46527a" stroke-width="1.8"/>
+<line x1="1103" y1="230.0" x2="1103" y2="252.0" stroke="#46527a" stroke-width="2"/>
+<text class="e_rel" x="940" y="225.0">0..*</text>
+<text class="e_rel" x="1092" y="225.0" text-anchor="end">1</text>
+<text class="e_card" x="1010.0" y="273.0" text-anchor="middle">each registration</text>
+<text class="e_card" x="1010.0" y="289.0" text-anchor="middle">is for one event</text>
+<rect x="30" y="430" width="1400" height="106" rx="14" fill="#fff" stroke="#dbe2f0"/>
+<text class="e_rel" x="60" y="466">[EVENTS]</text>
+<text class="e_rel" x="152" y="466">1</text>
+<line x1="168" y1="461" x2="268" y2="461" stroke="#46527a" stroke-width="1.8"/>
+<text class="e_rel" x="284" y="466">0..*</text>
+<text class="e_rel" x="332" y="466">[REGISTRATIONS]</text>
+<text class="e_rel" x="514" y="466">0..*</text>
+<line x1="556" y1="461" x2="656" y2="461" stroke="#46527a" stroke-width="1.8"/>
+<text class="e_rel" x="672" y="466">1</text>
+<text class="e_rel" x="694" y="466">[USERS]</text>
+<text class="e_card" x="60" y="498">An EVENT has zero or many REGISTRATIONS, but each REGISTRATION is for exactly one EVENT.</text>
+<text class="e_card" x="60" y="520">A USER has zero or many REGISTRATIONS, but each REGISTRATION belongs to exactly one USER.</text>
+<rect x="30" y="554" width="1400" height="136" rx="14" fill="#e8eeff" stroke="#c6d3fb"/>
+<text class="e_note" x="56" y="586"><tspan font-weight="700">Duplicate rule: </tspan>a composite UNIQUE index on REGISTRATIONS(event_id, user_id) guarantees one registration per email per event.</text>
+<text class="e_note" x="56" y="610"><tspan font-weight="700">Capacity rule: </tspan>COUNT(REGISTRATIONS WHERE status = 'confirmed') &lt;= EVENTS.max_participants, enforced within transaction.</text>
+<text class="e_note" x="56" y="634"><tspan font-weight="700">Password Reset: </tspan>USERS.reset_password_token stores a 64-character SHA-256 / crypto hex token with 1-hour expiration.</text>
+<text class="e_note" x="56" y="658"><tspan font-weight="700">Referential Integrity: </tspan>REGISTRATIONS.user_id &#8594; USERS.user_id and REGISTRATIONS.event_id &#8594; EVENTS.event_id (ON DELETE CASCADE, ON UPDATE CASCADE).</text>
+</svg></div>
+    <p class="caption">Source: <code>docs/ERD.svg</code> · raster copy <code>docs/ERD.png</code> ·
+       crow&#8217;s foot notation</p>
+
+    <h3>2.1 Relationship notation</h3>
+    <pre>[EVENTS] 1 ──── 0..* [REGISTRATIONS] 0..* ──── 1 [USERS]
+
+• One EVENT has zero or many REGISTRATIONS; each REGISTRATION is for exactly one EVENT.
+• One USER has zero or many REGISTRATIONS; each REGISTRATION belongs to exactly one USER.
+• REGISTRATIONS is the associative entity that resolves the many-to-many
+  relationship between participants and events.</pre>
+
+    <h3>2.2 Data dictionary</h3>
+
+    <h4>USERS</h4>
+    <table><thead><tr><th>Field</th><th>Type</th><th>Key / constraint</th><th>Description</th></tr></thead><tbody><tr><td>user_id</td><td>INT, auto increment</td><td><b>PK</b></td><td>Surrogate primary key</td></tr><tr><td>full_name</td><td>VARCHAR(120)</td><td>NOT NULL</td><td>Complete name of the user</td></tr><tr><td>email</td><td>VARCHAR(160)</td><td>UNIQUE, NOT NULL</td><td>Login name; also the duplicate-registration key</td></tr><tr><td>password</td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Bcrypt hash - never stored in plain text</td></tr><tr><td>role</td><td>ENUM(admin, participant)</td><td>default participant</td><td>Access level of the account</td></tr></tbody></table>
+
+    <h4>EVENTS</h4>
+    <table><thead><tr><th>Field</th><th>Type</th><th>Key / constraint</th><th>Description</th></tr></thead><tbody><tr><td>event_id</td><td>INT, auto increment</td><td><b>PK</b></td><td>Surrogate primary key</td></tr><tr><td>title</td><td>VARCHAR(180)</td><td>NOT NULL</td><td>Event name on the public listing</td></tr><tr><td>description</td><td>TEXT</td><td>NULL</td><td>Full details of the event</td></tr><tr><td>event_date</td><td>DATETIME</td><td>NOT NULL</td><td>Date and time of the event</td></tr><tr><td>venue</td><td>VARCHAR(180)</td><td>NOT NULL</td><td>Where the event is held</td></tr><tr><td>max_participants</td><td>INT</td><td>NOT NULL, >= 1</td><td>Slot limit; registration is blocked once reached</td></tr></tbody></table>
+
+    <h4>REGISTRATIONS</h4>
+    <table><thead><tr><th>Field</th><th>Type</th><th>Key / constraint</th><th>Description</th></tr></thead><tbody><tr><td>registration_id</td><td>INT, auto increment</td><td><b>PK</b></td><td>Surrogate primary key</td></tr><tr><td>user_id</td><td>INT</td><td><b>FK</b> -> USERS</td><td>Participant who registered</td></tr><tr><td>event_id</td><td>INT</td><td><b>FK</b> -> EVENTS</td><td>Event being registered for</td></tr><tr><td>registration_date</td><td>DATETIME</td><td>default now</td><td>Timestamp when the registration was saved</td></tr><tr><td>status</td><td>ENUM(confirmed, waitlisted, cancelled)</td><td>default confirmed</td><td>Registration state</td></tr><tr><td>(composite)</td><td>UNIQUE(event_id, user_id)</td><td>index</td><td>Database-level duplicate prevention</td></tr></tbody></table>
+
+    <div class="callout ok">
+      <b>Duplicate rule:</b> a composite UNIQUE index on <code>REGISTRATIONS(event_id, user_id)</code>
+      blocks a second registration from the same email for the same event.<br>
+      <b>Capacity rule:</b> confirmed registrations may never exceed
+      <code>EVENTS.max_participants</code>.
+    </div>
+
+    <h2><span class="num">3.</span> System Flowchart</h2>
+    <div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 1182" width="1180" height="1182" font-family="'Segoe UI',Arial,Helvetica,sans-serif">
+<defs>
+<style>.f_box{fill:#fff;stroke:#2f5bff;stroke-width:1.8}.f_proc{fill:#15203a;font-size:15px;font-weight:600}.f_term{fill:#fff;font-size:15px;font-weight:700;letter-spacing:.05em}.f_arr{stroke:#46527a;stroke-width:2;fill:none}.f_yes{fill:#10a36b;font-size:14px;font-weight:700}.f_no{fill:#e0425f;font-size:14px;font-weight:700}.f_h1{fill:#15203a;font-size:23px;font-weight:700}.f_sub{fill:#6b7691;font-size:13px}</style>
+<marker id="f_ah" markerWidth="11" markerHeight="9" refX="9" refY="4.5" orient="auto"><path d="M0 0 L11 4.5 L0 9 z" fill="#46527a"/></marker>
+<filter id="f_sh2" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#15203a" flood-opacity="0.12"/></filter>
+</defs>
+<rect width="1180" height="1182" fill="#f5f7fb"/>
+<text class="f_h1" x="30" y="52">System Flowchart &#8212; Online Event Registration</text>
+<text class="f_sub" x="30" y="76">Start &#8594; view event list &#8594; select event &#8594; slot check &#8594; validate &#8594; save registration &#8594; confirm &#8594; End</text>
+<g filter="url(#f_sh2)"><rect x="185.0" y="112" width="170" height="52" rx="26" fill="#26407a"/></g>
+<text class="f_term" x="270.0" y="144" text-anchor="middle">Start</text>
+<line class="f_arr" x1="270.0" y1="164" x2="270.0" y2="198" marker-end="url(#f_ah)"/>
+<g filter="url(#f_sh2)"><rect class="f_box" x="70.0" y="206" width="400" height="56" rx="10"/></g>
+<text class="f_proc" x="270.0" y="239.5" text-anchor="middle">User views event list</text>
+<line class="f_arr" x1="270.0" y1="262" x2="270.0" y2="296" marker-end="url(#f_ah)"/>
+<g filter="url(#f_sh2)"><rect class="f_box" x="70.0" y="304" width="400" height="56" rx="10"/></g>
+<text class="f_proc" x="270.0" y="337.5" text-anchor="middle">Select event</text>
+<line class="f_arr" x1="270.0" y1="360" x2="270.0" y2="394" marker-end="url(#f_ah)"/>
+<g filter="url(#f_sh2)"><path d="M270.0 402 L435.0 472.0 L270.0 542 L105.0 472.0 Z" fill="#fff" stroke="#2f5bff" stroke-width="1.8"/></g>
+<text class="f_proc" x="270.0" y="466.0" text-anchor="middle">Event has</text>
+<text class="f_proc" x="270.0" y="488.0" text-anchor="middle">available slots?</text>
+<line class="f_arr" x1="435.0" y1="472.0" x2="520.0" y2="472.0" marker-end="url(#f_ah)"/>
+<text class="f_no" x="451.0" y="458.0">No</text>
+<g filter="url(#f_sh2)"><rect class="f_box" x="520.0" y="414" width="320" height="56" rx="10"/></g>
+<text class="f_proc" x="680" y="447.5" text-anchor="middle">Show &#8220;Event full&#8221; (Waitlist option)</text>
+<line class="f_arr" x1="680" y1="470" x2="680" y2="511" marker-end="url(#f_ah)"/>
+<g filter="url(#f_sh2)"><rect x="605.0" y="515" width="150" height="52" rx="26" fill="#e0425f"/></g>
+<text class="f_term" x="680" y="547" text-anchor="middle">End</text>
+<line class="f_arr" x1="270.0" y1="542" x2="270.0" y2="576" marker-end="url(#f_ah)"/>
+<text class="f_yes" x="284.0" y="570">Yes</text>
+<g filter="url(#f_sh2)"><rect class="f_box" x="70.0" y="584" width="400" height="56" rx="10"/></g>
+<text class="f_proc" x="270.0" y="617.5" text-anchor="middle">Enter participant details</text>
+<line class="f_arr" x1="270.0" y1="640" x2="270.0" y2="674" marker-end="url(#f_ah)"/>
+<g filter="url(#f_sh2)"><rect class="f_box" x="70.0" y="682" width="400" height="56" rx="10"/></g>
+<text class="f_proc" x="270.0" y="715.5" text-anchor="middle">Validate email and required fields</text>
+<line class="f_arr" x1="270.0" y1="738" x2="270.0" y2="772" marker-end="url(#f_ah)"/>
+<g filter="url(#f_sh2)"><rect class="f_box" x="70.0" y="780" width="400" height="56" rx="10"/></g>
+<text class="f_proc" x="270.0" y="813.5" text-anchor="middle">Save registration (or reactivate cancelled)</text>
+<line class="f_arr" x1="270.0" y1="836" x2="270.0" y2="870" marker-end="url(#f_ah)"/>
+<g filter="url(#f_sh2)"><rect class="f_box" x="70.0" y="878" width="400" height="56" rx="10"/></g>
+<text class="f_proc" x="270.0" y="911.5" text-anchor="middle">Increase registered participant count</text>
+<line class="f_arr" x1="270.0" y1="934" x2="270.0" y2="968" marker-end="url(#f_ah)"/>
+<g filter="url(#f_sh2)"><rect class="f_box" x="70.0" y="976" width="400" height="56" rx="10"/></g>
+<text class="f_proc" x="270.0" y="1009.5" text-anchor="middle">Show confirmation & account notice</text>
+<line class="f_arr" x1="270.0" y1="1032" x2="270.0" y2="1066" marker-end="url(#f_ah)"/>
+<g filter="url(#f_sh2)"><rect x="185.0" y="1074" width="170" height="52" rx="26" fill="#26407a"/></g>
+<text class="f_term" x="270.0" y="1106" text-anchor="middle">End</text>
+</svg></div>
+    <p class="caption">Source: <code>docs/FLOWCHART.svg</code> · raster copy <code>docs/FLOWCHART.png</code></p>
+
+    <h3>3.1 Text form and code mapping</h3>
+    <pre>Start
+  |
+User views event list                  ->  GET /                        (eventController.publicList)
+  |
+Select event                           ->  GET /events/:id              (eventController.show)
+  |
+Event has available slots? -- No --> Show "Event full" --> End
+  |                                 (HTTP 409, views/events/full.ejs)
+ Yes
+  |
+Enter participant details              ->  POST /events/:id/register
+  |
+Validate email and required fields     ->  middlewares/validate.js
+  |
+Save registration                      ->  Registration.create() in a transaction
+  |
+Increase registered participant count  ->  COUNT(status = 'confirmed') recomputed
+  |
+Show confirmation                      ->  views/events/confirmation.ejs (REG-00001)
+  |
+ End</pre>
+
+    <h3>3.2 Exception paths</h3>
+    <table><thead><tr><th>Condition</th><th>System response</th></tr></thead><tbody><tr><td>Email already registered for the event</td><td>HTTP 409 + <code>views/events/duplicate.ejs</code> &mdash; &ldquo;You are already registered&rdquo;</td></tr><tr><td>Missing field or invalid email</td><td>HTTP 422 + form redisplayed with the error list</td></tr><tr><td>Two participants submit the last slot at the same time</td><td>The second transaction re-counts inside a row lock and returns the &ldquo;Event full&rdquo; page &mdash; no overbooking</td></tr><tr><td>A confirmed participant cancels</td><td>Slot is freed and the earliest <code>waitlisted</code> registration is promoted to <code>confirmed</code></td></tr></tbody></table>
+
+    <h2><span class="num">4.</span> Feature Specification</h2>
+    <table><thead><tr><th>Feature</th><th>Route</th><th>Controller action</th><th>View / output</th></tr></thead><tbody><tr><td>Create, edit and delete events</td><td><code>GET/POST /admin/events</code>, <code>PUT/DELETE /admin/events/:id</code></td><td>eventController.create / update / destroy</td><td>admin/event-form.ejs, admin/events.ejs</td></tr><tr><td>Public event listing page</td><td><code>GET /</code></td><td>eventController.publicList</td><td>events/index.ejs with search and capacity bars</td></tr><tr><td>Online participant registration</td><td><code>POST /events/:id/register</code></td><td>registrationController.store</td><td>events/confirmation.ejs with reference no.</td></tr><tr><td>Limit registrations (max participants)</td><td>checked on submit</td><td>capacity check inside a transaction</td><td>events/full.ejs &mdash; &ldquo;Event full&rdquo;</td></tr><tr><td>Prevent duplicate registration (same email)</td><td>checked on submit</td><td>duplicate check + UNIQUE index</td><td>events/duplicate.ejs</td></tr><tr><td>View registered participants per event</td><td><code>GET /admin/events/:id/participants</code></td><td>adminController.participants</td><td>admin/participants.ejs with status filters</td></tr>
+      <tr><td>Forgot &amp; Reset Password</td><td><code>GET/POST /forgot-password</code>, <code>GET/POST /reset-password/:token</code></td><td>authController.forgotPassword / resetPassword</td><td>views/auth/forgot-password.ejs, reset-password.ejs</td></tr>
+      <tr><td>User Self Password Change</td><td><code>GET/POST /change-password</code></td><td>authController.showChangePassword / changePassword</td><td>views/auth/change-password.ejs</td></tr>
+      <tr><td>Admin User Management</td><td><code>GET /admin/users</code>, <code>POST /admin/users/:id/reset-password</code></td><td>adminController.users / adminResetPassword</td><td>views/admin/users.ejs</td></tr><tr><td>Generate attendance list</td><td><code>GET /admin/events/:id/attendance</code> and <code>.../attendance.csv</code></td><td>adminController.attendance / attendanceCsv</td><td>admin/attendance.ejs printable sheet + CSV</td></tr><tr><td>Waiting list (extension of the &ldquo;full&rdquo; branch)</td><td><code>POST /events/:id/waitlist</code></td><td>registrationController.waitlist</td><td>status <code>waitlisted</code>, auto-promoted on cancellation</td></tr><tr><td>Accounts and sessions</td><td><code>/register</code>, <code>/login</code>, <code>/logout</code>, <code>/my-registrations</code></td><td>authController</td><td>auth/*.ejs, my-registrations.ejs</td></tr></tbody></table>
+
+    <h2><span class="num">5.</span> MVC Architecture</h2>
+    <div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1250 610" width="1250" height="610" font-family="'Segoe UI',Arial,Helvetica,sans-serif">
+<defs><style>.m_t{fill:#15203a;font-size:16px;font-weight:700}.m_s{fill:#46527a;font-size:12.5px}.m_h1{fill:#15203a;font-size:23px;font-weight:700}.m_sub{fill:#6b7691;font-size:13px}.m_lab{fill:#46527a;font-size:12px;font-weight:600}.m_seq{fill:#33406b;font-size:13px}</style><marker id="m_a3" markerWidth="11" markerHeight="9" refX="9" refY="4.5" orient="auto"><path d="M0 0 L11 4.5 L0 9 z" fill="#46527a"/></marker><filter id="m_sh3" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#15203a" flood-opacity="0.12"/></filter></defs>
+<rect width="1250" height="610" fill="#f5f7fb"/>
+<text class="m_h1" x="30" y="52">MVC Architecture</text>
+<text class="m_sub" x="30" y="76">Express request lifecycle &#8212; Model &#183; View &#183; Controller</text>
+<g filter="url(#m_sh3)"><rect x="30" y="150" width="260" height="158" rx="12" fill="#fff" stroke="#dbe2f0"/></g>
+<rect x="30" y="150" width="6" height="158" rx="3" fill="#6b7691"/>
+<text class="m_t" x="52" y="180">Browser (Client)</text>
+<text class="m_s" x="52" y="206">EJS-rendered HTML + CSS</text>
+<text class="m_s" x="52" y="225">GET  /  &#8594; event list</text>
+<text class="m_s" x="52" y="244">GET  /events/:id</text>
+<text class="m_s" x="52" y="263">POST /events/:id/register</text>
+<text class="m_s" x="52" y="282">public/js/main.js  (client validation)</text>
+<g filter="url(#m_sh3)"><rect x="330" y="150" width="260" height="158" rx="12" fill="#fff" stroke="#dbe2f0"/></g>
+<rect x="330" y="150" width="6" height="158" rx="3" fill="#e79a12"/>
+<text class="m_t" x="352" y="180">Router</text>
+<text class="m_s" x="352" y="206">routes/index.js</text>
+<text class="m_s" x="352" y="225">Maps URL + HTTP verb</text>
+<text class="m_s" x="352" y="244">to a controller action,</text>
+<text class="m_s" x="352" y="263">then applies auth / role /</text>
+<text class="m_s" x="352" y="282">asyncHandler guards</text>
+<g filter="url(#m_sh3)"><rect x="630" y="150" width="260" height="158" rx="12" fill="#fff" stroke="#dbe2f0"/></g>
+<rect x="630" y="150" width="6" height="158" rx="3" fill="#2f5bff"/>
+<text class="m_t" x="652" y="180">Controller</text>
+<text class="m_s" x="652" y="206">eventController</text>
+<text class="m_s" x="652" y="225">registrationController</text>
+<text class="m_s" x="652" y="244">adminController / authController</text>
+<text class="m_s" x="652" y="263">Validates input, enforces</text>
+<text class="m_s" x="652" y="282">capacity, duplicate + reset tokens</text>
+<g filter="url(#m_sh3)"><rect x="630" y="360" width="260" height="158" rx="12" fill="#fff" stroke="#dbe2f0"/></g>
+<rect x="630" y="360" width="6" height="158" rx="3" fill="#10a36b"/>
+<text class="m_t" x="652" y="390">Model (Sequelize)</text>
+<text class="m_s" x="652" y="416">User   &#8594; USERS</text>
+<text class="m_s" x="652" y="435">Event  &#8594; EVENTS</text>
+<text class="m_s" x="652" y="454">Registration &#8594; REGISTRATIONS</text>
+<text class="m_s" x="652" y="473">Associations, validations,</text>
+<text class="m_s" x="652" y="492">transactions, unique index</text>
+<g filter="url(#m_sh3)"><rect x="950" y="360" width="260" height="158" rx="12" fill="#fff" stroke="#dbe2f0"/></g>
+<rect x="950" y="360" width="6" height="158" rx="3" fill="#2440a8"/>
+<text class="m_t" x="972" y="390">Database</text>
+<text class="m_s" x="972" y="416">MySQL / PostgreSQL</text>
+<text class="m_s" x="972" y="435">(SQLite for demo/local)</text>
+<text class="m_s" x="972" y="454">Tables: USERS &#183; EVENTS</text>
+<text class="m_s" x="972" y="473">&#183; REGISTRATIONS</text>
+<text class="m_s" x="972" y="492">Seeded via npm run seed</text>
+<g filter="url(#m_sh3)"><rect x="330" y="360" width="260" height="158" rx="12" fill="#fff" stroke="#dbe2f0"/></g>
+<rect x="330" y="360" width="6" height="158" rx="3" fill="#8b5cf6"/>
+<text class="m_t" x="352" y="390">View (EJS)</text>
+<text class="m_s" x="352" y="416">views/events/*.ejs</text>
+<text class="m_s" x="352" y="435">views/admin/*.ejs</text>
+<text class="m_s" x="352" y="454">views/auth/*.ejs</text>
+<text class="m_s" x="352" y="473">Attendance, full, duplicate,</text>
+<text class="m_s" x="352" y="492">and password-reset views</text>
+<path d="M290 229 L322 229" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#m_a3)"/>
+<text class="m_lab" x="306" y="218" text-anchor="middle">request</text>
+<path d="M590 229 L622 229" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#m_a3)"/>
+<text class="m_lab" x="618" y="218" text-anchor="end">dispatch</text>
+<path d="M760 308 L760 352" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#m_a3)"/>
+<text class="m_lab" x="772" y="336" text-anchor="start">query / save</text>
+<path d="M890 415 L942 415" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#m_a3)"/>
+<text class="m_lab" x="916" y="404" text-anchor="middle">SQL</text>
+<path d="M950 455 L898 455" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#m_a3)"/>
+<text class="m_lab" x="924" y="478" text-anchor="middle">rows</text>
+<path d="M650 308 L650 334 L470 334 L470 352" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#m_a3)"/>
+<text class="m_lab" x="578" y="326" text-anchor="middle">render</text>
+<path d="M330 440 L160 440 L160 314" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#m_a3)"/>
+<text class="m_lab" x="236" y="462" text-anchor="middle">rendered HTML response</text>
+<rect x="30" y="548" width="1190" height="40" rx="10" fill="#e8eeff" stroke="#c6d3fb"/>
+<text class="m_seq" x="50" y="573"><tspan font-weight="700">Request sequence:  </tspan>Browser &#8594; Router &#8594; Controller &#8594; Model &#8594; Database &#8594; Model &#8594; Controller &#8594; View (EJS) &#8594; Browser</text>
+</svg></div>
+    <p class="caption">Source: <code>docs/MVC-ARCHITECTURE.svg</code> · raster copy <code>docs/MVC-ARCHITECTURE.png</code></p>
+
+    <div class="callout">
+      <b>Request lifecycle:</b>
+      Browser &rarr; Router &rarr; Controller &rarr; Model (Sequelize) &rarr; Database &rarr;
+      Model &rarr; Controller &rarr; View (EJS) &rarr; Browser
+    </div>
+
+    <h3>5.1 File-to-layer mapping</h3>
+    <table><thead><tr><th>Layer</th><th>File</th><th>Responsibility</th></tr></thead><tbody><tr><td><span class="pill m">M</span></td><td><code>models/User.js</code></td><td>USERS model - user_id PK, unique email, bcrypt hook, role</td></tr><tr><td><span class="pill m">M</span></td><td><code>models/Event.js</code></td><td>EVENTS model - event_id PK, title, description, event_date, venue, max_participants</td></tr><tr><td><span class="pill m">M</span></td><td><code>models/Registration.js</code></td><td>REGISTRATIONS model - PK, user_id FK, event_id FK, registration_date, status, UNIQUE(event_id, user_id)</td></tr><tr><td><span class="pill m">M</span></td><td><code>models/index.js</code></td><td>Loads models, defines the 1:0..* associations, capacity helper</td></tr></tbody></table>
+    <table><thead><tr><th>Layer</th><th>File</th><th>Responsibility</th></tr></thead><tbody><tr><td><span class="pill v">V</span></td><td><code>views/events/index.ejs</code></td><td>Public event listing page with capacity bars and slot badges</td></tr><tr><td><span class="pill v">V</span></td><td><code>views/events/show.ejs</code></td><td>Event detail + online registration form</td></tr><tr><td><span class="pill v">V</span></td><td><code>views/events/confirmation.ejs</code></td><td>Confirmation page with reference number</td></tr><tr><td><span class="pill v">V</span></td><td><code>views/events/full.ejs</code></td><td>Show "Event full" page (flowchart No branch)</td></tr><tr><td><span class="pill v">V</span></td><td><code>views/events/duplicate.ejs</code></td><td>Duplicate-registration warning page</td></tr><tr><td><span class="pill v">V</span></td><td><code>views/admin/*.ejs</code></td><td>Dashboard, manage events, event form, participants, attendance sheet, user list</td></tr>
+<tr><td><span class="pill v">V</span></td><td><code>views/auth/*.ejs</code></td><td>Login, registration, forgot-password, reset-password, change-password</td></tr><tr><td><span class="pill v">V</span></td><td><code>public/css/style.css</code></td><td>Responsive styling plus print stylesheet for the attendance list</td></tr><tr><td><span class="pill v">V</span></td><td><code>public/js/main.js</code></td><td>Client-side required-field and email validation</td></tr></tbody></table>
+    <table><thead><tr><th>Layer</th><th>File</th><th>Responsibility</th></tr></thead><tbody><tr><td><span class="pill c">C</span></td><td><code>controllers/eventController.js</code></td><td>Public listing, event detail, create / edit / delete events</td></tr><tr><td><span class="pill c">C</span></td><td><code>controllers/registrationController.js</code></td><td>Slot check, validation, duplicate check, save in transaction, waitlist, cancel</td></tr><tr><td><span class="pill c">C</span></td><td><code>controllers/adminController.js</code></td><td>Dashboard, participants per event, attendance list + CSV export</td></tr><tr><td><span class="pill c">C</span></td><td><code>controllers/authController.js</code></td><td>Sign up, log in, log out, my registrations</td></tr></tbody></table>
+    <table><thead><tr><th>Layer</th><th>File</th><th>Responsibility</th></tr></thead><tbody><tr><td><span class="pill o">&#8212;</span></td><td><code>routes/index.js</code></td><td>Routing table mapping URLs to controller actions</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>middlewares/auth.js</code></td><td>Session auth, admin role guard, flash messages</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>middlewares/validate.js</code></td><td>Required-field, email and event validators</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>server.js</code></td><td>Express app bootstrap: views, session, routes, error pages, DB sync</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>seeders/seed.js</code></td><td>Demo users, 5 events and registrations (npm run seed)</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>docs/schema.sql</code></td><td>MySQL DDL with the constraints and reporting queries</td></tr></tbody></table>
+
+    <h2><span class="num">6.</span> Route / Endpoint Reference</h2>
+    <table><thead><tr><th>Method</th><th>Path</th><th>Access</th><th>Controller action</th><th>Purpose</th></tr></thead><tbody><tr><td><code>GET</code></td><td><code>/</code></td><td>public</td><td><code>eventController.publicList</code></td><td>Public event listing page (search ?q=)</td></tr><tr><td><code>GET</code></td><td><code>/events/:id</code></td><td>public</td><td><code>eventController.show</code></td><td>Event detail + registration form</td></tr><tr><td><code>POST</code></td><td><code>/events/:id/register</code></td><td>public</td><td><code>registrationController.store</code></td><td>Save an online registration</td></tr><tr><td><code>POST</code></td><td><code>/events/:id/waitlist</code></td><td>public</td><td><code>registrationController.waitlist</code></td><td>Join the waiting list when full</td></tr><tr><td><code>POST</code></td><td><code>/registrations/:id/cancel</code></td><td>user</td><td><code>registrationController.cancel</code></td><td>Cancel own registration</td></tr><tr><td><code>GET/POST</code></td><td><code>/register</code></td><td>public</td><td><code>authController</code></td><td>Create an account</td></tr>
+<tr><td><code>GET/POST</code></td><td><code>/forgot-password</code></td><td>public</td><td><code>authController.forgotPassword</code></td><td>Request password reset link</td></tr>
+<tr><td><code>GET/POST</code></td><td><code>/reset-password/:token</code></td><td>public</td><td><code>authController.resetPassword</code></td><td>Reset password using secure token</td></tr>
+<tr><td><code>GET/POST</code></td><td><code>/change-password</code></td><td>user</td><td><code>authController.changePassword</code></td><td>Change password for authenticated user</td></tr><tr><td><code>GET/POST</code></td><td><code>/login</code></td><td>public</td><td><code>authController</code></td><td>Log in</td></tr><tr><td><code>POST</code></td><td><code>/logout</code></td><td>user</td><td><code>authController.logout</code></td><td>Log out</td></tr><tr><td><code>GET</code></td><td><code>/my-registrations</code></td><td>user</td><td><code>authController.myRegistrations</code></td><td>Registrations of the logged-in user</td></tr><tr><td><code>GET</code></td><td><code>/admin</code></td><td>admin</td><td><code>adminController.dashboard</code></td><td>Dashboard tiles + latest registrations</td></tr><tr><td><code>GET</code></td><td><code>/admin/events</code></td><td>admin</td><td><code>eventController.adminIndex</code></td><td>Manage-events table</td></tr><tr><td><code>GET</code></td><td><code>/admin/events/new</code></td><td>admin</td><td><code>eventController.showCreateForm</code></td><td>Create-event form</td></tr><tr><td><code>POST</code></td><td><code>/admin/events</code></td><td>admin</td><td><code>eventController.create</code></td><td>Save new event</td></tr><tr><td><code>GET</code></td><td><code>/admin/events/:id/edit</code></td><td>admin</td><td><code>eventController.showEditForm</code></td><td>Edit-event form</td></tr><tr><td><code>PUT</code></td><td><code>/admin/events/:id</code></td><td>admin</td><td><code>eventController.update</code></td><td>Save event changes</td></tr><tr><td><code>DELETE</code></td><td><code>/admin/events/:id</code></td><td>admin</td><td><code>eventController.destroy</code></td><td>Delete event + its registrations</td></tr><tr><td><code>GET</code></td><td><code>/admin/events/:id/participants</code></td><td>admin</td><td><code>adminController.participants</code></td><td>Registered participants per event</td></tr><tr><td><code>POST</code></td><td><code>/admin/registrations/:id/status</code></td><td>admin</td><td><code>adminController.updateStatus</code></td><td>Confirm / waitlist / cancel a registration</td></tr><tr><td><code>GET</code></td><td><code>/admin/events/:id/attendance</code></td><td>admin</td><td><code>adminController.attendance</code></td><td>Generate printable attendance list</td></tr><tr><td><code>GET</code></td><td><code>/admin/events/:id/attendance.csv</code></td><td>admin</td><td><code>adminController.attendanceCsv</code></td><td>Download attendance list (CSV)</td></tr>
+<tr><td><code>GET</code></td><td><code>/admin/users</code></td><td>admin</td><td><code>adminController.users</code></td><td>Manage all user accounts and roles</td></tr>
+<tr><td><code>POST</code></td><td><code>/admin/users/:id/reset-password</code></td><td>admin</td><td><code>adminController.adminResetPassword</code></td><td>Admin forced password reset for user</td></tr></tbody></table>
+
+    <h2><span class="num">7.</span> Business Rules</h2>
+    <table><thead><tr><th>#</th><th>Rule</th><th>Enforcement</th></tr></thead><tbody><tr><td>BR-1</td><td>Registration is only allowed while <code>confirmed &lt; max_participants</code></td><td>Application check, re-counted inside a transaction with a row lock</td></tr><tr><td>BR-2</td><td>One registration per email address per event</td><td><code>UNIQUE(event_id, user_id)</code> index + application check (HTTP 409)</td></tr><tr><td>BR-3</td><td>Full name and a valid email are required</td><td>middlewares/validate.js (server) + public/js/main.js (client)</td></tr><tr><td>BR-4</td><td>Passwords are hashed, never stored in plain text</td><td>bcrypt hook in models/User.js</td></tr><tr><td>BR-5</td><td>Only admins may create, edit or delete events</td><td>requireAdmin middleware &rarr; HTTP 403</td></tr><tr><td>BR-6</td><td>Capacity cannot drop below the confirmed head-count</td><td>eventController.update validation</td></tr><tr><td>BR-7</td><td>Cancelling a confirmed slot promotes the earliest waitlisted person</td><td>registrationController.cancel and adminController.updateStatus</td></tr><tr><td>BR-8</td><td>Attendance list contains confirmed registrations only</td><td>adminController.attendance (SQL filter on status)</td></tr>
+<tr><td>BR-9</td><td>Password reset tokens are single-use cryptographically random 64-hex tokens expiring in 1 hour</td><td>authController.forgotPassword / resetPassword via crypto.randomBytes</td></tr>
+<tr><td>BR-10</td><td>Passwords must be at least 6 characters in length</td><td>middlewares/validate.js validatePassword rule</td></tr>
+<tr><td>BR-11</td><td>Re-registration after cancellation re-activates the existing record without unique violation</td><td>registrationController.store update existing cancelled record</td></tr>
+<tr><td>BR-12</td><td>Registrations are forbidden on past events</td><td>event.isPast check &rarr; HTTP 400 with user error message</td></tr></tbody></table>
+
+    <h2><span class="num">8.</span> Test Cases</h2>
+    <table><thead><tr><th>TC</th><th>Scenario</th><th>Input</th><th>Expected result</th></tr></thead><tbody><tr><td>TC-01</td><td>View public listing</td><td>GET /</td><td>All events with slot badges and capacity bars</td></tr><tr><td>TC-02</td><td>Open event detail</td><td>GET /events/2</td><td>Detail page with registration form</td></tr><tr><td>TC-03</td><td>Valid registration</td><td>new name + email</td><td>HTTP 201, confirmation page with reference number</td></tr><tr><td>TC-04</td><td>Duplicate email, same event</td><td>same email again</td><td>HTTP 409 &mdash; &ldquo;You are already registered&rdquo;</td></tr><tr><td>TC-05</td><td>Invalid email</td><td>not-an-email</td><td>HTTP 422 with the error list</td></tr><tr><td>TC-06</td><td>Missing required field</td><td>blank name</td><td>HTTP 422 &mdash; Participant name is required.</td></tr><tr><td>TC-07</td><td>Register when full</td><td>event at capacity</td><td>HTTP 409 &mdash; &ldquo;Event full&rdquo;, limit not exceeded</td></tr><tr><td>TC-08</td><td>Waitlist a full event</td><td>full event + new email</td><td>HTTP 201, status waitlisted</td></tr><tr><td>TC-09</td><td>Cancel a confirmed registration</td><td>own registration</td><td>Slot freed, earliest waitlisted promoted</td></tr><tr><td>TC-10</td><td>Create event (admin)</td><td>valid form</td><td>Event appears in the admin list (HTTP 302)</td></tr><tr><td>TC-11</td><td>Edit event (admin)</td><td><code>_method=PUT</code></td><td>Changes saved (HTTP 302)</td></tr><tr><td>TC-12</td><td>Delete event (admin)</td><td><code>_method=DELETE</code></td><td>Event and its registrations removed</td></tr><tr><td>TC-13</td><td>View participants</td><td>/admin/events/2/participants</td><td>Rows with name, email, date, status</td></tr><tr><td>TC-14</td><td>Attendance list</td><td>/admin/events/2/attendance</td><td>Printable sheet, confirmed rows only</td></tr><tr><td>TC-15</td><td>Attendance CSV</td><td>/admin/events/2/attendance.csv</td><td>CSV download with correct filename</td></tr><tr><td>TC-16</td><td>Non-admin opens /admin</td><td>participant session</td><td>HTTP 403 access-denied page</td></tr><tr><td>TC-17</td><td>Unknown event</td><td>GET /events/999</td><td>HTTP 404 page</td></tr><tr><td>TC-18</td><td>Unknown route</td><td>GET /nope</td><td>HTTP 404 page</td></tr>
+<tr><td>TC-19</td><td>Forgot password generation</td><td>POST /forgot-password</td><td>HTTP 200 with one-time reset link</td></tr>
+<tr><td>TC-20</td><td>Reset password execution</td><td>POST /reset-password/:token</td><td>HTTP 302, password updated, token invalidated</td></tr>
+<tr><td>TC-21</td><td>Expired/Invalid reset token</td><td>GET /reset-password/fake-token</td><td>HTTP 400 invalid or expired token error</td></tr>
+<tr><td>TC-22</td><td>Authenticated change password</td><td>POST /change-password</td><td>HTTP 302, validates current password and updates</td></tr>
+<tr><td>TC-23</td><td>Admin reset user password</td><td>POST /admin/users/:id/reset-password</td><td>HTTP 302, sets new password for selected user</td></tr>
+<tr><td>TC-24</td><td>Re-register after cancellation</td><td>POST /events/:id/register</td><td>HTTP 201, reactivates cancelled registration to confirmed</td></tr>
+<tr><td>TC-25</td><td>Past event registration block</td><td>POST /events/past-id/register</td><td>HTTP 400 registration closed error</td></tr>
+<tr><td>TC-26</td><td>Automated test suite execution</td><td><code>npm test</code></td><td>16 automated tests pass in 1.5s</td></tr></tbody></table>
+
+  </main>
+
+  <footer>
+    Event Registration System &middot; Node.js &middot; Express.js &middot; Sequelize &middot;
+    MySQL / PostgreSQL &middot; EJS &middot; MVC &mdash; diagrams regenerated with
+    <code style="background:rgba(255,255,255,.12);color:#dbe4ff">python3 docs/generate-diagrams.py</code>
+  </footer>
+</div>
+</body>
+</html>

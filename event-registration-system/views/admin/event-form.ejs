@@ -1,0 +1,42 @@
+<%- include('../partials/header') %>
+
+<a class="back" href="/admin/events">← Back to manage events</a>
+
+<section class="narrow">
+  <h1><%= event ? 'Edit event' : 'Create event' %></h1>
+  <%- include('../partials/errors') %>
+
+  <form class="card-form" method="POST"
+        action="<%= event ? '/admin/events/' + event.event_id + '?_method=PUT' : '/admin/events' %>">
+    <label>Event title *
+      <input type="text" name="title" value="<%= old.title || '' %>" placeholder="Annual IT Convention 2026" required />
+    </label>
+
+    <label>Description
+      <textarea name="description" rows="5" placeholder="What is the event about?"><%= old.description || '' %></textarea>
+    </label>
+
+    <div class="two-col">
+      <label>Event date &amp; time *
+        <input type="datetime-local" name="event_date" required
+               value="<%= old.event_date ? formatDateTimeLocal(old.event_date) : '' %>" />
+      </label>
+      <label>Venue *
+        <input type="text" name="venue" value="<%= old.venue || '' %>" placeholder="University Gymnasium" required />
+      </label>
+    </div>
+
+    <label>Maximum participants *
+      <input type="number" name="max_participants" min="1" step="1"
+             value="<%= old.max_participants || 50 %>" required />
+      <small class="hint">Registration is blocked automatically once this limit is reached.</small>
+    </label>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" type="submit"><%= event ? 'Save changes' : 'Create event' %></button>
+      <a class="btn btn-outline" href="/admin/events">Cancel</a>
+    </div>
+  </form>
+</section>
+
+<%- include('../partials/footer') %>

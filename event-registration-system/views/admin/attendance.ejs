@@ -1,0 +1,58 @@
+<%- include('../partials/header') %>
+
+<div class="no-print">
+  <a class="back" href="/admin/events/<%= event.event_id %>/participants">← Back to participants</a>
+  <div class="btn-row">
+    <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Print attendance sheet</button>
+    <a class="btn btn-outline btn-sm" href="/admin/events/<%= event.event_id %>/attendance.csv">⬇ Download CSV</a>
+  </div>
+</div>
+
+<section class="sheet">
+  <header class="sheet-head">
+    <div>
+      <h1>Official Attendance List</h1>
+      <p>EventReg · Online Event Registration System</p>
+    </div>
+    <div class="sheet-brand">ER</div>
+  </header>
+
+  <table class="kv">
+    <tr><th>Event</th><td><%= event.title %></td><th>Date &amp; time</th><td><%= fmtDate(event.event_date) %></td></tr>
+    <tr><th>Venue</th><td><%= event.venue %></td><th>Capacity</th><td><%= event.taken %> / <%= event.max %></td></tr>
+    <tr><th>Generated</th><td><%= fmtDate(generatedAt) %></td><th>Total participants</th><td><%= rows.length %></td></tr>
+  </table>
+
+  <table class="table attendance">
+    <thead>
+      <tr>
+        <th style="width:48px">No.</th>
+        <th>Participant name</th>
+        <th>Email address</th>
+        <th>Registration date</th>
+        <th>Status</th>
+        <th style="width:150px">Signature</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% rows.forEach(function (r, i) { %>
+        <tr>
+          <td><%= i + 1 %></td>
+          <td><strong><%= r.user.full_name %></strong></td>
+          <td><%= r.user.email %></td>
+          <td><%= fmtDate(r.registration_date) %></td>
+          <td><%= r.status %></td>
+          <td></td>
+        </tr>
+      <% }); %>
+      <% if (!rows.length) { %><tr><td colspan="6" class="muted">No confirmed registrations yet.</td></tr><% } %>
+    </tbody>
+  </table>
+
+  <div class="sheet-foot">
+    <div><span class="line"></span><p>Prepared by (Event Organizer)</p></div>
+    <div><span class="line"></span><p>Approved by (Head of Committee)</p></div>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

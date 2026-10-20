@@ -1,0 +1,14 @@
+<%- include('partials/header') %>
+
+<section class="narrow">
+  <div class="panel center">
+    <h1 class="err-code"><%= status %></h1>
+    <p class="muted"><%= message %></p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="/">Go to event list</a>
+      <% if (currentUser) { %><a class="btn btn-outline" href="/my-registrations">My registrations</a><% } %>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

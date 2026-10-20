@@ -1,0 +1,36 @@
+<%- include('../partials/header') %>
+
+<section class="narrow">
+  <div class="panel center">
+    <div class="cross">!</div>
+    <h1>Event full</h1>
+    <p class="muted">
+      <strong><%= event.title %></strong> has reached its maximum of
+      <%= capacity.max %> participants (<%= capacity.taken %> confirmed).
+      The system blocked this registration to enforce the participant limit.
+    </p>
+
+    <table class="kv">
+      <tr><th>Event</th><td><%= event.title %></td></tr>
+      <tr><th>Date &amp; time</th><td><%= fmtDate(event.event_date) %></td></tr>
+      <tr><th>Venue</th><td><%= event.venue %></td></tr>
+      <tr><th>Capacity</th><td><%= capacity.taken %> / <%= capacity.max %></td></tr>
+    </table>
+
+    <% if (joinWaitlist) { %>
+      <h3>Join the waiting list</h3>
+      <form action="/events/<%= event.event_id %>/waitlist" method="POST">
+        <label>Full name <input type="text" name="full_name" required /></label>
+        <label>Email address <input type="email" name="email" required /></label>
+        <button class="btn btn-outline btn-block" type="submit">Join waiting list</button>
+      </form>
+    <% } %>
+
+    <div class="btn-row">
+      <a class="btn btn-primary" href="/">See other events</a>
+      <a class="btn btn-outline" href="/events/<%= event.event_id %>">Back to event</a>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

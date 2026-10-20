@@ -1,0 +1,130 @@
+{
+  "_comment": "Sample request/response payloads of the Event Registration System (docs/REGISTRATIONS-SAMPLE.json)",
+  "U001_create_event_request": {
+    "method": "POST",
+    "path": "/admin/events",
+    "contentType": "application/x-www-form-urlencoded",
+    "body": {
+      "title": "Annual IT Convention 2026",
+      "description": "A whole-day convention on software engineering, cloud computing and AI.",
+      "event_date": "2026-11-14T08:00",
+      "venue": "SMX Convention Center, Pasay City",
+      "max_participants": "120"
+    },
+    "response": "302 redirect -> /admin/events with flash: Event \"Annual IT Convention 2026\" was created."
+  },
+
+  "U002_register_participant_request": {
+    "method": "POST",
+    "path": "/events/1/register",
+    "body": {
+      "full_name": "Juan Dela Cruz",
+      "email": "juan@email.com",
+      "event_id": "1"
+    },
+    "response_status": 201,
+    "response_page": "events/confirmation.ejs"
+  },
+
+  "U003_registration_saved": {
+    "registration_id": 17,
+    "reference_no": "REG-00017",
+    "user_id": 7,
+    "event_id": 1,
+    "registration_date": "2026-10-12T09:15:42.000Z",
+    "status": "confirmed",
+    "event": {
+      "event_id": 1,
+      "title": "Annual IT Convention 2026",
+      "event_date": "2026-11-14T08:00:00.000Z",
+      "venue": "SMX Convention Center, Pasay City",
+      "max_participants": 120
+    },
+    "capacity": {
+      "taken": 6,
+      "max": 120,
+      "remaining": 114,
+      "isFull": false
+    }
+  },
+
+  "U004_duplicate_registration": {
+    "method": "POST",
+    "path": "/events/1/register",
+    "body": { "full_name": "Juan Dela Cruz", "email": "juan@email.com" },
+    "response_status": 409,
+    "response_page": "events/duplicate.ejs",
+    "message": "The email juan@email.com already has a registration for Annual IT Convention 2026. Duplicate registrations for the same event are not allowed.",
+    "database_guard": "UNIQUE(event_id, user_id) on REGISTRATIONS"
+  },
+
+  "U005_event_full": {
+    "method": "POST",
+    "path": "/events/5/register",
+    "body": { "full_name": "Late Comer", "email": "late@email.com" },
+    "response_status": 409,
+    "response_page": "events/full.ejs",
+    "message": "Basic Photography Workshop has reached its maximum of 5 participants (5 confirmed).",
+    "flowchart_branch": "Event has available slots? -> No -> Show \"Event full\" -> End"
+  },
+
+  "U006_validation_error": {
+    "method": "POST",
+    "path": "/events/2/register",
+    "body": { "full_name": "", "email": "not-an-email" },
+    "response_status": 422,
+    "response_page": "events/show.ejs (form redisplayed)",
+    "errors": [
+      "Participant name is required.",
+      "Please enter a valid email address (e.g. juan@email.com)."
+    ]
+  },
+
+  "U007_waitlist_a_full_event": {
+    "method": "POST",
+    "path": "/events/5/waitlist",
+    "body": { "full_name": "Hopeful Person", "email": "hopeful@email.com" },
+    "response_status": 201,
+    "saved_record": {
+      "registration_id": 18,
+      "event_id": 5,
+      "status": "waitlisted",
+      "registration_date": "2026-10-12T09:30:00.000Z"
+    }
+  },
+
+  "U008_participants_of_event": {
+    "method": "GET",
+    "path": "/admin/events/2/participants?status=all",
+    "response_rows": [
+      { "registration_id": 3, "reference_no": "REG-00003", "full_name": "Juan Dela Cruz", "email": "juan@email.com", "registration_date": "2026-10-08T16:05:17.000Z", "status": "confirmed" },
+      { "registration_id": 4, "reference_no": "REG-00004", "full_name": "Maria Santos", "email": "maria@email.com", "registration_date": "2026-10-09T16:05:17.000Z", "status": "confirmed" },
+      { "registration_id": 5, "reference_no": "REG-00005", "full_name": "Ana Reyes", "email": "ana@email.com", "registration_date": "2026-10-10T16:05:17.000Z", "status": "confirmed" },
+      { "registration_id": 6, "reference_no": "REG-00006", "full_name": "Carlo Mendoza", "email": "carlo@email.com", "registration_date": "2026-10-11T16:05:17.000Z", "status": "waitlisted" }
+    ]
+  },
+
+  "U009_attendance_list_csv": {
+    "method": "GET",
+    "path": "/admin/events/2/attendance.csv",
+    "response_headers": {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": "attachment; filename=\"attendance-free-web-development-bootcamp.csv\""
+    },
+    "response_body": [
+      "No.,Participant Name,Email,Registration Date,Status,Signature",
+      "1,Juan Dela Cruz,juan@email.com,\"10/8/2026, 4:05:17 PM\",confirmed,",
+      "2,Maria Santos,maria@email.com,\"10/9/2026, 4:05:17 PM\",confirmed,",
+      "3,Ana Reyes,ana@email.com,\"10/10/2026, 4:05:17 PM\",confirmed,"
+    ]
+  },
+
+  "U010_cancel_and_promote": {
+    "method": "POST",
+    "path": "/registrations/3/cancel",
+    "response_status": 302,
+    "redirect": "/my-registrations",
+    "flash_success": "Registration cancelled. The next person on the waiting list was promoted to confirmed.",
+    "effect": "REG-00003 -> status 'cancelled'; earliest 'waitlisted' row of the same event -> status 'confirmed'"
+  }
+}

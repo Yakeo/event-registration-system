@@ -1,0 +1,37 @@
+<%- include('../partials/header') %>
+
+<section class="narrow">
+  <div class="panel">
+    <h1>Log in</h1>
+    <p class="muted">Sign in to manage your registrations or access the administration dashboard.</p>
+    <%- include('../partials/errors') %>
+
+    <form method="POST" action="/login">
+      <label>Email address
+        <input type="email" name="email" value="<%= old.email || '' %>" placeholder="juan@email.com" required />
+      </label>
+      
+      <div class="field-with-action">
+        <label>Password</label>
+        <a class="subtle-link" href="/forgot-password">Forgot password?</a>
+      </div>
+      <input type="password" name="password" placeholder="••••••••" required />
+
+      <input type="hidden" name="next" value="<%= next %>" />
+      <button class="btn btn-primary btn-block" style="margin-top: 16px;" type="submit">Log in</button>
+    </form>
+
+    <div class="auth-footer-links">
+      <p class="hint center">No account yet? <a href="/register">Create an account</a></p>
+      <div class="demo-box">
+        <strong>Demo Accounts (for defense evaluation):</strong>
+        <ul>
+          <li><strong>Admin:</strong> <code>admin@eventreg.test</code> / <code>admin123</code></li>
+          <li><strong>Participant:</strong> <code>maria@email.com</code> / <code>maria123</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

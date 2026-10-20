@@ -1,0 +1,58 @@
+<%- include('../partials/header') %>
+
+<a class="back" href="/admin/events">← Back to manage events</a>
+
+<section class="section-head">
+  <div>
+    <h1>Registered participants</h1>
+    <p class="muted"><%= event.title %> · <%= fmtDate(event.event_date) %> · <%= event.venue %></p>
+  </div>
+  <div class="btn-row">
+    <a class="btn btn-outline btn-sm" href="/admin/events/<%= event.event_id %>/attendance">Attendance list</a>
+    <a class="btn btn-primary btn-sm" href="/admin/events/<%= event.event_id %>/attendance.csv">Download CSV</a>
+  </div>
+</section>
+
+<div class="capacity wide">
+  <div class="capacity-bar"><span style="width:<%= event.percent %>%"></span></div>
+  <small><%= event.taken %> confirmed / <%= event.max %> slots · <%= event.remaining %> remaining</small>
+</div>
+
+<div class="filters">
+  <% ['all','confirmed','waitlisted','cancelled'].forEach(function (s) { %>
+    <a class="chip <%= status === s ? 'chip-active' : '' %>"
+       href="/admin/events/<%= event.event_id %>/participants?status=<%= s %>"><%= s %></a>
+  <% }); %>
+</div>
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr><th>#</th><th>Ref</th><th>Participant name</th><th>Email</th><th>Registration date</th><th>Status</th><th>Update status</th></tr>
+    </thead>
+    <tbody>
+      <% rows.forEach(function (r, i) { %>
+        <tr>
+          <td><%= i + 1 %></td>
+          <td>REG-<%= String(r.registration_id).padStart(5, '0') %></td>
+          <td><%= r.user.full_name %></td>
+          <td><%= r.user.email %></td>
+          <td><%= fmtDate(r.registration_date) %></td>
+          <td><span class="badge <%= r.status === 'confirmed' ? 'badge-success' : r.status === 'waitlisted' ? 'badge-warn' : 'badge-muted' %>"><%= r.status %></span></td>
+          <td>
+            <form action="/admin/registrations/<%= r.registration_id %>/status" method="POST" class="inline">
+              <select name="status" onchange="this.form.submit()">
+                <% ['confirmed','waitlisted','cancelled'].forEach(function (s) { %>
+                  <option value="<%= s %>" <%= r.status === s ? 'selected' : '' %>><%= s %></option>
+                <% }); %>
+              </select>
+            </form>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!rows.length) { %><tr><td colspan="7" class="muted">No participants for this filter.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

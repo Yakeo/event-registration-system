@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %> | EventReg</title>
+  <link rel="stylesheet" href="/css/style.css?v=2" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark">ER</span>
+        <span>
+          <strong>EventReg</strong>
+          <small>Online Event Registration System</small>
+        </span>
+      </a>
+
+      <nav class="nav">
+        <a href="/">Events</a>
+        <% if (currentUser) { %>
+          <% if (currentUser.role === 'admin') { %>
+            <a href="/admin">Dashboard</a>
+            <a href="/admin/events">Manage events</a>
+            <a href="/admin/users">Users</a>
+          <% } else { %>
+            <a href="/my-registrations">My registrations</a>
+          <% } %>
+          <a href="/change-password" title="Change your password">Security</a>
+          <span class="nav-user">Hi, <%= currentUser.full_name.split(' ')[0] %> (<%= currentUser.role %>)</span>
+          <form action="/logout" method="POST" class="inline">
+            <button class="btn btn-ghost btn-sm" type="submit">Log out</button>
+          </form>
+        <% } else { %>
+          <a href="/login">Log in</a>
+          <a class="btn btn-primary btn-sm" href="/register">Sign up</a>
+        <% } %>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <% if (flash.success) { %><div class="alert alert-success"><%= flash.success %></div><% } %>
+    <% if (flash.error) { %><div class="alert alert-error"><%= flash.error %></div><% } %>
+    <% if (flash.info) { %><div class="alert alert-info"><%= flash.info %></div><% } %>

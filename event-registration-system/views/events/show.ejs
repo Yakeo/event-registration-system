@@ -1,0 +1,88 @@
+<%- include('../partials/header') %>
+
+<a class="back" href="/">← Back to event list</a>
+
+<section class="detail">
+  <div class="detail-main">
+    <% if (event.isPast) { %>
+      <span class="badge badge-muted">Event concluded</span>
+    <% } else if (event.isFull) { %>
+      <span class="badge badge-danger">Event full</span>
+    <% } else { %>
+      <span class="badge badge-success"><%= event.remaining %> slot(s) left</span>
+    <% } %>
+
+    <h1><%= event.title %></h1>
+    <p class="event-meta">📅 <%= fmtDate(event.event_date) %></p>
+    <p class="event-meta">📍 <%= event.venue %></p>
+    <p class="event-meta">👥 <%= event.taken %> of <%= event.max %> slots taken</p>
+
+    <div class="capacity">
+      <div class="capacity-bar"><span style="width:<%= event.percent %>%"></span></div>
+      <small><%= event.percent %>% of capacity filled (<%= event.remaining %> remaining)</small>
+    </div>
+
+    <h3>About this event</h3>
+    <p class="pre"><%= event.description || 'No description provided.' %></p>
+
+    <% if (currentUser && currentUser.role === 'admin') { %>
+      <div class="admin-strip">
+        <a class="btn btn-outline btn-sm" href="/admin/events/<%= event.event_id %>/edit">Edit event</a>
+        <a class="btn btn-outline btn-sm" href="/admin/events/<%= event.event_id %>/participants">View participants</a>
+        <a class="btn btn-outline btn-sm" href="/admin/events/<%= event.event_id %>/attendance">Attendance list</a>
+      </div>
+    <% } %>
+  </div>
+
+  <aside class="detail-side">
+    <div class="panel">
+      <% if (event.isPast) { %>
+        <h2>Registration closed</h2>
+        <p class="muted">
+          This event took place on <strong><%= fmtDate(event.event_date) %></strong> and is now concluded. No new registrations or waitlist submissions are accepted.
+        </p>
+        <a class="btn btn-outline btn-block" href="/">Browse upcoming events</a>
+      <% } else if (event.isFull) { %>
+        <h2>Event full</h2>
+        <p class="muted">
+          All <%= event.max %> slots for this event have been reserved, so online registration is closed.
+          You can join the waiting list below — the system will automatically confirm your slot if a registered participant cancels.
+        </p>
+        <%- include('../partials/errors') %>
+        <form action="/events/<%= event.event_id %>/waitlist" method="POST">
+          <label>Full name *
+            <input type="text" name="full_name" value="<%= old.full_name || '' %>" placeholder="Juan Dela Cruz" required />
+          </label>
+          <label>Email address *
+            <input type="email" name="email" value="<%= old.email || '' %>" placeholder="juan@email.com" required />
+          </label>
+          <button class="btn btn-outline btn-block" type="submit">Join waiting list</button>
+        </form>
+      <% } else { %>
+        <h2>Register for this event</h2>
+        <p class="muted">Enter your participant details to reserve your slot online.</p>
+        <% if (currentUser) { %>
+          <div class="info-tag">
+            ℹ️ Logged in as <strong><%= currentUser.full_name %></strong> (<code><%= currentUser.email %></code>)
+          </div>
+        <% } %>
+        <%- include('../partials/errors') %>
+        <form action="/events/<%= event.event_id %>/register" method="POST" id="registrationForm">
+          <label>Full name *
+            <input type="text" name="full_name" id="full_name" value="<%= old.full_name || '' %>"
+                   placeholder="Juan Dela Cruz" required />
+          </label>
+          <label>Email address *
+            <input type="email" name="email" id="email" value="<%= old.email || '' %>"
+                   placeholder="juan@email.com" required />
+          </label>
+          <input type="hidden" name="event_id" value="<%= event.event_id %>" />
+          <button class="btn btn-primary btn-block" type="submit">Confirm registration</button>
+          <p class="hint">Strictly one registration per email address per event.</p>
+        </form>
+      <% } %>
+    </div>
+  </aside>
+</section>
+
+<%- include('../partials/footer') %>
