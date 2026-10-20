@@ -6,6 +6,7 @@
 const { Op } = require('sequelize');
 const { User, Registration, Event, eventVenueInclude, logAudit } = require('../models');
 const { normalizeEmail, validatePassword, LIMITS } = require('../middlewares/validate');
+const { queue, link } = require('../services/notifications');
 const { safeRedirect, regenerateSession } = require('../middlewares/auth');
 const { accountLoginLockout } = require('../middlewares/rateLimit');
 
@@ -169,6 +170,20 @@ const authController = {
     // Generate secure token and set 1-hour expiration
     const token = await user.generateResetToken();
     const resetUrl = `/reset-password/${token}`;
+
+    // Queue the real e-mail through the outbox. The on-screen link below stays
+    // as a development convenience, but delivery no longer depends on somebody
+    // reading the server console.
+    await queue({
+      kind: 'password_reset',
+      email: user.email,
+      userId: user.user_id,
+      payload: {
+        participant_name: user.full_name,
+        email: user.email,
+        reset_url: link(resetUrl),
+      },
+    });
 
     if (process.env.NODE_ENV !== 'production') {
       console.log(`\n[PASSWORD RESET] Generated reset token for ${user.email}:`);

@@ -20,6 +20,7 @@ const Attendance = require('./Attendance')(sequelize);
 const RegistrationStatusChange = require('./RegistrationStatusChange')(sequelize);
 const AuditLog = require('./AuditLog')(sequelize);
 const Session = require('./Session')(sequelize);
+const Notification = require('./Notification')(sequelize);
 
 /* ------------------------------- ASSOCIATIONS ------------------------------ */
 // VENUES (1) ---- (0..*) EVENTS
@@ -100,6 +101,37 @@ User.hasMany(AuditLog, {
 AuditLog.belongsTo(User, {
   foreignKey: 'actor_id',
   as: 'actor',
+});
+
+// USERS / REGISTRATIONS / EVENTS (0..*) ---- (0..*) NOTIFICATIONS
+// The outbox: one row per e-mail that must be delivered, written inside the
+// same transaction as the change it announces.
+User.hasMany(Notification, {
+  foreignKey: 'user_id',
+  as: 'notifications',
+  onDelete: 'SET NULL',
+});
+Notification.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
+});
+Registration.hasMany(Notification, {
+  foreignKey: 'registration_id',
+  as: 'notifications',
+  onDelete: 'SET NULL',
+});
+Notification.belongsTo(Registration, {
+  foreignKey: 'registration_id',
+  as: 'registration',
+});
+Event.hasMany(Notification, {
+  foreignKey: 'event_id',
+  as: 'notifications',
+  onDelete: 'SET NULL',
+});
+Notification.belongsTo(Event, {
+  foreignKey: 'event_id',
+  as: 'event',
 });
 
 /* -------------------------------- INCLUDES -------------------------------- */
@@ -199,6 +231,7 @@ module.exports = {
   RegistrationStatusChange,
   AuditLog,
   Session,
+  Notification,
   eventVenueInclude,
   getEventCapacity,
   logStatusChange,

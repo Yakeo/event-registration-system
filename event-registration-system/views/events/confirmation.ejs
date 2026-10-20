@@ -14,7 +14,7 @@
     </p>
 
     <table class="kv">
-      <tr><th>Reference no.</th><td><strong>REG-<%= String(registration.registration_id).padStart(5, '0') %></strong></td></tr>
+      <tr><th>Reference no.</th><td><strong><%= registration.referenceCode() %></strong></td></tr>
       <tr><th>Participant</th><td><%= participant.full_name %></td></tr>
       <tr><th>Email address</th><td><%= participant.email %></td></tr>
       <tr><th>Event</th><td><%= event.title %></td></tr>
@@ -34,6 +34,12 @@
         </p>
       </div>
     <% } %>
+
+    <p class="muted" style="margin-top:16px;">
+      📧 A <%= registration.status === 'confirmed' ? 'confirmation' : 'waitlist notice' %> has been queued
+      for <strong><%= participant.email %></strong>. If it does not arrive, check the spam folder
+      or use Forgot Password to regain access.
+    </p>
 
     <div class="btn-row">
       <a class="btn btn-primary" href="/">Back to event list</a>

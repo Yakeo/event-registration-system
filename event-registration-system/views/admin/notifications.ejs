@@ -1,0 +1,105 @@
+<%- include('../partials/header') %>
+
+<a class="back" href="/admin">← Back to dashboard</a>
+
+<section class="section-head">
+  <div>
+    <h1>Notification outbox</h1>
+    <p class="muted">
+      Every e-mail the system has decided to send. Rows are written in the same
+      transaction as the change they announce, then delivered by a background
+      worker — so nothing is lost if the server restarts or SMTP is down.
+    </p>
+  </div>
+  <span class="badge badge-muted"><%= count %> rows</span>
+</section>
+
+<div class="stat-row" style="display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;">
+  <div class="tile"><span class="tile-num"><%= totals.queued %></span><span class="tile-label">Queued</span></div>
+  <div class="tile"><span class="tile-num"><%= totals.sent %></span><span class="tile-label">Sent</span></div>
+  <div class="tile"><span class="tile-num"><%= totals.failed %></span><span class="tile-label">Failed</span></div>
+  <div class="tile">
+    <span class="tile-num" style="font-size:1rem;"><%= transport %></span>
+    <span class="tile-label">Transport</span>
+  </div>
+</div>
+
+<% if (transport === 'console') { %>
+  <div class="alert alert-info">
+    <strong>Console transport.</strong>
+    Messages are written as <code>.eml</code> files to <code>tmp/outbox/</code> and logged to the
+    server console — no SMTP server or credentials needed. Set <code>MAIL_TRANSPORT=smtp</code>
+    (plus the <code>SMTP_*</code> variables) in <code>.env</code> to deliver for real.
+  </div>
+<% } %>
+
+<form class="search" action="/admin/notifications" method="GET">
+  <select name="status">
+    <option value="">All statuses</option>
+    <% ['queued', 'sent', 'failed'].forEach(function (s) { %>
+      <option value="<%= s %>" <%= status === s ? 'selected' : '' %>><%= s %></option>
+    <% }); %>
+  </select>
+  <select name="kind">
+    <option value="">All kinds</option>
+    <% kinds.forEach(function (k) { %>
+      <option value="<%= k %>" <%= kind === k ? 'selected' : '' %>><%= k %></option>
+    <% }); %>
+  </select>
+  <button class="btn btn-outline btn-sm" type="submit">Filter</button>
+  <% if (status || kind) { %><a class="btn btn-ghost btn-sm" href="/admin/notifications">Clear</a><% } %>
+</form>
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr><th>#</th><th>Queued</th><th>Kind</th><th>To</th><th>Status</th><th>Attempts</th><th>Sent</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% rows.forEach(function (n) { %>
+        <tr>
+          <td><%= n.notification_id %></td>
+          <td><%= fmtDate(n.created_at) %></td>
+          <td><code><%= n.kind %></code></td>
+          <td><%= n.email %></td>
+          <td>
+            <span class="badge <%= n.status === 'sent' ? 'badge-success' : n.status === 'failed' ? 'badge-danger' : 'badge-warn' %>">
+              <%= n.status %>
+            </span>
+            <% if (n.last_error) { %>
+              <br /><small class="muted" title="<%= n.last_error %>"><%= n.last_error.slice(0, 60) %></small>
+            <% } %>
+          </td>
+          <td><%= n.attempts %></td>
+          <td><%= n.sent_at ? fmtDate(n.sent_at) : '—' %></td>
+          <td class="row-actions">
+            <a class="btn btn-outline btn-sm" href="/admin/notifications/<%= n.notification_id %>/preview">Preview</a>
+            <% if (n.status !== 'queued') { %>
+              <form action="/admin/notifications/<%= n.notification_id %>/retry" method="POST" style="display:inline;">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                <button class="btn btn-sm" type="submit">Requeue</button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!rows.length) { %>
+        <tr><td colspan="8" class="muted">No notifications match this filter. Register for an event and one will appear here.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<% if (totalPages > 1) { %>
+  <nav class="pager">
+    <% if (page > 1) { %>
+      <a class="btn btn-outline btn-sm" href="/admin/notifications?page=<%= page - 1 %>&status=<%= status %>&kind=<%= kind %>">← Newer</a>
+    <% } %>
+    <span class="muted">Page <%= page %> of <%= totalPages %></span>
+    <% if (page < totalPages) { %>
+      <a class="btn btn-outline btn-sm" href="/admin/notifications?page=<%= page + 1 %>&status=<%= status %>&kind=<%= kind %>">Older →</a>
+    <% } %>
+  </nav>
+<% } %>
+
+<%- include('../partials/footer') %>

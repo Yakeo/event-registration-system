@@ -64,11 +64,15 @@ event-registration-system/
 ├── public/
 │   ├── css/style.css            # responsive UI + print stylesheet
 │   └── js/main.js               # client-side form validation
+├── services/
+│   ├── notifications.js         # outbox queue + EJS e-mail rendering
+│   ├── notificationWorker.js    # timer that drains the outbox, with retries
+│   └── mailer.js                # console (.eml) / SMTP / memory transports
 ├── seeders/
 │   ├── seed.js                  # full demo dataset (18 users, 11 events, 77 registrations)
 │   └── reset.js                 # drop + recreate all tables
 ├── test/
-│   └── system.test.js           # automated test suite (25 tests, runs on an in-memory DB)
+│   └── system.test.js           # automated test suite (38 tests, runs on an in-memory DB)
 ├── docs/
 │   ├── DEFENSE-GUIDE.md         # ★ comprehensive academic defense presentation manual
 │   ├── SYSTEM-DOCS.html / .pdf  # ★ full documentation sheet (diagrams inlined)
@@ -79,6 +83,8 @@ event-registration-system/
 │   ├── GETTING-STARTED.md       # ★ how to run it, initialise the DB, troubleshoot
 │   ├── DEMO-DATA.md             # ★ what the seed data contains and which screen it demos
 │   ├── DATABASE-AUDIT.md        # ★ normalisation audit, fixes, recommendations
+│   ├── NOTIFICATIONS.md         # ★ the e-mail outbox: schema, kinds, retries
+│   ├── MYSQL-SETUP.md           # ★ running on MySQL / XAMPP, incl. pitfalls
 │   ├── schema.sql               # MySQL DDL for the running schema + reporting queries
 │   ├── schema-3nf.sql           # proposed normalised v2 schema (venue, attendance, tokens, audit)
 │   ├── REGISTRATIONS-SAMPLE.json# sample request/response payloads
@@ -94,6 +100,7 @@ event-registration-system/
 ## 3. Installation & Quick Start
 
 ```bash
+# 0. optional: nothing to configure - SQLite + the console mail transport work out of the box
 # 1. install dependencies
 npm install
 
@@ -103,7 +110,7 @@ cp .env.example .env          # Windows: copy .env.example .env
 # 3. load demo data (creates tables + 11 realistic events + seed accounts)
 npm run seed
 
-# 4. run automated test suite (verifies all 25 business rules & security controls)
+# 4. run automated test suite (38 tests, in-memory SQLite - never touches your data)
 npm test
 
 # 5. start the server
@@ -131,6 +138,19 @@ first registration demo, and an archived event. See
 [`docs/DEMO-DATA.md`](./docs/DEMO-DATA.md).
 
 ---
+
+### Notifications (new)
+
+Every state change that a participant should hear about is written to a
+`NOTIFICATIONS` outbox **inside the same transaction** as the change itself, then
+delivered by a background worker. That covers registration receipts, waitlist
+confirmation, automatic promotion, cancellations, event archiving, password
+resets and the "claim your profile" link for anonymous registrants.
+
+`MAIL_TRANSPORT=console` (the default) writes `.eml` files to `tmp/outbox/`, so
+the whole flow is demoable with no SMTP account. Admins can inspect every row at
+`/admin/notifications`, preview the exact e-mail, and requeue failures.
+See [`docs/NOTIFICATIONS.md`](./docs/NOTIFICATIONS.md).
 
 ## 4. Key Features & Route Mapping
 
