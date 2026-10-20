@@ -192,7 +192,7 @@ async function start() {
   await sequelize.sync(); // creates / updates every table defined in models/
   console.log(
     `✔ Models synchronised (USERS, VENUES, EVENTS, REGISTRATIONS, ATTENDANCE, ` +
-      `REGISTRATION_STATUS_CHANGES, AUDIT_LOGS, SESSIONS)`
+      `REGISTRATION_STATUS_CHANGES, AUDIT_LOGS, SESSIONS, NOTIFICATIONS, MANAGE_TOKENS)`
   );
   if (sessionStore) {
     sessionStore.startCleanup();
