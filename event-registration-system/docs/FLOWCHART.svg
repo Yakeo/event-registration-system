@@ -43,9 +43,9 @@
 <text class="t-tbl" x="236" y="343" text-anchor="middle">one event and its bookings</text>
 <text class="t-ops" x="236" y="362" text-anchor="middle">That one event, and how full it is.</text>
 <path d="M236 376 L236 384" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
-<path d="M236 384 L351.0 417.0 L236 450 L121.0 417.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
-<text class="t-proc" x="236" y="414.5" text-anchor="middle">Any seats</text>
-<text class="t-proc" x="236" y="426.5" text-anchor="middle">left?</text>
+<path d="M236 384 L356.0 417.0 L236 450 L116.0 417.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="414.5" text-anchor="middle">Fewer booked</text>
+<text class="t-proc" x="236" y="426.5" text-anchor="middle">than the cap?</text>
 <path d="M351 417.0 L436 417.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
 <text class="t-no" x="362" y="411.0" text-anchor="start">No</text>
 <path d="M450.0 399.0 L776.0 399.0 L762.0 443.0 L436.0 443.0 Z" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
@@ -144,8 +144,8 @@
 <text class="t-term" x="236" y="106.0" text-anchor="middle">Organizer opens the dashboard</text>
 <path d="M236 120 L236 128" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
 <path d="M236 128 L356.0 161.0 L236 194 L116.0 161.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
-<text class="t-proc" x="236" y="158.5" text-anchor="middle">Already signed in</text>
-<text class="t-proc" x="236" y="170.5" text-anchor="middle">as an organizer?</text>
+<text class="t-proc" x="236" y="158.5" text-anchor="middle">Is an admin session</text>
+<text class="t-proc" x="236" y="170.5" text-anchor="middle">already open?</text>
 <path d="M356 161.0 L436 161.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
 <text class="t-no" x="367" y="155.0" text-anchor="start">No</text>
 <path d="M450.0 141.0 L776.0 141.0 L762.0 185.0 L436.0 185.0 Z" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
@@ -177,8 +177,8 @@
 <text class="t-ops" x="236" y="322" text-anchor="middle">Counts events, booked seats, waiting and arrivals.</text>
 <path d="M236 336 L236 344" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
 <path d="M236 344 L356.0 377.0 L236 410 L116.0 377.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
-<text class="t-proc" x="236" y="374.5" text-anchor="middle">What does the</text>
-<text class="t-proc" x="236" y="386.5" text-anchor="middle">organizer do?</text>
+<text class="t-proc" x="236" y="374.5" text-anchor="middle">Which form was</text>
+<text class="t-proc" x="236" y="386.5" text-anchor="middle">submitted?</text>
 <path d="M236 410 L236 782" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
 <path d="M236 490.0 L434 490.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
 <path d="M436.0 463 A170.0 7 0 0 1 776.0 463 L776.0 517 A170.0 7 0 0 1 436.0 517 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
@@ -186,24 +186,21 @@
 <text class="t-db" x="606" y="478" text-anchor="middle">Edits an event</text>
 <text class="t-tbl" x="606" y="491" text-anchor="middle">events and venues</text>
 <text class="t-ops" x="606" y="510" text-anchor="middle">Saves it, or hides it from the public list.</text>
-<text class="t-lab" x="434" y="485.0" text-anchor="end">event</text>
-<text class="t-lab" x="448" y="449" text-anchor="start">works on an event</text>
+<text class="t-lab" x="252" y="484.0" text-anchor="start">event form</text>
 <path d="M236 604.0 L434 604.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
 <path d="M436.0 577 A170.0 7 0 0 1 776.0 577 L776.0 631 A170.0 7 0 0 1 436.0 631 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
 <path d="M436.0 577 A170.0 7 0 0 0 776.0 577" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
 <text class="t-db" x="606" y="592" text-anchor="middle">Checks someone in</text>
 <text class="t-tbl" x="606" y="605" text-anchor="middle">attendance and its history</text>
 <text class="t-ops" x="606" y="624" text-anchor="middle">Marks them arrived, notes who did it.</text>
-<text class="t-lab" x="434" y="599.0" text-anchor="end">check-in</text>
-<text class="t-lab" x="448" y="563" text-anchor="start">works on attendance</text>
+<text class="t-lab" x="252" y="598.0" text-anchor="start">check-in form</text>
 <path d="M236 718.0 L434 718.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
 <path d="M436.0 691 A170.0 7 0 0 1 776.0 691 L776.0 745 A170.0 7 0 0 1 436.0 745 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
 <path d="M436.0 691 A170.0 7 0 0 0 776.0 691" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
 <text class="t-db" x="606" y="706" text-anchor="middle">Cancels or changes a booking</text>
 <text class="t-tbl" x="606" y="719" text-anchor="middle">booking, history, mail</text>
 <text class="t-ops" x="606" y="738" text-anchor="middle">Frees the seat and offers it to the next one waiting.</text>
-<text class="t-lab" x="434" y="713.0" text-anchor="end">booking</text>
-<text class="t-lab" x="448" y="677" text-anchor="start">works on a booking</text>
+<text class="t-lab" x="252" y="712.0" text-anchor="start">booking change</text>
 <rect x="121.0" y="782" width="230" height="36" rx="18.0" fill="#2b3a55"/>
 <text class="t-term" x="236" y="804.0" text-anchor="middle">Change saved</text>
 <text class="t-lab" x="236" y="836" text-anchor="middle">every change above is also kept in the history, and sends its message</text>
@@ -262,8 +259,9 @@
 <rect x="86.0" y="202" width="300" height="44" rx="3" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
 <text class="t-proc" x="236" y="227.5" text-anchor="middle">Fills in the template, then sends it</text>
 <path d="M236 246 L236 253" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
-<path d="M236 253 L356.0 286.0 L236 319 L116.0 286.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
-<text class="t-proc" x="236" y="289.5" text-anchor="middle">Did it go out?</text>
+<path d="M236 253 L361.0 286.0 L236 319 L111.0 286.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="283.5" text-anchor="middle">Did the mail service</text>
+<text class="t-proc" x="236" y="295.5" text-anchor="middle">accept it?</text>
 <path d="M356 286.0 L436 286.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
 <text class="t-no" x="367" y="280.0" text-anchor="start">No</text>
 <path d="M436.0 263.0 A170.0 7 0 0 1 776.0 263.0 L776.0 317.0 A170.0 7 0 0 1 436.0 317.0 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
@@ -292,31 +290,28 @@
 <text class="t-tbl" x="236" y="502" text-anchor="middle">personal links and people</text>
 <text class="t-ops" x="236" y="521" text-anchor="middle">Finds the person and booking; checks it is still valid.</text>
 <path d="M236 535 L236 542" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
-<path d="M236 542 L356.0 575.0 L236 608 L116.0 575.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
-<text class="t-proc" x="236" y="572.5" text-anchor="middle">What do they</text>
-<text class="t-proc" x="236" y="584.5" text-anchor="middle">want to do?</text>
+<path d="M236 542 L361.0 575.0 L236 608 L111.0 575.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="572.5" text-anchor="middle">Which action did</text>
+<text class="t-proc" x="236" y="584.5" text-anchor="middle">the link ask for?</text>
 <path d="M236 608 L236 857" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
 <path d="M236 652.5 L432 652.5" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
 <path d="M436.0 630 L776.0 630 L776.0 665 Q691.0 653 606 665 Q521.0 677 436.0 665 Z" fill="#f7f9fc" stroke="#2b3a55" stroke-width="1.5"/>
 <text class="t-proc" x="606" y="647" text-anchor="middle">Sees the booking: event, date, place</text>
-<text class="t-lab" x="434" y="647.5" text-anchor="end">look</text>
-<text class="t-lab" x="448" y="623" text-anchor="start">just looks</text>
+<text class="t-lab" x="252" y="646.5" text-anchor="start">view only</text>
 <path d="M236 723.0 L432 723.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
 <path d="M436.0 696 A170.0 7 0 0 1 776.0 696 L776.0 750 A170.0 7 0 0 1 436.0 750 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
 <path d="M436.0 696 A170.0 7 0 0 0 776.0 696" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
 <text class="t-db" x="606" y="711" text-anchor="middle">Cancels the booking</text>
 <text class="t-tbl" x="606" y="724" text-anchor="middle">booking, history, mail</text>
 <text class="t-ops" x="606" y="743" text-anchor="middle">Same as the signed-in page: seat freed, next one offered it.</text>
-<text class="t-lab" x="434" y="718.0" text-anchor="end">cancel</text>
-<text class="t-lab" x="448" y="682" text-anchor="start">cancels</text>
+<text class="t-lab" x="252" y="717.0" text-anchor="start">cancel</text>
 <path d="M236 805.0 L432 805.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
 <path d="M436.0 778 A170.0 7 0 0 1 776.0 778 L776.0 832 A170.0 7 0 0 1 436.0 832 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
 <path d="M436.0 778 A170.0 7 0 0 0 776.0 778" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
 <text class="t-db" x="606" y="793" text-anchor="middle">Sets a password</text>
 <text class="t-tbl" x="606" y="806" text-anchor="middle">people and their links</text>
 <text class="t-ops" x="606" y="825" text-anchor="middle">Saves it and marks the link as used.</text>
-<text class="t-lab" x="434" y="800.0" text-anchor="end">claim</text>
-<text class="t-lab" x="448" y="764" text-anchor="start">turns the guest into an account</text>
+<text class="t-lab" x="252" y="799.0" text-anchor="start">claim a password</text>
 <rect x="136.0" y="857" width="200" height="36" rx="18.0" fill="#2b3a55"/>
 <text class="t-term" x="236" y="879.0" text-anchor="middle">Done</text>
 <line x1="40" y1="1006" x2="754" y2="1006" stroke="#dfe5ef"/>

@@ -33,8 +33,9 @@
 <rect x="86.0" y="202" width="300" height="44" rx="3" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
 <text class="t-proc" x="236" y="227.5" text-anchor="middle">Fills in the template, then sends it</text>
 <path d="M236 246 L236 253" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
-<path d="M236 253 L356.0 286.0 L236 319 L116.0 286.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
-<text class="t-proc" x="236" y="289.5" text-anchor="middle">Did it go out?</text>
+<path d="M236 253 L361.0 286.0 L236 319 L111.0 286.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="283.5" text-anchor="middle">Did the mail service</text>
+<text class="t-proc" x="236" y="295.5" text-anchor="middle">accept it?</text>
 <path d="M356 286.0 L436 286.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
 <text class="t-no" x="367" y="280.0" text-anchor="start">No</text>
 <path d="M436.0 263.0 A170.0 7 0 0 1 776.0 263.0 L776.0 317.0 A170.0 7 0 0 1 436.0 317.0 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
@@ -63,31 +64,28 @@
 <text class="t-tbl" x="236" y="502" text-anchor="middle">personal links and people</text>
 <text class="t-ops" x="236" y="521" text-anchor="middle">Finds the person and booking; checks it is still valid.</text>
 <path d="M236 535 L236 542" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
-<path d="M236 542 L356.0 575.0 L236 608 L116.0 575.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
-<text class="t-proc" x="236" y="572.5" text-anchor="middle">What do they</text>
-<text class="t-proc" x="236" y="584.5" text-anchor="middle">want to do?</text>
+<path d="M236 542 L361.0 575.0 L236 608 L111.0 575.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="572.5" text-anchor="middle">Which action did</text>
+<text class="t-proc" x="236" y="584.5" text-anchor="middle">the link ask for?</text>
 <path d="M236 608 L236 857" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
 <path d="M236 652.5 L432 652.5" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
 <path d="M436.0 630 L776.0 630 L776.0 665 Q691.0 653 606 665 Q521.0 677 436.0 665 Z" fill="#f7f9fc" stroke="#2b3a55" stroke-width="1.5"/>
 <text class="t-proc" x="606" y="647" text-anchor="middle">Sees the booking: event, date, place</text>
-<text class="t-lab" x="434" y="647.5" text-anchor="end">look</text>
-<text class="t-lab" x="448" y="623" text-anchor="start">just looks</text>
+<text class="t-lab" x="252" y="646.5" text-anchor="start">view only</text>
 <path d="M236 723.0 L432 723.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
 <path d="M436.0 696 A170.0 7 0 0 1 776.0 696 L776.0 750 A170.0 7 0 0 1 436.0 750 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
 <path d="M436.0 696 A170.0 7 0 0 0 776.0 696" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
 <text class="t-db" x="606" y="711" text-anchor="middle">Cancels the booking</text>
 <text class="t-tbl" x="606" y="724" text-anchor="middle">booking, history, mail</text>
 <text class="t-ops" x="606" y="743" text-anchor="middle">Same as the signed-in page: seat freed, next one offered it.</text>
-<text class="t-lab" x="434" y="718.0" text-anchor="end">cancel</text>
-<text class="t-lab" x="448" y="682" text-anchor="start">cancels</text>
+<text class="t-lab" x="252" y="717.0" text-anchor="start">cancel</text>
 <path d="M236 805.0 L432 805.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
 <path d="M436.0 778 A170.0 7 0 0 1 776.0 778 L776.0 832 A170.0 7 0 0 1 436.0 832 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
 <path d="M436.0 778 A170.0 7 0 0 0 776.0 778" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
 <text class="t-db" x="606" y="793" text-anchor="middle">Sets a password</text>
 <text class="t-tbl" x="606" y="806" text-anchor="middle">people and their links</text>
 <text class="t-ops" x="606" y="825" text-anchor="middle">Saves it and marks the link as used.</text>
-<text class="t-lab" x="434" y="800.0" text-anchor="end">claim</text>
-<text class="t-lab" x="448" y="764" text-anchor="start">turns the guest into an account</text>
+<text class="t-lab" x="252" y="799.0" text-anchor="start">claim a password</text>
 <rect x="136.0" y="857" width="200" height="36" rx="18.0" fill="#2b3a55"/>
 <text class="t-term" x="236" y="879.0" text-anchor="middle">Done</text>
 <line x1="40" y1="1006" x2="754" y2="1006" stroke="#dfe5ef"/>

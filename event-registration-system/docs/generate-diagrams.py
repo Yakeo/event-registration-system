@@ -600,7 +600,7 @@ def sheet_a():
     parts.append(s_wire([(cx, y - GAP), (cx, y)]))
 
     dec_y = y
-    out, h = s_dec(cx, dec_y, ['Any seats', 'left?'], w=230)
+    out, h = s_dec(cx, dec_y, ['Fewer booked', 'than the cap?'], w=240)
     parts += out
     y = dec_y + h
 
@@ -687,7 +687,7 @@ def sheet_b():
 
     dec_y = y
     parts.append(s_wire([(cx, dec_y - GAP), (cx, dec_y)]))
-    out, h = s_dec(cx, dec_y, ['Already signed in', 'as an organizer?'], w=240)
+    out, h = s_dec(cx, dec_y, ['Is an admin session', 'already open?'], w=240)
     parts += out
     y = dec_y + h
 
@@ -729,7 +729,7 @@ def sheet_b():
 
     dec_y = y
     parts.append(s_wire([(cx, dec_y - GAP), (cx, dec_y)]))
-    out, h = s_dec(cx, dec_y, ['What does the', 'organizer do?'], w=240)
+    out, h = s_dec(cx, dec_y, ['Which form was', 'submitted?'], w=240)
     parts += out
     y = dec_y + h
 
@@ -750,9 +750,9 @@ def sheet_b():
                     tag='booking, history, mail', w=340)
 
     groups = [
-        ('works on an event', 'event', g_event),
-        ('works on attendance', 'check-in', g_checkin),
-        ('works on a booking', 'booking', g_cancel),
+        ('', 'event form', g_event),
+        ('', 'check-in form', g_checkin),
+        ('', 'booking change', g_cancel),
     ]
 
     cursor = y + 46
@@ -769,8 +769,9 @@ def sheet_b():
         parts.append(s_wire([(cx, tap_y), (LANE - 172, tap_y)]))
         out, _ = build(top)
         parts += out
-        parts.append(s_lbl(LANE - 172, tap_y - 5, tag, 't-lab', 'end'))
-        parts.append(s_lbl(LANE - 158, top - 7, caption, 't-lab', 'start'))
+        parts.append(s_lbl(cx + 16, tap_y - 6, tag, 't-lab', 'start'))
+        if caption:
+            parts.append(s_lbl(LANE - 158, top - 7, caption, 't-lab', 'start'))
 
     out, ht = s_term(cx, term_y, 'Change saved', w=230)
     parts += out
@@ -807,7 +808,7 @@ def sheet_c():
 
     dec_y = y
     parts.append(s_wire([(cx, dec_y - g), (cx, dec_y)]))
-    out, h = s_dec(cx, dec_y, ['Did it go out?'], w=240)
+    out, h = s_dec(cx, dec_y, ['Did the mail service', 'accept it?'], w=250)
     parts += out
     y = dec_y + h
 
@@ -850,7 +851,7 @@ def sheet_c():
 
     dec_y = y
     parts.append(s_wire([(cx, dec_y - g), (cx, dec_y)]))
-    out, h = s_dec(cx, dec_y, ['What do they', 'want to do?'], w=240)
+    out, h = s_dec(cx, dec_y, ['Which action did', 'the link ask for?'], w=250)
     parts += out
     y = dec_y + h
 
@@ -868,9 +869,9 @@ def sheet_c():
                     tag='people and their links', w=340)
 
     groups = [
-        ('just looks', 'look', g_view),
-        ('cancels', 'cancel', g_cancel),
-        ('turns the guest into an account', 'claim', g_claim),
+        ('', 'view only', g_view),
+        ('', 'cancel', g_cancel),
+        ('', 'claim a password', g_claim),
     ]
 
     cursor = y + 22
@@ -887,8 +888,9 @@ def sheet_c():
         parts.append(s_wire([(cx, tap_y), (LANE - 174, tap_y)]))
         out, _ = build(top)
         parts += out
-        parts.append(s_lbl(LANE - 172, tap_y - 5, tag, 't-lab', 'end'))
-        parts.append(s_lbl(LANE - 158, top - 7, caption, 't-lab', 'start'))
+        parts.append(s_lbl(cx + 16, tap_y - 6, tag, 't-lab', 'start'))
+        if caption:
+            parts.append(s_lbl(LANE - 158, top - 7, caption, 't-lab', 'start'))
 
     out, ht = s_term(cx, term_y, 'Done', w=200)
     parts += out
