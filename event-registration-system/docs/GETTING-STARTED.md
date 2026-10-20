@@ -24,9 +24,10 @@ npm start ──► node server.js
 * **Schema creation:** `sequelize.sync()` in `server.js` runs on every boot and
   creates any missing table. There are **no migration files** in this project —
   the models in `models/` are the source of truth.
-* **Seed data:** the committed `.sqlite` file is **already seeded** (6 users,
-  5 venues, 5 events, 16 registrations, attendance + audit rows). A fresh clone
-  can just `npm start`.
+* **Seed data:** the committed `.sqlite` file is **already seeded** (18 users,
+  7 venues, 11 events, 77 registrations, 20 check-ins, status history and audit
+  rows). A fresh clone can just `npm start`. See
+  [`DEMO-DATA.md`](./DEMO-DATA.md) for a map of which row demonstrates what.
 
 ---
 
@@ -43,7 +44,9 @@ Then log in with a seeded account:
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | `admin@eventreg.test` | `admin123` |
+| Second admin / organiser | `organizer@eventreg.test` | `organizer123` |
 | Participant | `maria@email.com` | `maria123` |
+| Any other participant | `juan@email.com` … `ella@email.com` | `password123` |
 
 `npm run dev` is the same thing with auto-restart on file changes.
 
@@ -59,7 +62,7 @@ Three different things people mean by "initialise":
 
 | Goal | Command | What it does |
 |------|---------|--------------|
-| **Start clean, with demo data** (recommended) | `npm run seed` | **Drops every table**, recreates them, inserts the 6 users / 5 venues / 5 events / 16 registrations / attendance / audit rows. |
+| **Start clean, with demo data** (recommended) | `npm run seed` | **Drops every table**, recreates them, inserts the 18 users / 7 venues / 11 events / 77 registrations / 20 check-ins / status history / audit rows. |
 | **Start clean, empty** | `npm run reset` | Drops and recreates the tables with no rows. You then create the first admin yourself (see below). |
 | **Just create missing tables** | `npm start` | `sync()` creates whatever is missing and leaves existing data alone. |
 
