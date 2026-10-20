@@ -52,6 +52,11 @@
                  style="display:inline-block;background:#1f2937;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:11px 18px;border-radius:8px;">
                 <%= cta.label %>
               </a>
+              <% if (secondary) { %>
+                <p style="margin:14px 0 0 0;font-size:13px;">
+                  <a href="<%= secondary.url %>" style="color:#2440a8;"><%= secondary.label %></a>
+                </p>
+              <% } %>
               <p style="margin:14px 0 0 0;font-size:12px;color:#9ca3af;word-break:break-all;">
                 If the button does not work, copy this link:<br />
                 <span style="color:#6b7280;"><%= cta.url %></span>

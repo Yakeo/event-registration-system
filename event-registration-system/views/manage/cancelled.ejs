@@ -1,0 +1,46 @@
+<%- include('../partials/header') %>
+
+<section class="narrow">
+  <div class="panel center">
+    <h1><%= alreadyCancelled ? 'Already cancelled' : 'Registration cancelled' %></h1>
+
+    <% if (alreadyCancelled) { %>
+      <p class="muted">
+        This registration was already cancelled — nothing further was changed.
+      </p>
+    <% } else { %>
+      <p class="muted">
+        Your slot for <strong><%= event ? event.title : 'the event' %></strong> has been released
+        and a confirmation e-mail is on its way.
+      </p>
+    <% } %>
+
+    <table class="kv">
+      <tr><th>Reference no.</th><td><strong><%= registration.referenceCode() %></strong></td></tr>
+      <tr><th>Participant</th><td><%= participant.full_name %></td></tr>
+      <tr><th>Event</th><td><%= event ? event.title : '—' %></td></tr>
+      <tr>
+        <th>Status</th>
+        <td><span class="badge badge-muted"><%= registration.status %></span></td>
+      </tr>
+      <% if (promoted) { %>
+        <tr>
+          <th>Waiting list</th>
+          <td>
+            <%= promoted.user ? promoted.user.full_name : 'The next person' %>
+            was promoted into the freed slot.
+          </td>
+        </tr>
+      <% } %>
+    </table>
+
+    <div class="btn-row">
+      <a class="btn btn-primary" href="/">Back to events</a>
+      <% if (event) { %>
+        <a class="btn btn-outline" href="/events/<%= event.event_id %>">View event page</a>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

@@ -3,9 +3,9 @@
 **Scope:** `event-registration-system/` (Node.js 18 · Express 4 · Sequelize 6 · EJS · SQLite/MySQL/PostgreSQL)
 **Branch:** `arena/fb51bb4e-event-registration-system`
 **Method:** static read of every model / controller / route / view + live run of the app against a scratch database (`DB_STORAGE=/tmp/app.sqlite`) + `npm test`.
-**Verdict in one line:** the original *logical* design (USERS — REGISTRATIONS — EVENTS) was sound but **under-modelled** — no venue, no attendance, no status history, no audit trail, token columns inside USERS — and the ERD did not match the DDL at all (relationship lines missed the foreign keys). Both parts have now been fixed: the running schema is **8 tables in 3NF/BCNF** (one documented exception, §4.2), 24 defects were corrected, and the ERD was rebuilt.
+**Verdict in one line:** the original *logical* design (USERS — REGISTRATIONS — EVENTS) was sound but **under-modelled** — no venue, no attendance, no status history, no audit trail, token columns inside USERS — and the ERD did not match the DDL at all (relationship lines missed the foreign keys). Both parts have now been fixed: the running schema is **10 tables in 3NF/BCNF** (one documented exception, §4.2), 24 defects were corrected, and the ERD was rebuilt.
 
-> **Status (updated after the follow-up round):** §4 "missing tables" and §5 "proposed v2" are now **implemented** in the running schema — `VENUES`, `ATTENDANCE`, `REGISTRATION_STATUS_CHANGES`, `AUDIT_LOGS`, `SESSIONS`, plus soft delete on `EVENTS`. What remains *proposed* is the stricter variant in `docs/schema-3nf.sql` (PASSWORD_RESET_TOKENS, lookup tables, NOTIFICATIONS, EVENT_STAFF).
+> **Status (updated after the follow-up rounds):** §4 "missing tables" and §5 "proposed v2" are now **implemented** in the running schema — `VENUES`, `ATTENDANCE`, `REGISTRATION_STATUS_CHANGES`, `AUDIT_LOGS`, `SESSIONS`, plus soft delete on `EVENTS`; the notification round added `NOTIFICATIONS` (§7.6) and the passwordless round added `MANAGE_TOKENS` (§7.7). What remains *proposed* is the stricter variant in `docs/schema-3nf.sql` (PASSWORD_RESET_TOKENS, lookup tables, EVENT_STAFF).
 
 ---
 
@@ -343,7 +343,7 @@ and automatic waitlist promotion never runs for concluded events.
 * **`sequelize.sync()`** is still the schema mechanism; adopt migrations
   (`sequelize-cli`/Umzug) before running against data you cannot rebuild.
 
-## 7.6 The nine-table schema (this round)
+## 7.6 The ten-table schema (after the notification + passwordless rounds)
 
 | Table | Role | Added |
 |---|---|---|
@@ -355,7 +355,26 @@ and automatic waitlist promotion never runs for concluded events.
 | `REGISTRATION_STATUS_CHANGES` | append-only status timeline | earlier round |
 | `AUDIT_LOGS` | administrative action trail | earlier round |
 | `SESSIONS` | express-session store | earlier round |
-| **`NOTIFICATIONS`** | **transactional outbox for e-mail** | **this round** |
+| `NOTIFICATIONS` | transactional outbox for e-mail | notification round |
+| **`MANAGE_TOKENS`** | **hashed `/r/:token` links for passwordless guest self-service** | **passwordless round** |
+
+### 7.7 Passwordless guest access (`MANAGE_TOKENS`)
+
+Participants no longer need a password to manage a booking, so the schema had to
+answer a new question: *how does an anonymous person prove they own a
+registration?*
+
+| Column | Rule |
+|---|---|
+| `token_hash` | `CHAR(64)`, `UNIQUE`. The URL carries 32 random bytes; only the SHA-256 digest is stored, so a dumped database cannot be replayed. |
+| `user_id` | `NOT NULL` FK → `USERS`, `ON DELETE CASCADE`. Every registration already creates a `USERS` row, so the link always has an owner. |
+| `registration_id` | `NULL` FK → `REGISTRATIONS`. `NULL` means "valid for every booking of this user", which is what the password-reset fallback needs. |
+| `expires_at` / `used_at` | 7-day TTL; `used_at` is set **inside** the cancel/claim transaction, so a token cannot be spent twice by two concurrent requests. Rendering `GET /r/:token` deliberately does **not** consume it. |
+
+`USERS.password` is `NULL` until the guest claims the account, and `claimed_at`
+records when that happened. `USER.verifyPassword()` returns `false` for a NULL
+hash instead of letting bcrypt throw, and the `beforeSave` hashing hook is
+guarded by `changed('password') && password`.
 
 Guest reference codes (`REG-00049-7F3A9C`) are **derived**, not stored: an
 HMAC of the primary key, so no column, no backfill and no uniqueness

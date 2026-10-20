@@ -4,7 +4,15 @@
  * and academic-defense-grade Forgot / Reset Password workflow.
  */
 const { Op } = require('sequelize');
-const { User, Registration, Event, eventVenueInclude, logAudit } = require('../models');
+const {
+  User,
+  Registration,
+  Event,
+  eventVenueInclude,
+  logAudit,
+} = require('../models');
+const format = require('../config/format');
+const manageTokens = require('../services/manageTokens');
 const { normalizeEmail, validatePassword, LIMITS } = require('../middlewares/validate');
 const { queue, link } = require('../services/notifications');
 const { safeRedirect, regenerateSession } = require('../middlewares/auth');
@@ -167,6 +175,61 @@ const authController = {
       });
     }
 
+    /* ---- guest account (registered without ever setting a password) -------
+     * Asking for a "password reset" when you never had one is confusing, and
+     * forcing a password just to cancel a booking is worse. Send the manage
+     * link back instead: it is the same credential they were given at
+     * registration, and the page offers a password as an option.
+     */
+    if (!user.hasPassword()) {
+      const latest = await Registration.findOne({
+        where: { user_id: user.user_id },
+        order: [['registration_id', 'DESC']],
+      });
+      const latestEvent = latest
+        ? await Event.findByPk(latest.event_id, { include: [eventVenueInclude] })
+        : null;
+
+      const rawToken = await manageTokens.issue({
+        userId: user.user_id,
+        registrationId: latest ? latest.registration_id : null,
+      });
+      const manageUrl = manageTokens.url(rawToken);
+
+      await queue({
+        kind: 'account_claim',
+        email: user.email,
+        userId: user.user_id,
+        registrationId: latest ? latest.registration_id : null,
+        eventId: latest ? latest.event_id : null,
+        payload: {
+          participant_name: user.full_name,
+          email: user.email,
+          manage_url: manageUrl,
+          event_id: latestEvent ? latestEvent.event_id : null,
+          event_title: latestEvent ? latestEvent.title : null,
+          event_date: latestEvent ? new Date(latestEvent.event_date).toISOString() : null,
+          venue_name: latestEvent ? format.venueName(latestEvent) : null,
+          reference: latest ? latest.referenceCode() : null,
+          status: latest ? latest.status : null,
+        },
+      });
+
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`\n[MANAGE LINK] ${user.email} has no password yet - issued a manage link:`);
+        console.log(`  ${manageUrl}\n`);
+      }
+
+      return res.render('auth/forgot-password', {
+        title: 'Manage link generated',
+        errors: [],
+        old: { email },
+        resetLink: manageUrl,
+        targetUser: { full_name: user.full_name, email: user.email },
+        submitted: true,
+      });
+    }
+
     // Generate secure token and set 1-hour expiration
     const token = await user.generateResetToken();
     const resetUrl = `/reset-password/${token}`;
@@ -264,10 +327,12 @@ const authController = {
       });
     }
 
-    // Update password and clear reset token fields
+    // Update password and clear reset token fields. Setting the first password
+    // also claims a guest account, so it stops being passwordless.
     user.password = password;
     user.reset_password_token = null;
     user.reset_password_expires = null;
+    if (!user.claimed_at) user.claimed_at = new Date();
     await user.save();
 
     await logAudit({

@@ -91,25 +91,25 @@
     </div>
 
     <h2><span class="num">2.</span> Entity Relationship Diagram (ERD)</h2>
-    <div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1470" width="1500" height="1470" font-family="'Segoe UI',Arial,Helvetica,sans-serif">
+    <div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1850" width="1500" height="1850" font-family="'Segoe UI','DejaVu Sans',Arial,Helvetica,sans-serif">
 <defs>
 <linearGradient id="e_hd" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#26407a"/><stop offset="100%" stop-color="#2f5bff"/></linearGradient>
 <style>.e_ent-title{fill:#fff;font-size:16px;font-weight:700;letter-spacing:.05em}.e_fld{fill:#15203a;font-size:13px}.e_typ{fill:#6b7691;font-size:11px}.e_pk{fill:#b42b45;font-size:10px;font-weight:700}.e_fk{fill:#2440a8;font-size:10px;font-weight:700}.e_uq{fill:#0c7a52;font-size:10px;font-weight:700}.e_rel{fill:#15203a;font-size:12.5px;font-weight:700}.e_card{fill:#46527a;font-size:11.5px}.e_note{fill:#33406b;font-size:12px}.e_note-b{fill:#15203a;font-size:12.5px;font-weight:700}.e_h1{fill:#15203a;font-size:22px;font-weight:700}.e_sub{fill:#6b7691;font-size:12.5px}.e_legend{fill:#46527a;font-size:11.5px}</style>
 <filter id="e_sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#15203a" flood-opacity="0.12"/></filter>
 </defs>
-<rect width="1500" height="1470" fill="#f5f7fb"/>
+<rect width="1500" height="1850" fill="#f5f7fb"/>
 <text class="e_h1" x="40" y="48">Entity Relationship Diagram — Event Registration System</text>
-<text class="e_sub" x="40" y="72">8 tables · crow&#8217;s-foot notation · solid = enforced foreign key, dashed = nullable audit reference</text>
+<text class="e_sub" x="40" y="72">10 tables &#183; crow&#8217;s-foot notation &#183; solid = enforced foreign key, dashed = nullable reference (audit trail and outbox)</text>
 <path d="M400 191.0 L462 191.0 L462 221.0 L560 221.0" fill="none" stroke="#46527a" stroke-width="1.7"/>
 <line x1="414" y1="181.0" x2="414" y2="201.0" stroke="#46527a" stroke-width="2.4"/>
 <line x1="560" y1="211.0" x2="540" y2="221.0" stroke="#46527a" stroke-width="1.8"/><line x1="560" y1="231.0" x2="540" y2="221.0" stroke="#46527a" stroke-width="1.8"/>
 <text class="e_rel" x="422" y="179.0" text-anchor="middle">1</text>
-<text class="e_rel" x="526" y="208.0" text-anchor="middle">0..*</text>
+<text class="e_rel" x="478" y="210.0" text-anchor="start">0..*</text>
 <path d="M1080 191.0 L962 191.0 L962 251.0 L920 251.0" fill="none" stroke="#46527a" stroke-width="1.7"/>
 <line x1="1056" y1="191.0" x2="1076" y2="191.0" stroke="#46527a" stroke-width="2.4"/>
 <line x1="920" y1="241.0" x2="940" y2="251.0" stroke="#46527a" stroke-width="1.8"/><line x1="920" y1="261.0" x2="940" y2="251.0" stroke="#46527a" stroke-width="1.8"/>
 <text class="e_rel" x="1058" y="179.0" text-anchor="end">1</text>
-<text class="e_rel" x="954" y="238.0" text-anchor="start">0..*</text>
+<text class="e_rel" x="946" y="240.0" text-anchor="start">0..*</text>
 <path d="M1230 386 L1230 480" fill="none" stroke="#46527a" stroke-width="1.7"/>
 <line x1="1220" y1="468" x2="1240" y2="468" stroke="#46527a" stroke-width="2.4"/>
 <line x1="1220" y1="386" x2="1230" y2="406" stroke="#46527a" stroke-width="1.8"/><line x1="1240" y1="386" x2="1230" y2="406" stroke="#46527a" stroke-width="1.8"/>
@@ -124,16 +124,28 @@
 <line x1="810" y1="328" x2="810" y2="348" stroke="#46527a" stroke-width="2.4"/>
 <circle cx="904" cy="889.0" r="5" fill="#fff" stroke="#46527a" stroke-width="1.8"/>
 <text class="e_rel" x="1014" y="412" text-anchor="start">0..1</text>
-<path d="M160 386 L160 480" fill="none" stroke="#46527a" stroke-width="1.7"/>
-<line x1="150" y1="398" x2="170" y2="398" stroke="#46527a" stroke-width="2.4"/>
+<path d="M160 416 L160 480" fill="none" stroke="#46527a" stroke-width="1.7"/>
+<line x1="150" y1="428" x2="170" y2="428" stroke="#46527a" stroke-width="2.4"/>
 <line x1="150" y1="480" x2="160" y2="460" stroke="#46527a" stroke-width="1.8"/><line x1="170" y1="480" x2="160" y2="460" stroke="#46527a" stroke-width="1.8"/>
-<text class="e_rel" x="174" y="418" text-anchor="start">1</text>
+<text class="e_rel" x="174" y="448" text-anchor="start">1</text>
 <text class="e_rel" x="174" y="458" text-anchor="start">0..*</text>
-<path d="M400 372 L500 372 L500 689.0 L560 689.0" fill="none" stroke="#46527a" stroke-width="1.7" stroke-dasharray="7 5"/>
+<path d="M400 401.0 L500 401.0 L500 689.0 L560 689.0" fill="none" stroke="#46527a" stroke-width="1.7" stroke-dasharray="7 5"/>
 <line x1="560" y1="679.0" x2="540" y2="689.0" stroke="#46527a" stroke-width="1.8"/><line x1="560" y1="699.0" x2="540" y2="689.0" stroke="#46527a" stroke-width="1.8"/>
-<line x1="414" y1="362" x2="414" y2="382" stroke="#46527a" stroke-width="2.4"/>
+<line x1="414" y1="391.0" x2="414" y2="411.0" stroke="#46527a" stroke-width="2.4"/>
+<path d="M400 919.0 L440 919.0 L440 311.0 L400 311.0" fill="none" stroke="#46527a" stroke-width="1.7"/>
+<line x1="414" y1="301.0" x2="414" y2="321.0" stroke="#46527a" stroke-width="2.4"/>
+<line x1="400" y1="909.0" x2="420" y2="919.0" stroke="#46527a" stroke-width="1.8"/><line x1="400" y1="929.0" x2="420" y2="919.0" stroke="#46527a" stroke-width="1.8"/>
+<text class="e_rel" x="428" y="333.0" text-anchor="end">1</text>
+<text class="e_rel" x="414" y="906.0" text-anchor="start">0..*</text>
+<path d="M400 949.0 L512 949.0 L512 311.0 L560 311.0" fill="none" stroke="#46527a" stroke-width="1.7" stroke-dasharray="7 5"/>
+<line x1="560" y1="301.0" x2="540" y2="311.0" stroke="#46527a" stroke-width="1.8"/><line x1="560" y1="321.0" x2="540" y2="311.0" stroke="#46527a" stroke-width="1.8"/>
+<text class="e_rel" x="524" y="938.0" text-anchor="start">0..1</text>
+<text class="e_rel" x="524" y="333.0" text-anchor="start">0..*</text>
+<path d="M1080 979.0 L1044 979.0 L1044 191.0 L920 191.0" fill="none" stroke="#46527a" stroke-width="1.7" stroke-dasharray="7 5"/>
+<line x1="920" y1="181.0" x2="940" y2="191.0" stroke="#46527a" stroke-width="1.8"/><line x1="920" y1="201.0" x2="940" y2="191.0" stroke="#46527a" stroke-width="1.8"/>
+<text class="e_rel" x="1032" y="968.0" text-anchor="end">0..*</text>
 <g filter="url(#e_sh)">
-<rect x="40" y="132" width="360" height="254" rx="11" fill="#fff" stroke="#dbe2f0"/>
+<rect x="40" y="132" width="360" height="284" rx="11" fill="#fff" stroke="#dbe2f0"/>
 <path d="M40 143 a11 11 0 0 1 11-11 h338 a11 11 0 0 1 11 11 v33 h-360 z" fill="url(#e_hd)"/>
 <text class="e_ent-title" x="56" y="161">USERS</text>
 </g>
@@ -149,16 +161,19 @@
 <text class="e_typ" x="388" y="256" text-anchor="end">VARCHAR(160)</text>
 <line x1="40" y1="266" x2="400" y2="266" stroke="#eef1f8"/>
 <text class="e_fld" x="86" y="286">password</text>
-<text class="e_typ" x="388" y="286" text-anchor="end">VARCHAR(255) bcrypt</text>
+<text class="e_typ" x="388" y="286" text-anchor="end">VARCHAR(255) bcrypt &#183; NULL &#183; NULL</text>
 <line x1="40" y1="296" x2="400" y2="296" stroke="#eef1f8"/>
-<text class="e_fld" x="86" y="316">role</text>
-<text class="e_typ" x="388" y="316" text-anchor="end">ENUM('admin','participant')</text>
+<text class="e_fld" x="86" y="316">claimed_at</text>
+<text class="e_typ" x="388" y="316" text-anchor="end">DATETIME &#183; NULL</text>
 <line x1="40" y1="326" x2="400" y2="326" stroke="#eef1f8"/>
-<text class="e_fld" x="86" y="346">reset_password_token</text>
-<text class="e_typ" x="388" y="346" text-anchor="end">CHAR(64) sha256 &#183; NULL</text>
+<text class="e_fld" x="86" y="346">role</text>
+<text class="e_typ" x="388" y="346" text-anchor="end">ENUM('admin','participant')</text>
 <line x1="40" y1="356" x2="400" y2="356" stroke="#eef1f8"/>
-<text class="e_fld" x="86" y="376">reset_password_expires</text>
-<text class="e_typ" x="388" y="376" text-anchor="end">DATETIME &#183; NULL</text>
+<text class="e_fld" x="86" y="376">reset_password_token</text>
+<text class="e_typ" x="388" y="376" text-anchor="end">CHAR(64) sha256 &#183; NULL</text>
+<line x1="40" y1="386" x2="400" y2="386" stroke="#eef1f8"/>
+<text class="e_fld" x="86" y="406">reset_password_expires</text>
+<text class="e_typ" x="388" y="406" text-anchor="end">DATETIME &#183; NULL</text>
 <g filter="url(#e_sh)">
 <rect x="560" y="132" width="360" height="194" rx="11" fill="#fff" stroke="#dbe2f0"/>
 <path d="M560 143 a11 11 0 0 1 11-11 h338 a11 11 0 0 1 11 11 v33 h-360 z" fill="url(#e_hd)"/>
@@ -283,19 +298,19 @@
 <text class="e_fld" x="1126" y="634">city</text>
 <text class="e_typ" x="1428" y="634" text-anchor="end">VARCHAR(120)</text>
 <g filter="url(#e_sh)">
-<rect x="1080" y="800" width="360" height="134" rx="11" fill="#fff" stroke="#dbe2f0"/>
-<path d="M1080 811 a11 11 0 0 1 11-11 h338 a11 11 0 0 1 11 11 v33 h-360 z" fill="url(#e_hd)"/>
-<text class="e_ent-title" x="1096" y="829">SESSIONS</text>
+<rect x="40" y="1170" width="360" height="134" rx="11" fill="#fff" stroke="#dbe2f0"/>
+<path d="M40 1181 a11 11 0 0 1 11-11 h338 a11 11 0 0 1 11 11 v33 h-360 z" fill="url(#e_hd)"/>
+<text class="e_ent-title" x="56" y="1199">SESSIONS</text>
 </g>
-<rect x="1092" y="852" width="24" height="14" rx="4" fill="#fdeaee"/><text class="e_pk" x="1098" y="863">PK</text>
-<text class="e_fld" x="1126" y="864">sid</text>
-<text class="e_typ" x="1428" y="864" text-anchor="end">VARCHAR(64)</text>
-<line x1="1080" y1="874" x2="1440" y2="874" stroke="#eef1f8"/>
-<text class="e_fld" x="1126" y="894">data</text>
-<text class="e_typ" x="1428" y="894" text-anchor="end">TEXT (session JSON)</text>
-<line x1="1080" y1="904" x2="1440" y2="904" stroke="#eef1f8"/>
-<text class="e_fld" x="1126" y="924">expires_at</text>
-<text class="e_typ" x="1428" y="924" text-anchor="end">DATETIME</text>
+<rect x="52" y="1222" width="24" height="14" rx="4" fill="#fdeaee"/><text class="e_pk" x="58" y="1233">PK</text>
+<text class="e_fld" x="86" y="1234">sid</text>
+<text class="e_typ" x="388" y="1234" text-anchor="end">VARCHAR(64)</text>
+<line x1="40" y1="1244" x2="400" y2="1244" stroke="#eef1f8"/>
+<text class="e_fld" x="86" y="1264">data</text>
+<text class="e_typ" x="388" y="1264" text-anchor="end">TEXT (session JSON)</text>
+<line x1="40" y1="1274" x2="400" y2="1274" stroke="#eef1f8"/>
+<text class="e_fld" x="86" y="1294">expires_at</text>
+<text class="e_typ" x="388" y="1294" text-anchor="end">DATETIME</text>
 <g filter="url(#e_sh)">
 <rect x="560" y="800" width="360" height="194" rx="11" fill="#fff" stroke="#dbe2f0"/>
 <path d="M560 811 a11 11 0 0 1 11-11 h338 a11 11 0 0 1 11 11 v33 h-360 z" fill="url(#e_hd)"/>
@@ -318,28 +333,107 @@
 <line x1="560" y1="964" x2="920" y2="964" stroke="#eef1f8"/>
 <text class="e_fld" x="606" y="984">remarks</text>
 <text class="e_typ" x="908" y="984" text-anchor="end">VARCHAR(255) &#183; NULL</text>
+<g filter="url(#e_sh)">
+<rect x="40" y="800" width="360" height="254" rx="11" fill="#fff" stroke="#dbe2f0"/>
+<path d="M40 811 a11 11 0 0 1 11-11 h338 a11 11 0 0 1 11 11 v33 h-360 z" fill="url(#e_hd)"/>
+<text class="e_ent-title" x="56" y="829">MANAGE_TOKENS</text>
+</g>
+<rect x="52" y="852" width="24" height="14" rx="4" fill="#fdeaee"/><text class="e_pk" x="58" y="863">PK</text>
+<text class="e_fld" x="86" y="864">token_id</text>
+<text class="e_typ" x="388" y="864" text-anchor="end">INT AI</text>
+<line x1="40" y1="874" x2="400" y2="874" stroke="#eef1f8"/>
+<rect x="52" y="882" width="24" height="14" rx="4" fill="#e6f7ef"/><text class="e_uq" x="58" y="893">UQ</text>
+<text class="e_fld" x="86" y="894">token_hash</text>
+<text class="e_typ" x="388" y="894" text-anchor="end">CHAR(64) sha256</text>
+<line x1="40" y1="904" x2="400" y2="904" stroke="#eef1f8"/>
+<rect x="52" y="912" width="24" height="14" rx="4" fill="#e8eeff"/><text class="e_fk" x="58" y="923">FK</text>
+<text class="e_fld" x="86" y="924">user_id</text>
+<text class="e_typ" x="388" y="924" text-anchor="end">INT &#8594; USERS</text>
+<line x1="40" y1="934" x2="400" y2="934" stroke="#eef1f8"/>
+<rect x="52" y="942" width="24" height="14" rx="4" fill="#e8eeff"/><text class="e_fk" x="58" y="953">FK</text>
+<text class="e_fld" x="86" y="954">registration_id</text>
+<text class="e_typ" x="388" y="954" text-anchor="end">INT &#8594; REGISTRATIONS &#183; NULL</text>
+<line x1="40" y1="964" x2="400" y2="964" stroke="#eef1f8"/>
+<text class="e_fld" x="86" y="984">expires_at</text>
+<text class="e_typ" x="388" y="984" text-anchor="end">DATETIME</text>
+<line x1="40" y1="994" x2="400" y2="994" stroke="#eef1f8"/>
+<text class="e_fld" x="86" y="1014">used_at</text>
+<text class="e_typ" x="388" y="1014" text-anchor="end">DATETIME &#183; NULL</text>
+<line x1="40" y1="1024" x2="400" y2="1024" stroke="#eef1f8"/>
+<text class="e_fld" x="86" y="1044">created_at</text>
+<text class="e_typ" x="388" y="1044" text-anchor="end">DATETIME</text>
+<g filter="url(#e_sh)">
+<rect x="1080" y="800" width="360" height="404" rx="11" fill="#fff" stroke="#dbe2f0"/>
+<path d="M1080 811 a11 11 0 0 1 11-11 h338 a11 11 0 0 1 11 11 v33 h-360 z" fill="url(#e_hd)"/>
+<text class="e_ent-title" x="1096" y="829">NOTIFICATIONS</text>
+</g>
+<rect x="1092" y="852" width="24" height="14" rx="4" fill="#fdeaee"/><text class="e_pk" x="1098" y="863">PK</text>
+<text class="e_fld" x="1126" y="864">notification_id</text>
+<text class="e_typ" x="1428" y="864" text-anchor="end">INT AI</text>
+<line x1="1080" y1="874" x2="1440" y2="874" stroke="#eef1f8"/>
+<rect x="1092" y="882" width="24" height="14" rx="4" fill="#e8eeff"/><text class="e_fk" x="1098" y="893">FK</text>
+<text class="e_fld" x="1126" y="894">user_id</text>
+<text class="e_typ" x="1428" y="894" text-anchor="end">INT &#8594; USERS &#183; NULL</text>
+<line x1="1080" y1="904" x2="1440" y2="904" stroke="#eef1f8"/>
+<text class="e_fld" x="1126" y="924">email</text>
+<text class="e_typ" x="1428" y="924" text-anchor="end">VARCHAR(160)</text>
+<line x1="1080" y1="934" x2="1440" y2="934" stroke="#eef1f8"/>
+<text class="e_fld" x="1126" y="954">kind</text>
+<text class="e_typ" x="1428" y="954" text-anchor="end">VARCHAR(40) enum-ish</text>
+<line x1="1080" y1="964" x2="1440" y2="964" stroke="#eef1f8"/>
+<rect x="1092" y="972" width="24" height="14" rx="4" fill="#e8eeff"/><text class="e_fk" x="1098" y="983">FK</text>
+<text class="e_fld" x="1126" y="984">registration_id</text>
+<text class="e_typ" x="1428" y="984" text-anchor="end">INT &#8594; REGISTRATIONS &#183; NULL</text>
+<line x1="1080" y1="994" x2="1440" y2="994" stroke="#eef1f8"/>
+<rect x="1092" y="1002" width="24" height="14" rx="4" fill="#e8eeff"/><text class="e_fk" x="1098" y="1013">FK</text>
+<text class="e_fld" x="1126" y="1014">event_id</text>
+<text class="e_typ" x="1428" y="1014" text-anchor="end">INT &#8594; EVENTS &#183; NULL</text>
+<line x1="1080" y1="1024" x2="1440" y2="1024" stroke="#eef1f8"/>
+<text class="e_fld" x="1126" y="1044">payload</text>
+<text class="e_typ" x="1428" y="1044" text-anchor="end">TEXT json &#183; NULL</text>
+<line x1="1080" y1="1054" x2="1440" y2="1054" stroke="#eef1f8"/>
+<text class="e_fld" x="1126" y="1074">status</text>
+<text class="e_typ" x="1428" y="1074" text-anchor="end">VARCHAR(10) queued/sent/failed</text>
+<line x1="1080" y1="1084" x2="1440" y2="1084" stroke="#eef1f8"/>
+<text class="e_fld" x="1126" y="1104">attempts</text>
+<text class="e_typ" x="1428" y="1104" text-anchor="end">INT default 0</text>
+<line x1="1080" y1="1114" x2="1440" y2="1114" stroke="#eef1f8"/>
+<text class="e_fld" x="1126" y="1134">last_error</text>
+<text class="e_typ" x="1428" y="1134" text-anchor="end">VARCHAR(255) &#183; NULL</text>
+<line x1="1080" y1="1144" x2="1440" y2="1144" stroke="#eef1f8"/>
+<text class="e_fld" x="1126" y="1164">created_at</text>
+<text class="e_typ" x="1428" y="1164" text-anchor="end">DATETIME</text>
+<line x1="1080" y1="1174" x2="1440" y2="1174" stroke="#eef1f8"/>
+<text class="e_fld" x="1126" y="1194">sent_at</text>
+<text class="e_typ" x="1428" y="1194" text-anchor="end">DATETIME &#183; NULL</text>
+<text class="e_card" x="1080" y="1230">dashed FK: user_id &#8594; USERS, event_id &#8594; EVENTS (both nullable)</text>
+<text class="e_card" x="424" y="1230">express-session payload</text>
+<text class="e_card" x="424" y="1252">purged on expiry &#183; no foreign key</text>
+<text class="e_card" x="424" y="1274">(table kept for the session store)</text>
 <rect x="1030" y="84" width="430" height="54" rx="9" fill="#fff" stroke="#dbe2f0"/>
 <rect x="1044" y="97" width="24" height="14" rx="4" fill="#fdeaee"/><text class="e_pk" x="1050" y="108">PK</text><text class="e_legend" x="1074" y="109">primary key</text>
 <rect x="1164" y="97" width="24" height="14" rx="4" fill="#e8eeff"/><text class="e_fk" x="1170" y="108">FK</text><text class="e_legend" x="1194" y="109">foreign key</text>
 <rect x="1284" y="97" width="24" height="14" rx="4" fill="#e6f7ef"/><text class="e_uq" x="1290" y="108">UQ</text><text class="e_legend" x="1314" y="109">unique key</text>
 <line x1="1384" y1="105" x2="1414" y2="105" stroke="#46527a" stroke-width="1.7"/><text class="e_legend" x="1420" y="109">1</text>
 <text class="e_legend" x="1436" y="109">bar</text>
-<text class="e_legend" x="1044" y="128">0..* = zero or many &#183; 0..1 = optional one &#183; dashed = nullable audit reference</text>
-<rect x="40" y="1010" width="1420" height="382" rx="14" fill="#e8eeff" stroke="#c6d3fb"/>
-<text class="e_note-b" x="66" y="1040">Keys, constraints and rules enforced by the schema</text>
-<text class="e_note" x="66" y="1066"><tspan font-weight="700">Duplicate rule:</tspan> UNIQUE (event_id, user_id) on REGISTRATIONS &#8212; one registration per participant per event.</text>
-<text class="e_note" x="66" y="1090"><tspan font-weight="700">Capacity rule:</tspan> COUNT(status = 'confirmed') may never exceed EVENTS.max_participants; checked inside a transaction with a row lock.</text>
-<text class="e_note" x="66" y="1114"><tspan font-weight="700">Attendance rule:</tspan> UNIQUE (registration_id) on ATTENDANCE &#8212; a participant can be checked in only once, and only while confirmed.</text>
-<text class="e_note" x="66" y="1138"><tspan font-weight="700">Venue rule:</tspan> UNIQUE (name, city) on VENUES; EVENTS.venue_id is NOT NULL, so the venue name is stored once.</text>
-<text class="e_note" x="66" y="1162"><tspan font-weight="700">Referential integrity:</tspan> REGISTRATIONS &#8594; USERS/EVENTS, ATTENDANCE &#8594; REGISTRATIONS, REGISTRATION_STATUS_CHANGES &#8594; REGISTRATIONS &#8594; ON DELETE CASCADE;</text>
-<text class="e_note" x="66" y="1182">AUDIT_LOGS.actor_id and the audit columns use ON DELETE SET NULL so history survives a deleted user.</text>
-<text class="e_note" x="66" y="1206"><tspan font-weight="700">Soft delete:</tspan> EVENTS.deleted_at keeps an archived event&#8217;s registrations, attendance and status history available for reports.</text>
-<text class="e_note" x="66" y="1230"><tspan font-weight="700">Indexes:</tspan> USERS(email UQ, reset_password_token UQ, role), VENUES(name, city UQ), EVENTS(event_date, venue_id),</text>
-<text class="e_note" x="66" y="1250">REGISTRATIONS(event_id,status), (user_id,status), (status,registration_date) &#8212; the FIFO waitlist queue; ATTENDANCE(registration_id UQ);</text>
-<text class="e_note" x="66" y="1270">REGISTRATION_STATUS_CHANGES(registration_id, changed_at); AUDIT_LOGS(entity, entity_id), (created_at); SESSIONS(expires_at).</text>
-<text class="e_note" x="66" y="1296"><tspan font-weight="700">SESSIONS:</tspan> no foreign key &#8212; it stores the serialised express-session payload and is purged by expiry.</text>
-<text class="e_note" x="66" y="1328" fill="#8a3b12"><tspan font-weight="700">Normalisation:</tspan> 1NF/2NF/3NF are satisfied for every table shown; the one remaining 3NF exception is the single-use reset token on USERS.</text>
-<text class="e_note" x="66" y="1354" fill="#8a3b12">A stricter variant (PASSWORD_RESET_TOKENS, lookup tables, NOTIFICATIONS) is proposed in docs/schema-3nf.sql.</text>
+<text class="e_legend" x="1044" y="128">0..* = zero or many &#183; 0..1 = optional one &#183; dashed = nullable reference</text>
+<rect x="40" y="1332" width="1420" height="416" rx="14" fill="#e8eeff" stroke="#c6d3fb"/>
+<text class="e_note-b" x="66" y="1362">Keys, constraints and rules enforced by the schema</text>
+<text class="e_note" x="66" y="1388"><tspan font-weight="700">Duplicate rule:</tspan> UNIQUE (event_id, user_id) on REGISTRATIONS &#8212; one registration per participant per event.</text>
+<text class="e_note" x="66" y="1412"><tspan font-weight="700">Capacity rule:</tspan> COUNT(status = 'confirmed') may never exceed EVENTS.max_participants; checked inside a transaction with a row lock.</text>
+<text class="e_note" x="66" y="1436"><tspan font-weight="700">Attendance rule:</tspan> UNIQUE (registration_id) on ATTENDANCE &#8212; a participant can be checked in only once, and only while confirmed.</text>
+<text class="e_note" x="66" y="1460"><tspan font-weight="700">Venue rule:</tspan> UNIQUE (name, city) on VENUES; EVENTS.venue_id is NOT NULL, so the venue name is stored once.</text>
+<text class="e_note" x="66" y="1484"><tspan font-weight="700">Referential integrity:</tspan> REGISTRATIONS &#8594; USERS/EVENTS, ATTENDANCE &#8594; REGISTRATIONS, REGISTRATION_STATUS_CHANGES &#8594; REGISTRATIONS &#8594; ON DELETE CASCADE;</text>
+<text class="e_note" x="66" y="1504">AUDIT_LOGS.actor_id and the audit columns use ON DELETE SET NULL so history survives a deleted user.</text>
+<text class="e_note" x="66" y="1528"><tspan font-weight="700">Soft delete:</tspan> EVENTS.deleted_at keeps an archived event&#8217;s registrations, attendance and status history available for reports.</text>
+<text class="e_note" x="66" y="1552"><tspan font-weight="700">Indexes:</tspan> USERS(email UQ, reset_password_token UQ, role), VENUES(name, city UQ), EVENTS(event_date, venue_id),</text>
+<text class="e_note" x="66" y="1572">REGISTRATIONS(event_id,status), (user_id,status), (status,registration_date) &#8212; the FIFO waitlist queue; ATTENDANCE(registration_id UQ);</text>
+<text class="e_note" x="66" y="1592">REGISTRATION_STATUS_CHANGES(registration_id, changed_at); AUDIT_LOGS(entity, entity_id), (created_at); SESSIONS(expires_at).</text>
+<text class="e_note" x="66" y="1618"><tspan font-weight="700">Outbox:</tspan> NOTIFICATIONS is written in the same transaction as the change it describes, then drained by the worker and retried up to 3 times.</text>
+<text class="e_note" x="66" y="1642"><tspan font-weight="700">Guest access:</tspan> MANAGE_TOKENS stores only the SHA-256 of the link token; USERS.password is NULL until the account is claimed (claimed_at), so a guest never needs a password to cancel.</text>
+<text class="e_note" x="66" y="1666"><tspan font-weight="700">SESSIONS:</tspan> no foreign key &#8212; it stores the serialised express-session payload and is purged by expiry.</text>
+<text class="e_note" x="66" y="1698" fill="#8a3b12"><tspan font-weight="700">Normalisation:</tspan> 1NF/2NF/3NF are satisfied for every table shown; the one remaining 3NF exception is the single-use reset token on USERS.</text>
+<text class="e_note" x="66" y="1722" fill="#8a3b12">A stricter variant (PASSWORD_RESET_TOKENS, lookup tables, NOTIFICATIONS) is proposed in docs/schema-3nf.sql.</text>
 </svg></div>
     <p class="caption">Source: <code>docs/ERD.svg</code> · raster copy <code>docs/ERD.png</code> ·
        crow&#8217;s foot notation</p>
@@ -371,53 +465,256 @@
     </div>
 
     <h2><span class="num">3.</span> System Flowchart</h2>
-    <div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 1182" width="1180" height="1182" font-family="'Segoe UI',Arial,Helvetica,sans-serif">
+    <div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 2714" width="1600" height="2714" font-family="'Segoe UI','DejaVu Sans',Arial,Helvetica,sans-serif">
 <defs>
-<style>.f_box{fill:#fff;stroke:#2f5bff;stroke-width:1.8}.f_proc{fill:#15203a;font-size:15px;font-weight:600}.f_term{fill:#fff;font-size:15px;font-weight:700;letter-spacing:.05em}.f_arr{stroke:#46527a;stroke-width:2;fill:none}.f_yes{fill:#10a36b;font-size:14px;font-weight:700}.f_no{fill:#e0425f;font-size:14px;font-weight:700}.f_h1{fill:#15203a;font-size:23px;font-weight:700}.f_sub{fill:#6b7691;font-size:13px}</style>
+<style>
+.f_box{fill:#fff;stroke:#2f5bff;stroke-width:1.8}
+.f_proc{fill:#15203a;font-size:14px;font-weight:600}
+.f_proc-s{fill:#15203a;font-size:12.5px;font-weight:600}
+.f_term{fill:#fff;font-size:14px;font-weight:700;letter-spacing:.04em}
+.f_arr{stroke:#46527a;stroke-width:1.9;fill:none}
+.f_yes{fill:#0c7a52;font-size:12.5px;font-weight:700}
+.f_no{fill:#e0425f;font-size:12.5px;font-weight:700}
+.f_h1{fill:#15203a;font-size:24px;font-weight:700}
+.f_sub{fill:#6b7691;font-size:13px}
+.f_sec{fill:#15203a;font-size:16px;font-weight:700}
+.f_secs{fill:#6b7691;font-size:12px}
+.f_colhead{fill:#2440a8;font-size:11.5px;font-weight:700;letter-spacing:.14em}
+.f_db{fill:#eef4ff;stroke:#2440a8;stroke-width:1.4}
+.f_dbn{fill:#f7f2fb;stroke:#5b4b8a;stroke-width:1.4}
+.f_dbt{fill:#15203a;font-family:'Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:11.5px}
+.f_dbn-t{fill:#3f3268;font-family:'Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:11.5px}
+.f_rw{fill:#0c7a52;font-size:10px;font-weight:700;letter-spacing:.1em}
+.f_ww{fill:#b42b45;font-size:10px;font-weight:700;letter-spacing:.1em}
+.f_note{fill:#5a6584;font-size:11.5px}
+</style>
 <marker id="f_ah" markerWidth="11" markerHeight="9" refX="9" refY="4.5" orient="auto"><path d="M0 0 L11 4.5 L0 9 z" fill="#46527a"/></marker>
-<filter id="f_sh2" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#15203a" flood-opacity="0.12"/></filter>
+<marker id="f_ahs" markerWidth="11" markerHeight="9" refX="2" refY="4.5" orient="auto"><path d="M11 0 L0 4.5 L11 9 z" fill="#46527a"/></marker>
+<filter id="f_sh" x="-20%" y="-30%" width="140%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#15203a" flood-opacity="0.10"/></filter>
 </defs>
-<rect width="1180" height="1182" fill="#f5f7fb"/>
-<text class="f_h1" x="30" y="52">System Flowchart &#8212; Online Event Registration</text>
-<text class="f_sub" x="30" y="76">Start &#8594; view event list &#8594; select event &#8594; slot check &#8594; validate &#8594; save registration &#8594; confirm &#8594; End</text>
-<g filter="url(#f_sh2)"><rect x="185.0" y="112" width="170" height="52" rx="26" fill="#26407a"/></g>
-<text class="f_term" x="270.0" y="144" text-anchor="middle">Start</text>
-<line class="f_arr" x1="270.0" y1="164" x2="270.0" y2="198" marker-end="url(#f_ah)"/>
-<g filter="url(#f_sh2)"><rect class="f_box" x="70.0" y="206" width="400" height="56" rx="10"/></g>
-<text class="f_proc" x="270.0" y="239.5" text-anchor="middle">User views event list</text>
-<line class="f_arr" x1="270.0" y1="262" x2="270.0" y2="296" marker-end="url(#f_ah)"/>
-<g filter="url(#f_sh2)"><rect class="f_box" x="70.0" y="304" width="400" height="56" rx="10"/></g>
-<text class="f_proc" x="270.0" y="337.5" text-anchor="middle">Select event</text>
-<line class="f_arr" x1="270.0" y1="360" x2="270.0" y2="394" marker-end="url(#f_ah)"/>
-<g filter="url(#f_sh2)"><path d="M270.0 402 L435.0 472.0 L270.0 542 L105.0 472.0 Z" fill="#fff" stroke="#2f5bff" stroke-width="1.8"/></g>
-<text class="f_proc" x="270.0" y="466.0" text-anchor="middle">Event has</text>
-<text class="f_proc" x="270.0" y="488.0" text-anchor="middle">available slots?</text>
-<line class="f_arr" x1="435.0" y1="472.0" x2="520.0" y2="472.0" marker-end="url(#f_ah)"/>
-<text class="f_no" x="451.0" y="458.0">No</text>
-<g filter="url(#f_sh2)"><rect class="f_box" x="520.0" y="414" width="320" height="56" rx="10"/></g>
-<text class="f_proc" x="680" y="447.5" text-anchor="middle">Show &#8220;Event full&#8221;</text>
-<line class="f_arr" x1="680" y1="470" x2="680" y2="511" marker-end="url(#f_ah)"/>
-<g filter="url(#f_sh2)"><rect x="605.0" y="515" width="150" height="52" rx="26" fill="#e0425f"/></g>
-<text class="f_term" x="680" y="547" text-anchor="middle">End</text>
-<line class="f_arr" x1="270.0" y1="542" x2="270.0" y2="576" marker-end="url(#f_ah)"/>
-<text class="f_yes" x="284.0" y="570">Yes</text>
-<g filter="url(#f_sh2)"><rect class="f_box" x="70.0" y="584" width="400" height="56" rx="10"/></g>
-<text class="f_proc" x="270.0" y="617.5" text-anchor="middle">Enter participant details</text>
-<line class="f_arr" x1="270.0" y1="640" x2="270.0" y2="674" marker-end="url(#f_ah)"/>
-<g filter="url(#f_sh2)"><rect class="f_box" x="70.0" y="682" width="400" height="56" rx="10"/></g>
-<text class="f_proc" x="270.0" y="715.5" text-anchor="middle">Validate email and required fields</text>
-<line class="f_arr" x1="270.0" y1="738" x2="270.0" y2="772" marker-end="url(#f_ah)"/>
-<g filter="url(#f_sh2)"><rect class="f_box" x="70.0" y="780" width="400" height="56" rx="10"/></g>
-<text class="f_proc" x="270.0" y="813.5" text-anchor="middle">Save registration</text>
-<line class="f_arr" x1="270.0" y1="836" x2="270.0" y2="870" marker-end="url(#f_ah)"/>
-<g filter="url(#f_sh2)"><rect class="f_box" x="70.0" y="878" width="400" height="56" rx="10"/></g>
-<text class="f_proc" x="270.0" y="911.5" text-anchor="middle">Recompute confirmed count (COUNT)</text>
-<line class="f_arr" x1="270.0" y1="934" x2="270.0" y2="968" marker-end="url(#f_ah)"/>
-<g filter="url(#f_sh2)"><rect class="f_box" x="70.0" y="976" width="400" height="56" rx="10"/></g>
-<text class="f_proc" x="270.0" y="1009.5" text-anchor="middle">Show confirmation</text>
-<line class="f_arr" x1="270.0" y1="1032" x2="270.0" y2="1066" marker-end="url(#f_ah)"/>
-<g filter="url(#f_sh2)"><rect x="185.0" y="1074" width="170" height="52" rx="26" fill="#26407a"/></g>
-<text class="f_term" x="270.0" y="1106" text-anchor="middle">End</text>
+<rect width="1600" height="2714" fill="#f5f7fb"/>
+<text class="f_h1" x="40" y="50">System Flowchart &#8212; Online Event Registration</text>
+<text class="f_sub" x="40" y="74">Participant registration, administration, and the notification worker &#8212; with every database read and write shown in order.</text>
+<rect x="24" y="96" width="1552" height="1114" rx="16" fill="#ffffff" stroke="#dbe2f0"/>
+<text class="f_sec" x="48" y="128">A &#183; Participant &#8212; browse, register, confirm</text>
+<text class="f_secs" x="48" y="148">Public pages. No login: the e-mailed link is the credential, so a guest never has to invent a password.</text>
+<text class="f_colhead" x="830" y="128" text-anchor="middle">DATABASE</text>
+<text class="f_colhead" x="1345" y="128" text-anchor="middle">WAITING LIST</text>
+<g filter="url(#f_sh)"><rect x="225.0" y="170" width="250" height="46" rx="23.0" fill="#26407a"/></g>
+<text class="f_term" x="350" y="198.0" text-anchor="middle">Start</text>
+<path class="f_arr" d="M350 216 L350 242" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_box" x="160.0" y="242" width="380" height="62" rx="10"/></g>
+<text class="f_proc" x="350" y="277.5" text-anchor="middle">Opens the event list  ( GET / )</text>
+<g filter="url(#f_sh)"><rect class="f_db" x="595.0" y="233.5" width="470" height="79" rx="8"/></g>
+<rect x="595.0" y="233.5" width="5" height="79" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="613.0" y="257.5">SELECT EVENTS &#10227; VENUES</text>
+<text class="f_dbt" x="613.0" y="274.5">COUNT(*) WHERE status='confirmed'</text>
+<text class="f_dbt" x="613.0" y="291.5">remaining = max_participants - taken</text>
+<path class="f_arr" d="M540.0 273.0 L592.0 273.0" marker-end="url(#f_ah)" marker-start="url(#f_ahs)" fill="none"/>
+<text class="f_rw" x="567.5" y="265.0" text-anchor="middle">READ</text>
+<path class="f_arr" d="M350 304 L350 340" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_box" x="160.0" y="340" width="380" height="62" rx="10"/></g>
+<text class="f_proc" x="350" y="375.5" text-anchor="middle">Selects one event  ( GET /events/:id )</text>
+<g filter="url(#f_sh)"><rect class="f_db" x="595.0" y="340.0" width="470" height="62" rx="8"/></g>
+<rect x="595.0" y="340.0" width="5" height="62" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="613.0" y="364.0">SELECT event + venue</text>
+<text class="f_dbt" x="613.0" y="381.0">COUNT confirmed seats</text>
+<path class="f_arr" d="M540.0 371.0 L592.0 371.0" marker-end="url(#f_ah)" marker-start="url(#f_ahs)" fill="none"/>
+<text class="f_rw" x="567.5" y="363.0" text-anchor="middle">READ</text>
+<path class="f_arr" d="M350 402 L350 438" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><path d="M350 438 L480.0 492.0 L350 546 L220.0 492.0 Z" fill="#fff" stroke="#2f5bff" stroke-width="1.8"/></g>
+<text class="f_proc" x="350" y="488.0" text-anchor="middle">Seats still</text>
+<text class="f_proc" x="350" y="506.0" text-anchor="middle">available?</text>
+<path class="f_arr" d="M480 492 L1107.0 492" marker-end="url(#f_ah)" fill="none"/>
+<text class="f_no" x="518" y="482" text-anchor="start">No</text>
+<g filter="url(#f_sh)"><rect class="f_box" x="1110.0" y="466" width="470" height="62" rx="10"/></g>
+<text class="f_proc" x="1345" y="501.5" text-anchor="middle">Joins the waiting list</text>
+<path class="f_arr" d="M1345 528 L1345 558" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_db" x="1110.0" y="558" width="470" height="96" rx="8"/></g>
+<rect x="1110.0" y="558" width="5" height="96" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="1128.0" y="582">INSERT REGISTRATIONS</text>
+<text class="f_dbt" x="1128.0" y="599">  status = 'waitlisted'</text>
+<text class="f_dbt" x="1128.0" y="616">INSERT REGISTRATION_STATUS_CHANGES</text>
+<text class="f_dbt" x="1128.0" y="633">INSERT NOTIFICATIONS  ('queued')</text>
+<text class="f_ww" x="1536.0" y="548" text-anchor="start">WRITE</text>
+<path class="f_arr" d="M1345 654 L1345 682" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect x="1185.0" y="682" width="320" height="46" rx="23.0" fill="#5a6584"/></g>
+<text class="f_term" x="1345" y="710.0" text-anchor="middle">End &#8212; on the waiting list</text>
+<text class="f_note" x="1345" y="752" text-anchor="middle">Promoted to confirmed automatically when a seat frees up</text>
+<text class="f_note" x="1345" y="770" text-anchor="middle">(band C: FIFO by registration_date)</text>
+<path class="f_arr" d="M350 546 L350 580" marker-end="url(#f_ah)" fill="none"/>
+<text class="f_yes" x="360" y="570" text-anchor="start">Yes</text>
+<g filter="url(#f_sh)"><rect class="f_box" x="160.0" y="580" width="380" height="62" rx="10"/></g>
+<text class="f_proc" x="350" y="615.5" text-anchor="middle">Enters full name + e-mail address</text>
+<text class="f_note" x="830" y="628" text-anchor="middle">no write yet &#8212; nothing is stored before validation</text>
+<path class="f_arr" d="M350 642 L350 676" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_box" x="160.0" y="676" width="380" height="62" rx="10"/></g>
+<text class="f_proc" x="350" y="711.5" text-anchor="middle">Server validates fields and the duplicate rule</text>
+<g filter="url(#f_sh)"><rect class="f_db" x="595.0" y="676.0" width="470" height="62" rx="8"/></g>
+<rect x="595.0" y="676.0" width="5" height="62" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="613.0" y="700.0">SELECT USERS, REGISTRATIONS</text>
+<text class="f_dbt" x="613.0" y="717.0">WHERE (event_id, user_id)</text>
+<path class="f_arr" d="M540.0 707.0 L592.0 707.0" marker-end="url(#f_ah)" marker-start="url(#f_ahs)" fill="none"/>
+<text class="f_rw" x="567.5" y="699.0" text-anchor="middle">READ</text>
+<path class="f_arr" d="M350 738 L350 772" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_box" x="160.0" y="772" width="380" height="62" rx="10"/></g>
+<text class="f_proc" x="350" y="807.5" text-anchor="middle">Re-checks capacity inside a transaction</text>
+<g filter="url(#f_sh)"><rect class="f_db" x="595.0" y="772.0" width="470" height="62" rx="8"/></g>
+<rect x="595.0" y="772.0" width="5" height="62" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="613.0" y="796.0">SELECT event ... FOR UPDATE</text>
+<text class="f_dbt" x="613.0" y="813.0">COUNT confirmed (locked row)</text>
+<path class="f_arr" d="M540.0 803.0 L592.0 803.0" marker-end="url(#f_ah)" marker-start="url(#f_ahs)" fill="none"/>
+<text class="f_rw" x="567.5" y="795.0" text-anchor="middle">READ</text>
+<path class="f_arr" d="M350 834 L350 868" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_box" x="160.0" y="868" width="380" height="86" rx="10"/></g>
+<text class="f_proc-s" x="350" y="896.5" text-anchor="middle">BEGIN &#8594; INSERT registration</text>
+<text class="f_proc-s" x="350" y="915.5" text-anchor="middle">+ status history + notification</text>
+<text class="f_proc-s" x="350" y="934.5" text-anchor="middle">&#8594; COMMIT  (rollback on error)</text>
+<g filter="url(#f_sh)"><rect class="f_db" x="595.0" y="864" width="470" height="113" rx="8"/></g>
+<rect x="595.0" y="864" width="5" height="113" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="613.0" y="888">BEGIN</text>
+<text class="f_dbt" x="613.0" y="905">INSERT REGISTRATIONS</text>
+<text class="f_dbt" x="613.0" y="922">INSERT REGISTRATION_STATUS_CHANGES</text>
+<text class="f_dbt" x="613.0" y="939">INSERT NOTIFICATIONS ('queued')</text>
+<text class="f_dbt" x="613.0" y="956">COMMIT</text>
+<path class="f_arr" d="M540.0 911 L592.0 911" marker-end="url(#f_ah)" fill="none"/>
+<text class="f_ww" x="567.5" y="903" text-anchor="middle">WRITE</text>
+<text class="f_note" x="830" y="986" text-anchor="middle">one atomic unit: the booking, its history and the e-mail are all-or-nothing</text>
+<path class="f_arr" d="M350 954 L350 1004" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_box" x="160.0" y="1004" width="380" height="62" rx="10"/></g>
+<text class="f_proc" x="350" y="1039.5" text-anchor="middle">Renders the confirmation page</text>
+<g filter="url(#f_sh)"><rect class="f_db" x="595.0" y="995.5" width="470" height="79" rx="8"/></g>
+<rect x="595.0" y="995.5" width="5" height="79" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="613.0" y="1019.5">SELECT COUNT confirmed (fresh)</text>
+<text class="f_dbt" x="613.0" y="1036.5">reference = HMAC(registration_id)</text>
+<text class="f_dbt" x="613.0" y="1053.5">shown as REG-00049-7F3A9C</text>
+<path class="f_arr" d="M540.0 1035.0 L592.0 1035.0" marker-end="url(#f_ah)" marker-start="url(#f_ahs)" fill="none"/>
+<text class="f_rw" x="567.5" y="1027.0" text-anchor="middle">READ</text>
+<path class="f_arr" d="M350 1066 L350 1100" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect x="180.0" y="1100" width="340" height="46" rx="23.0" fill="#26407a"/></g>
+<text class="f_term" x="350" y="1128.0" text-anchor="middle">End &#8212; registration stored</text>
+<text class="f_note" x="350" y="1174" text-anchor="middle">the queued e-mail carries /r/:token &#8594; band C</text>
+<rect x="24" y="1234" width="1552" height="528" rx="16" fill="#ffffff" stroke="#dbe2f0"/>
+<text class="f_sec" x="48" y="1268">B &#183; Administration &#8212; authenticated session required</text>
+<text class="f_secs" x="48" y="1288">requireLogin + requireAdmin guard every route. Each action writes AUDIT_LOGS and queues a notification.</text>
+<text class="f_colhead" x="830" y="1268" text-anchor="middle">DATABASE</text>
+<g filter="url(#f_sh)"><rect x="195.0" y="1310" width="310" height="46" rx="23.0" fill="#26407a"/></g>
+<text class="f_term" x="350" y="1338.0" text-anchor="middle">Admin logs in  ( POST /login )</text>
+<g filter="url(#f_sh)"><rect class="f_db" x="595.0" y="1298" width="470" height="79" rx="8"/></g>
+<rect x="595.0" y="1298" width="5" height="79" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="613.0" y="1322">SELECT USERS WHERE email = ?</text>
+<text class="f_dbt" x="613.0" y="1339">bcrypt.compare(password, hash)</text>
+<text class="f_dbt" x="613.0" y="1356">INSERT / UPDATE SESSIONS</text>
+<path class="f_arr" d="M505 1333 L592.0 1347" marker-end="url(#f_ah)" fill="none"/>
+<text class="f_ww" x="550.0" y="1328" text-anchor="middle">WRITE</text>
+<path class="f_arr" d="M350 1356 L350 1386" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_box" x="160.0" y="1386" width="380" height="62" rx="10"/></g>
+<text class="f_proc" x="350" y="1421.5" text-anchor="middle">Dashboard  ( GET /admin )</text>
+<g filter="url(#f_sh)"><rect class="f_db" x="595.0" y="1377.5" width="470" height="79" rx="8"/></g>
+<rect x="595.0" y="1377.5" width="5" height="79" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="613.0" y="1401.5">SELECT aggregates:</text>
+<text class="f_dbt" x="613.0" y="1418.5">events &#183; confirmed &#183; waitlisted</text>
+<text class="f_dbt" x="613.0" y="1435.5">check-ins &#183; users</text>
+<path class="f_arr" d="M540.0 1417.0 L592.0 1417.0" marker-end="url(#f_ah)" marker-start="url(#f_ahs)" fill="none"/>
+<text class="f_rw" x="567.5" y="1409.0" text-anchor="middle">READ</text>
+<path class="f_arr" d="M350 1448 L350 1482" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_box" x="90.0" y="1482" width="420" height="81" rx="10"/></g>
+<text class="f_proc-s" x="300" y="1517.5" text-anchor="middle">Creates / edits /</text>
+<text class="f_proc-s" x="300" y="1536.5" text-anchor="middle">archives an event</text>
+<path class="f_arr" d="M300 1542 L300 1570" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_db" x="90.0" y="1570" width="420" height="79" rx="8"/></g>
+<rect x="90.0" y="1570" width="5" height="79" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="108.0" y="1594">INSERT / UPDATE EVENTS</text>
+<text class="f_dbt" x="108.0" y="1611">INSERT / UPDATE VENUES</text>
+<text class="f_dbt" x="108.0" y="1628">UPDATE deleted_at (archive)</text>
+<text class="f_ww" x="300" y="1678" text-anchor="middle">WRITE</text>
+<g filter="url(#f_sh)"><rect class="f_box" x="590.0" y="1482" width="420" height="62" rx="10"/></g>
+<text class="f_proc" x="800" y="1517.5" text-anchor="middle">Checks a participant in</text>
+<path class="f_arr" d="M800 1542 L800 1570" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_db" x="590.0" y="1570" width="420" height="79" rx="8"/></g>
+<rect x="590.0" y="1570" width="5" height="79" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="608.0" y="1594">INSERT ATTENDANCE</text>
+<text class="f_dbt" x="608.0" y="1611">UNIQUE(registration_id)</text>
+<text class="f_dbt" x="608.0" y="1628">INSERT AUDIT_LOGS</text>
+<text class="f_ww" x="800" y="1678" text-anchor="middle">WRITE</text>
+<g filter="url(#f_sh)"><rect class="f_box" x="1090.0" y="1482" width="420" height="81" rx="10"/></g>
+<text class="f_proc-s" x="1300" y="1517.5" text-anchor="middle">Cancels or changes</text>
+<text class="f_proc-s" x="1300" y="1536.5" text-anchor="middle">a status</text>
+<path class="f_arr" d="M1300 1542 L1300 1570" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_db" x="1090.0" y="1570" width="420" height="79" rx="8"/></g>
+<rect x="1090.0" y="1570" width="5" height="79" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="1108.0" y="1594">UPDATE REGISTRATIONS</text>
+<text class="f_dbt" x="1108.0" y="1611">INSERT STATUS_CHANGES</text>
+<text class="f_dbt" x="1108.0" y="1628">promote waitlist (FIFO)</text>
+<text class="f_ww" x="1300" y="1678" text-anchor="middle">WRITE</text>
+<rect x="48" y="1696" width="1504" height="46" rx="9" fill="#fdf2f5" stroke="#f3c9d4"/>
+<text class="f_note" x="68" y="1724">Every branch also writes <tspan font-weight="700">AUDIT_LOGS</tspan> (actor, action, entity, before/after) and queues <tspan font-weight="700">NOTIFICATIONS</tspan> rows &#8212; archiving an event queues one cancellation e-mail per affected participant.</text>
+<rect x="24" y="1786" width="1552" height="888" rx="16" fill="#ffffff" stroke="#dbe2f0"/>
+<text class="f_sec" x="48" y="1820">C &#183; Notification worker and guest self-service  ( /r/:token )</text>
+<text class="f_secs" x="48" y="1840">Delivery happens out of band, so an SMTP outage can never fail a registration; failures stay visible and retryable.</text>
+<text class="f_colhead" x="830" y="1820" text-anchor="middle">DATABASE</text>
+<text class="f_colhead" x="1345" y="1820" text-anchor="middle">ON FAILURE</text>
+<g filter="url(#f_sh)"><rect x="180.0" y="1868" width="340" height="46" rx="23.0" fill="#0f4c5c"/></g>
+<text class="f_term" x="350" y="1896.0" text-anchor="middle">Worker timer fires (every 15 s)</text>
+<g filter="url(#f_sh)"><rect class="f_db" x="595.0" y="1856" width="470" height="79" rx="8"/></g>
+<rect x="595.0" y="1856" width="5" height="79" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="613.0" y="1880">SELECT NOTIFICATIONS</text>
+<text class="f_dbt" x="613.0" y="1897">WHERE status = 'queued'</text>
+<text class="f_dbt" x="613.0" y="1914">ORDER BY created_at LIMIT 20</text>
+<path class="f_arr" d="M520 1891 L592.0 1902" marker-end="url(#f_ah)" fill="none"/>
+<text class="f_rw" x="557.5" y="1886" text-anchor="middle">READ</text>
+<path class="f_arr" d="M350 1914 L350 1944" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_box" x="160.0" y="1944" width="380" height="72" rx="10"/></g>
+<text class="f_proc-s" x="350" y="1975.0" text-anchor="middle">Renders the EJS e-mail template</text>
+<text class="f_proc-s" x="350" y="1994.0" text-anchor="middle">(subject + HTML + text alternative)</text>
+<path class="f_arr" d="M350 2016 L350 2046" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_box" x="160.0" y="2046" width="380" height="62" rx="10"/></g>
+<text class="f_proc" x="350" y="2081.5" text-anchor="middle">Sends through the transport (console .eml / SMTP)</text>
+<path class="f_arr" d="M350 2108 L350 2140" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><path d="M350 2140 L480.0 2192.0 L350 2244 L220.0 2192.0 Z" fill="#fff" stroke="#2f5bff" stroke-width="1.8"/></g>
+<text class="f_proc" x="350" y="2197.0" text-anchor="middle">Delivered?</text>
+<path class="f_arr" d="M480 2192 L1107.0 2192" marker-end="url(#f_ah)" fill="none"/>
+<text class="f_no" x="518" y="2182" text-anchor="start">No</text>
+<g filter="url(#f_sh)"><rect class="f_dbn" x="1110.0" y="2146" width="470" height="96" rx="8"/></g>
+<rect x="1110.0" y="2146" width="5" height="96" rx="2.5" fill="#5b4b8a"/>
+<text class="f_dbn-t" x="1128.0" y="2170">attempts = attempts + 1</text>
+<text class="f_dbn-t" x="1128.0" y="2187">requeue while attempts &lt; 3</text>
+<text class="f_dbn-t" x="1128.0" y="2204">then status = 'failed'</text>
+<text class="f_dbn-t" x="1128.0" y="2221">+ last_error (shown in the UI)</text>
+<text class="f_ww" x="1168.0" y="2182" text-anchor="middle">WRITE</text>
+<text class="f_note" x="1345" y="2272" text-anchor="middle">the Requeue button in /admin/notifications drains it immediately</text>
+<path class="f_arr" d="M350 2244 L350 2282" marker-end="url(#f_ah)" fill="none"/>
+<text class="f_yes" x="360" y="2270" text-anchor="start">Yes</text>
+<g filter="url(#f_sh)"><rect class="f_db" x="135.0" y="2282" width="430" height="62" rx="8"/></g>
+<rect x="135.0" y="2282" width="5" height="62" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="153.0" y="2306">UPDATE NOTIFICATIONS</text>
+<text class="f_dbt" x="153.0" y="2323">SET status = 'sent', sent_at = NOW()</text>
+<path class="f_arr" d="M350 2344 L350 2372" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_box" x="160.0" y="2372" width="380" height="62" rx="10"/></g>
+<text class="f_proc" x="350" y="2407.5" text-anchor="middle">Participant receives the e-mail</text>
+<path class="f_arr" d="M350 2434 L350 2464" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_box" x="160.0" y="2464" width="380" height="62" rx="10"/></g>
+<text class="f_proc" x="350" y="2499.5" text-anchor="middle">Opens /r/:token &#8212; no password required</text>
+<g filter="url(#f_sh)"><rect class="f_db" x="595.0" y="2455.5" width="470" height="79" rx="8"/></g>
+<rect x="595.0" y="2455.5" width="5" height="79" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="613.0" y="2479.5">SELECT MANAGE_TOKENS</text>
+<text class="f_dbt" x="613.0" y="2496.5">WHERE token_hash = SHA-256(token)</text>
+<text class="f_dbt" x="613.0" y="2513.5">JOIN USERS, REGISTRATIONS</text>
+<path class="f_arr" d="M540.0 2495.0 L592.0 2495.0" marker-end="url(#f_ah)" marker-start="url(#f_ahs)" fill="none"/>
+<text class="f_rw" x="567.5" y="2487.0" text-anchor="middle">READ</text>
+<path class="f_arr" d="M350 2526 L350 2556" marker-end="url(#f_ah)" fill="none"/>
+<g filter="url(#f_sh)"><rect class="f_box" x="180.0" y="2556" width="340" height="72" rx="10"/></g>
+<text class="f_proc-s" x="350" y="2587.0" text-anchor="middle">Views the booking, cancels it,</text>
+<text class="f_proc-s" x="350" y="2606.0" text-anchor="middle">or optionally sets a password</text>
+<g filter="url(#f_sh)"><rect class="f_db" x="595.0" y="2552" width="470" height="96" rx="8"/></g>
+<rect x="595.0" y="2552" width="5" height="96" rx="2.5" fill="#2440a8"/>
+<text class="f_dbt" x="613.0" y="2576">UPDATE status = 'cancelled'</text>
+<text class="f_dbt" x="613.0" y="2593">INSERT STATUS_CHANGES</text>
+<text class="f_dbt" x="613.0" y="2610">promote next waitlisted (FIFO)</text>
+<text class="f_dbt" x="613.0" y="2627">INSERT NOTIFICATIONS ('queued')</text>
+<path class="f_arr" d="M520 2592 L592.0 2592" marker-end="url(#f_ah)" fill="none"/>
+<text class="f_ww" x="557.5" y="2582" text-anchor="middle">WRITE</text>
+<text class="f_note" x="350" y="2660" text-anchor="middle">same engine as the logged-in cancel &#8212; cancelRegistration()</text>
 </svg></div>
     <p class="caption">Source: <code>docs/FLOWCHART.svg</code> · raster copy <code>docs/FLOWCHART.png</code></p>
 
@@ -451,7 +748,7 @@ Show confirmation                      ->  views/events/confirmation.ejs (REG-00
     <table><thead><tr><th>Feature</th><th>Route</th><th>Controller action</th><th>View / output</th></tr></thead><tbody><tr><td>Create, edit and delete events</td><td><code>GET/POST /admin/events</code>, <code>PUT/DELETE /admin/events/:id</code></td><td>eventController.create / update / destroy</td><td>admin/event-form.ejs, admin/events.ejs</td></tr><tr><td>Public event listing page</td><td><code>GET /</code></td><td>eventController.publicList</td><td>events/index.ejs with search and capacity bars</td></tr><tr><td>Online participant registration</td><td><code>POST /events/:id/register</code></td><td>registrationController.store</td><td>events/confirmation.ejs with reference no.</td></tr><tr><td>Limit registrations (max participants)</td><td>checked on submit</td><td>capacity check inside a transaction</td><td>events/full.ejs &mdash; &ldquo;Event full&rdquo;</td></tr><tr><td>Prevent duplicate registration (same email)</td><td>checked on submit</td><td>duplicate check + UNIQUE index</td><td>events/duplicate.ejs</td></tr><tr><td>View registered participants per event</td><td><code>GET /admin/events/:id/participants</code></td><td>adminController.participants</td><td>admin/participants.ejs with status filters</td></tr><tr><td>Generate attendance list</td><td><code>GET /admin/events/:id/attendance</code> and <code>.../attendance.csv</code></td><td>adminController.attendance / attendanceCsv</td><td>admin/attendance.ejs printable sheet + CSV</td></tr><tr><td>Waiting list (extension of the &ldquo;full&rdquo; branch)</td><td><code>POST /events/:id/waitlist</code></td><td>registrationController.waitlist</td><td>status <code>waitlisted</code>, auto-promoted on cancellation</td></tr><tr><td>Accounts and sessions</td><td><code>/register</code>, <code>/login</code>, <code>/logout</code>, <code>/my-registrations</code></td><td>authController</td><td>auth/*.ejs, my-registrations.ejs</td></tr></tbody></table>
 
     <h2><span class="num">5.</span> MVC Architecture</h2>
-    <div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1250 610" width="1250" height="610" font-family="'Segoe UI',Arial,Helvetica,sans-serif">
+    <div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1250 610" width="1250" height="610" font-family="'Segoe UI','DejaVu Sans',Arial,Helvetica,sans-serif">
 <defs><style>.m_t{fill:#15203a;font-size:16px;font-weight:700}.m_s{fill:#46527a;font-size:12.5px}.m_h1{fill:#15203a;font-size:23px;font-weight:700}.m_sub{fill:#6b7691;font-size:13px}.m_lab{fill:#46527a;font-size:12px;font-weight:600}.m_seq{fill:#33406b;font-size:13px}</style><marker id="m_a3" markerWidth="11" markerHeight="9" refX="9" refY="4.5" orient="auto"><path d="M0 0 L11 4.5 L0 9 z" fill="#46527a"/></marker><filter id="m_sh3" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#15203a" flood-opacity="0.12"/></filter></defs>
 <rect width="1250" height="610" fill="#f5f7fb"/>
 <text class="m_h1" x="30" y="52">MVC Architecture</text>
@@ -533,7 +830,7 @@ Show confirmation                      ->  views/events/confirmation.ejs (REG-00
     <table><thead><tr><th>Layer</th><th>File</th><th>Responsibility</th></tr></thead><tbody><tr><td><span class="pill m">M</span></td><td><code>models/User.js</code></td><td>USERS model - user_id PK, unique email, bcrypt hook, role</td></tr><tr><td><span class="pill m">M</span></td><td><code>models/Event.js</code></td><td>EVENTS model - event_id PK, title, description, event_date, venue, max_participants</td></tr><tr><td><span class="pill m">M</span></td><td><code>models/Registration.js</code></td><td>REGISTRATIONS model - PK, user_id FK, event_id FK, registration_date, status, UNIQUE(event_id, user_id)</td></tr><tr><td><span class="pill m">M</span></td><td><code>models/index.js</code></td><td>Loads models, defines the 1:0..* associations, capacity helper</td></tr></tbody></table>
     <table><thead><tr><th>Layer</th><th>File</th><th>Responsibility</th></tr></thead><tbody><tr><td><span class="pill v">V</span></td><td><code>views/events/index.ejs</code></td><td>Public event listing page with capacity bars and slot badges</td></tr><tr><td><span class="pill v">V</span></td><td><code>views/events/show.ejs</code></td><td>Event detail + online registration form</td></tr><tr><td><span class="pill v">V</span></td><td><code>views/events/confirmation.ejs</code></td><td>Confirmation page with reference number</td></tr><tr><td><span class="pill v">V</span></td><td><code>views/events/full.ejs</code></td><td>Show "Event full" page (flowchart No branch)</td></tr><tr><td><span class="pill v">V</span></td><td><code>views/events/duplicate.ejs</code></td><td>Duplicate-registration warning page</td></tr><tr><td><span class="pill v">V</span></td><td><code>views/admin/*.ejs</code></td><td>Dashboard, manage events, event form, participants, attendance sheet</td></tr><tr><td><span class="pill v">V</span></td><td><code>public/css/style.css</code></td><td>Responsive styling plus print stylesheet for the attendance list</td></tr><tr><td><span class="pill v">V</span></td><td><code>public/js/main.js</code></td><td>Client-side required-field and email validation</td></tr></tbody></table>
     <table><thead><tr><th>Layer</th><th>File</th><th>Responsibility</th></tr></thead><tbody><tr><td><span class="pill c">C</span></td><td><code>controllers/eventController.js</code></td><td>Public listing, event detail, create / edit / delete events</td></tr><tr><td><span class="pill c">C</span></td><td><code>controllers/registrationController.js</code></td><td>Slot check, validation, duplicate check, save in transaction, waitlist, cancel</td></tr><tr><td><span class="pill c">C</span></td><td><code>controllers/adminController.js</code></td><td>Dashboard, participants per event, attendance list + CSV export</td></tr><tr><td><span class="pill c">C</span></td><td><code>controllers/authController.js</code></td><td>Sign up, log in, log out, my registrations</td></tr></tbody></table>
-    <table><thead><tr><th>Layer</th><th>File</th><th>Responsibility</th></tr></thead><tbody><tr><td><span class="pill o">&#8212;</span></td><td><code>routes/index.js</code></td><td>Routing table mapping URLs to controller actions</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>middlewares/auth.js</code></td><td>Session auth, admin role guard, flash messages</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>middlewares/validate.js</code></td><td>Required-field, email and event validators</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>server.js</code></td><td>Express app bootstrap: views, session, routes, error pages, DB sync</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>seeders/seed.js</code></td><td>Demo users, 11 events and registrations (npm run seed)</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>services/notifications.js</code></td><td>Transactional outbox: queue + render e-mail</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>services/notificationWorker.js</code></td><td>Background worker that drains the outbox</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>models/Notification.js</code></td><td>NOTIFICATIONS - one row per e-mail owed</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>models/Venue.js</code></td><td>VENUES - venue master data (name, address, city)</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>models/Attendance.js</code></td><td>ATTENDANCE - physical check-in, UNIQUE(registration_id)</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>models/RegistrationStatusChange.js</code></td><td>REGISTRATION_STATUS_CHANGES - status timeline</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>models/AuditLog.js</code></td><td>AUDIT_LOGS - administrator action trail</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>models/Session.js</code></td><td>SESSIONS - persistent express-session store</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>middlewares/rateLimit.js</code></td><td>IP rate limiting and per-account login lockout</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>docs/schema.sql</code></td><td>MySQL DDL (8 tables) with the constraints and reporting queries</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>docs/DATABASE-AUDIT.md</code></td><td>Normalisation audit, fixes and remaining recommendations</td></tr></tbody></table>
+    <table><thead><tr><th>Layer</th><th>File</th><th>Responsibility</th></tr></thead><tbody><tr><td><span class="pill o">&#8212;</span></td><td><code>routes/index.js</code></td><td>Routing table mapping URLs to controller actions</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>middlewares/auth.js</code></td><td>Session auth, admin role guard, flash messages</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>middlewares/validate.js</code></td><td>Required-field, email and event validators</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>server.js</code></td><td>Express app bootstrap: views, session, routes, error pages, DB sync</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>seeders/seed.js</code></td><td>Demo users, 11 events and registrations (npm run seed)</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>services/notifications.js</code></td><td>Transactional outbox: queue + render e-mail</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>services/notificationWorker.js</code></td><td>Background worker that drains the outbox</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>models/Notification.js</code></td><td>NOTIFICATIONS - one row per e-mail owed</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>models/Venue.js</code></td><td>VENUES - venue master data (name, address, city)</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>models/Attendance.js</code></td><td>ATTENDANCE - physical check-in, UNIQUE(registration_id)</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>models/RegistrationStatusChange.js</code></td><td>REGISTRATION_STATUS_CHANGES - status timeline</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>models/AuditLog.js</code></td><td>AUDIT_LOGS - administrator action trail</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>models/Session.js</code></td><td>SESSIONS - persistent express-session store</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>middlewares/rateLimit.js</code></td><td>IP rate limiting and per-account login lockout</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>docs/schema.sql</code></td><td>MySQL DDL (10 tables) with the constraints and reporting queries</td></tr><tr><td><span class="pill o">&#8212;</span></td><td><code>docs/DATABASE-AUDIT.md</code></td><td>Normalisation audit, fixes and remaining recommendations</td></tr></tbody></table>
 
     <h2><span class="num">6.</span> Route / Endpoint Reference</h2>
     <table><thead><tr><th>Method</th><th>Path</th><th>Access</th><th>Controller action</th><th>Purpose</th></tr></thead><tbody><tr><td><code>GET</code></td><td><code>/</code></td><td>public</td><td><code>eventController.publicList</code></td><td>Public event listing page (search ?q=)</td></tr><tr><td><code>GET</code></td><td><code>/events/:id</code></td><td>public</td><td><code>eventController.show</code></td><td>Event detail + registration form</td></tr><tr><td><code>POST</code></td><td><code>/events/:id/register</code></td><td>public</td><td><code>registrationController.store</code></td><td>Save an online registration</td></tr><tr><td><code>POST</code></td><td><code>/events/:id/waitlist</code></td><td>public</td><td><code>registrationController.waitlist</code></td><td>Join the waiting list when full</td></tr><tr><td><code>POST</code></td><td><code>/registrations/:id/cancel</code></td><td>user</td><td><code>registrationController.cancel</code></td><td>Cancel own registration</td></tr><tr><td><code>GET/POST</code></td><td><code>/register</code></td><td>public</td><td><code>authController</code></td><td>Create an account</td></tr><tr><td><code>GET/POST</code></td><td><code>/login</code></td><td>public</td><td><code>authController</code></td><td>Log in</td></tr><tr><td><code>POST</code></td><td><code>/logout</code></td><td>user</td><td><code>authController.logout</code></td><td>Log out</td></tr><tr><td><code>GET</code></td><td><code>/my-registrations</code></td><td>user</td><td><code>authController.myRegistrations</code></td><td>Registrations of the logged-in user</td></tr><tr><td><code>GET</code></td><td><code>/admin</code></td><td>admin</td><td><code>adminController.dashboard</code></td><td>Dashboard tiles + latest registrations</td></tr><tr><td><code>GET</code></td><td><code>/admin/events</code></td><td>admin</td><td><code>eventController.adminIndex</code></td><td>Manage-events table</td></tr><tr><td><code>GET</code></td><td><code>/admin/events/new</code></td><td>admin</td><td><code>eventController.showCreateForm</code></td><td>Create-event form</td></tr><tr><td><code>POST</code></td><td><code>/admin/events</code></td><td>admin</td><td><code>eventController.create</code></td><td>Save new event</td></tr><tr><td><code>GET</code></td><td><code>/admin/events/:id/edit</code></td><td>admin</td><td><code>eventController.showEditForm</code></td><td>Edit-event form</td></tr><tr><td><code>PUT</code></td><td><code>/admin/events/:id</code></td><td>admin</td><td><code>eventController.update</code></td><td>Save event changes</td></tr><tr><td><code>DELETE</code></td><td><code>/admin/events/:id</code></td><td>admin</td><td><code>eventController.destroy</code></td><td>Delete event + its registrations</td></tr><tr><td><code>GET</code></td><td><code>/admin/events/:id/participants</code></td><td>admin</td><td><code>adminController.participants</code></td><td>Registered participants per event</td></tr><tr><td><code>POST</code></td><td><code>/admin/registrations/:id/status</code></td><td>admin</td><td><code>adminController.updateStatus</code></td><td>Confirm / waitlist / cancel a registration</td></tr><tr><td><code>GET</code></td><td><code>/admin/events/:id/attendance</code></td><td>admin</td><td><code>adminController.attendance</code></td><td>Generate printable attendance list</td></tr><tr><td><code>GET</code></td><td><code>/admin/events/:id/attendance.csv</code></td><td>admin</td><td><code>adminController.attendanceCsv</code></td><td>Download attendance list (CSV)</td></tr><tr><td><code>POST</code></td><td><code>/admin/attendance/:registrationId</code></td><td>admin</td><td><code>adminController.toggleAttendance</code></td><td>Check in / undo a participant</td></tr><tr><td><code>GET</code></td><td><code>/admin/registrations/:id/history</code></td><td>admin</td><td><code>adminController.registrationHistory</code></td><td>Status timeline of one registration</td></tr><tr><td><code>GET</code></td><td><code>/admin/audit</code></td><td>admin</td><td><code>adminController.auditIndex</code></td><td>Audit trail browser (filter + paging)</td></tr><tr><td><code>GET/POST</code></td><td><code>/admin/venues</code></td><td>admin</td><td><code>adminController.venues / createVenue</code></td><td>Venue master data</td></tr><tr><td><code>GET</code></td><td><code>/admin/events/archived</code></td><td>admin</td><td><code>eventController.archivedIndex</code></td><td>Soft-deleted (archived) events</td></tr></tbody></table>

@@ -47,10 +47,11 @@ event-registration-system/
 
 ## 3. Database Design & Entity Relationships (ERD)
 
-### Relational Schema (8 tables):
+### Relational Schema (10 tables):
 - **`VENUES` (1) ── (0..*) `EVENTS` (1) ── (0..*) `REGISTRATIONS` (0..*) ── (1) `USERS`**
 - **`REGISTRATIONS` (1) ── (0..1) `ATTENDANCE`** · **`REGISTRATIONS` (1) ── (0..*) `REGISTRATION_STATUS_CHANGES`**
 - **`USERS` (1) ── (0..*) `AUDIT_LOGS`** · **`SESSIONS`** (session store, no FK)
+- **`USERS` (1) ── (0..*) `MANAGE_TOKENS`** (hashed `/r/:token` links) · **`REGISTRATIONS` (1) ── (0..*) `NOTIFICATIONS`** (e-mail outbox, nullable FKs)
 
 | Entity | Primary Key | Foreign Keys | Key Attributes & Constraints |
 |---|---|---|---|
@@ -62,9 +63,13 @@ event-registration-system/
 | **`REGISTRATION_STATUS_CHANGES`** | `change_id` (INT) | `registration_id` → `REGISTRATIONS`<br>`changed_by` → `USERS` | `from_status`, `to_status`, `changed_at`, `reason` — `changed_by` NULL = automated promotion |
 | **`AUDIT_LOGS`** | `log_id` (BIGINT) | `actor_id` → `USERS` | `action`, `entity`, `entity_id`, `detail` (JSON), `created_at` |
 | **`SESSIONS`** | `sid` (VARCHAR 64) | None | `data` (session JSON), `expires_at` |
+| **`NOTIFICATIONS`** | `notification_id` (INT) | `user_id` → `USERS` (NULL)<br>`registration_id` → `REGISTRATIONS` (NULL)<br>`event_id` → `EVENTS` (NULL) | Transactional outbox: `email` snapshot, `kind`, `payload` (JSON), `status` ('queued' \| 'sent' \| 'failed'), `attempts`, `last_error`, `sent_at` |
+| **`MANAGE_TOKENS`** | `token_id` (INT) | `user_id` → `USERS`<br>`registration_id` → `REGISTRATIONS` (NULL) | `token_hash` (CHAR(64), SHA-256 of the URL token, **UNIQUE**), `expires_at` (7-day TTL), `used_at` — passwordless guest access |
 
 ### Normal form (panel question)
-Every table is in 1NF, 2NF and 3NF. `VENUES` removes the transitive dependency
+Every table is in 1NF, 2NF and 3NF. `MANAGE_TOKENS` stores only a derived digest
+(never the token itself) and `NOTIFICATIONS.payload` is an opaque delivery
+snapshot, not a fact that can drift. `VENUES` removes the transitive dependency
 `event → venue → address`; `REGISTRATION_STATUS_CHANGES` keeps transition data
 out of `REGISTRATIONS` (so no half-empty `cancelled_at`/`promoted_at` columns).
 The one documented exception is the single-use reset token on `USERS`; the

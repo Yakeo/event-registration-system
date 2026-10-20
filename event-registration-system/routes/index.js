@@ -14,6 +14,7 @@ const { eventController } = require('../controllers/eventController');
 const registrationController = require('../controllers/registrationController');
 const authController = require('../controllers/authController');
 const adminController = require('../controllers/adminController');
+const manageController = require('../controllers/manageController');
 const { requireLogin, requireAdmin, asyncHandler } = require('../middlewares/auth');
 const { createRateLimiter, accountLoginLockout } = require('../middlewares/rateLimit');
 
@@ -52,6 +53,19 @@ const signupLimiter = createRateLimiter({
 /* ------------------------------- PUBLIC ---------------------------------- */
 router.get('/', asyncHandler(eventController.publicList));              // public event listing page
 router.get('/events/:id', asyncHandler(eventController.show));          // event detail + registration form
+
+/* ------------------------ GUEST SELF-SERVICE (/r/:token) ------------------- */
+// The link in the confirmation e-mail IS the credential: no session required.
+const manageLinkLimiter = createRateLimiter({
+  scope: 'manage-link',
+  windowMs: 15 * 60 * 1000,
+  max: 40,
+  message: 'Too many changes from this address. Please try again later.',
+});
+
+router.get('/r/:token', asyncHandler(manageController.show));
+router.post('/r/:token/cancel', manageLinkLimiter, asyncHandler(manageController.cancel));
+router.post('/r/:token/claim', manageLinkLimiter, asyncHandler(manageController.claim));
 
 /* --------------------------- REGISTRATION FLOW ---------------------------- */
 router.post(

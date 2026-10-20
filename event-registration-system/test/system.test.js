@@ -40,10 +40,13 @@ const {
   queue,
   payloadFor,
   render,
+  contentFor,
   queueEventCancellation,
 } = require('../services/notifications');
 const { NotificationWorker } = require('../services/notificationWorker');
 const mailer = require('../services/mailer');
+const manageTokens = require('../services/manageTokens');
+const { ManageToken } = require('../models');
 
 describe('Event Registration System - Defense Verification Suite', () => {
   // Shared venue: EVENTS.venue_id is NOT NULL, so every event needs one.
@@ -774,6 +777,175 @@ describe('Event Registration System - Defense Verification Suite', () => {
     it('gives a different code per registration, so ids cannot be enumerated', () => {
       const codes = new Set([1, 2, 3, 4, 5, 6, 7, 8].map((id) => Registration.referenceFor(id)));
       assert.strictEqual(codes.size, 8);
+    });
+  });
+
+  /* --------------- 11. GUEST ACCOUNTS & MANAGE LINKS (PHASE 2) -------------- */
+  describe('11. Passwordless guest access', () => {
+    let guestEvent;
+
+    before(async () => {
+      guestEvent = await Event.create({
+        title: 'Guest Flow Event',
+        event_date: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000),
+        venue_id: venue.venue_id,
+        max_participants: 3,
+      });
+    });
+
+    beforeEach(async () => {
+      await ManageToken.destroy({ where: {}, truncate: true });
+      await Notification.destroy({ where: {}, truncate: true });
+      mailer.drainMemoryOutbox();
+    });
+
+    /** Mirrors what registrationController.store() does for a new e-mail. */
+    async function createGuest(email, status = 'confirmed') {
+      const user = await User.create({
+        full_name: 'Guest Person',
+        email,
+        password: null,
+        role: 'participant',
+      });
+      const registration = await Registration.create({
+        user_id: user.user_id,
+        event_id: guestEvent.event_id,
+        status,
+      });
+      const raw = await manageTokens.issue({
+        userId: user.user_id,
+        registrationId: registration.registration_id,
+      });
+      return { user, registration, raw };
+    }
+
+    it('creates a guest account with no password at all', async () => {
+      const { user } = await createGuest('guest-nopass@email.com');
+      const stored = await User.findByPk(user.user_id);
+
+      assert.strictEqual(stored.password, null);
+      assert.strictEqual(stored.claimed_at, null);
+      assert.strictEqual(stored.hasPassword(), false);
+    });
+
+    it('cannot authenticate an account that has no password', async () => {
+      const { user } = await createGuest('guest-nologin@email.com');
+      const stored = await User.findByPk(user.user_id);
+
+      assert.strictEqual(await stored.verifyPassword(''), false);
+      assert.strictEqual(await stored.verifyPassword('anything'), false);
+      assert.strictEqual(await stored.verifyPassword('null'), false);
+    });
+
+    it('stores only the SHA-256 digest of a manage token', async () => {
+      const { raw } = await createGuest('guest-hash@email.com');
+      const row = await ManageToken.findOne();
+
+      assert.strictEqual(row.token_hash, manageTokens.hash(raw));
+      assert.notStrictEqual(row.token_hash, raw);
+      assert.strictEqual(row.token_hash.length, 64);
+    });
+
+    it('resolves a valid token to its user and registration', async () => {
+      const { raw, registration, user } = await createGuest('guest-resolve@email.com');
+      const found = await manageTokens.verify(raw);
+
+      assert.ok(found);
+      assert.strictEqual(found.registration.registration_id, registration.registration_id);
+      assert.strictEqual(found.user.user_id, user.user_id);
+      assert.strictEqual(found.expired, false);
+      assert.strictEqual(found.used, false);
+    });
+
+    it('rejects unknown, malformed and expired tokens', async () => {
+      const { raw } = await createGuest('guest-expired@email.com');
+
+      assert.strictEqual(await manageTokens.verify('nope'), null);
+      assert.strictEqual(await manageTokens.verify('0'.repeat(64)), null);
+      assert.strictEqual(await manageTokens.verify(null), null);
+
+      // Force expiry: same raw token, past expiry date.
+      const row = await ManageToken.findOne();
+      await row.update({ expires_at: new Date(Date.now() - 1000) });
+      const expired = await manageTokens.verify(raw);
+      assert.ok(expired, 'the row still resolves');
+      assert.strictEqual(expired.expired, true, 'but it is reported as expired');
+    });
+
+    it('consumes a token for a state change, after which it is flagged used', async () => {
+      const { raw } = await createGuest('guest-consume@email.com');
+      const found = await manageTokens.verify(raw);
+      await manageTokens.consumeFor(found.token);
+
+      const after = await manageTokens.verify(raw);
+      assert.strictEqual(after.used, true);
+      assert.ok(after.token.used_at instanceof Date);
+    });
+
+    it('revokes every token when an account is claimed', async () => {
+      const { user, raw } = await createGuest('guest-revoke@email.com');
+      await manageTokens.issue({ userId: user.user_id });
+      assert.strictEqual(await ManageToken.count(), 2);
+
+      await manageTokens.revokeAllFor(user.user_id);
+      assert.strictEqual(await ManageToken.count(), 0);
+      assert.strictEqual(await manageTokens.verify(raw), null);
+    });
+
+    it('marks a guest as claimed once a password is set', async () => {
+      const { user } = await createGuest('guest-claimed@email.com');
+      const stored = await User.findByPk(user.user_id);
+
+      stored.password = 'brand-new-password';
+      await stored.markClaimed();
+
+      const after = await User.findByPk(user.user_id);
+      assert.match(after.password, /^\$2[ab]\$/, 'password must be bcrypt-hashed');
+      assert.ok(after.claimed_at instanceof Date);
+      assert.strictEqual(after.hasPassword(), true);
+      assert.strictEqual(await after.verifyPassword('brand-new-password'), true);
+    });
+
+    it('scopes the issued URL to APP_URL', () => {
+      const previous = process.env.APP_URL;
+      process.env.APP_URL = 'https://events.example.edu';
+      try {
+        assert.strictEqual(
+          manageTokens.url('abc123'),
+          'https://events.example.edu/r/abc123'
+        );
+      } finally {
+        if (previous === undefined) delete process.env.APP_URL;
+        else process.env.APP_URL = previous;
+      }
+    });
+
+    it('builds a guest e-mail whose primary action is the manage link', () => {
+      const view = contentFor('account_claim', {
+        participant_name: 'Guest Person',
+        event_title: 'Guest Flow Event',
+        status: 'confirmed',
+        manage_url: 'https://events.example.edu/r/tok',
+        event_id: 5,
+      });
+
+      assert.strictEqual(view.cta.url, 'https://events.example.edu/r/tok');
+      assert.match(view.cta.label, /Manage/i);
+      assert.ok(view.secondary, 'the event page stays available as a secondary link');
+      assert.match(view.footnote, /No password is required/i);
+    });
+
+    it('words the guest e-mail for a waitlisted registration', () => {
+      const view = contentFor('account_claim', {
+        participant_name: 'Guest Person',
+        event_title: 'Guest Flow Event',
+        status: 'waitlisted',
+        manage_url: 'https://events.example.edu/r/tok',
+      });
+
+      assert.match(view.subject, /waiting list/i);
+      assert.match(view.heading, /waiting list/i);
+      assert.doesNotMatch(view.intro, /is confirmed/);
     });
   });
 });

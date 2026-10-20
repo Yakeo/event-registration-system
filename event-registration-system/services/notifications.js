@@ -52,7 +52,16 @@ function contentFor(kind, payload = {}) {
   }
   if (payload.reason) rows.push(['Reason', payload.reason]);
 
-  const base = { tone: 'info', rows, footnote: null, cta: null };
+  // Guest self-service: when the registration e-mail carries a manage link,
+  // that is the primary button - it is the credential, not a decoration.
+  const manageCta = payload.manage_url
+    ? { label: 'Manage this registration', url: payload.manage_url }
+    : null;
+  const viewCta = payload.event_id
+    ? { label: 'View event details', url: link(`/events/${payload.event_id}`) }
+    : null;
+
+  const base = { tone: 'info', rows, footnote: null, cta: null, secondary: null };
 
   switch (kind) {
     case 'registration_confirmed':
@@ -62,7 +71,11 @@ function contentFor(kind, payload = {}) {
         subject: `Registration confirmed — ${eventTitle}`,
         heading: 'Your slot is confirmed',
         intro: `Hi ${payload.participant_name || 'there'}, your registration for ${eventTitle} has been confirmed. Please keep the reference number below for verification upon entry.`,
-        cta: { label: 'View event details', url: link(`/events/${payload.event_id || ''}`) },
+        cta: manageCta || viewCta,
+        secondary: manageCta ? viewCta : null,
+        footnote: manageCta
+          ? 'That link is personal — keep it to view or cancel this registration. No password needed.'
+          : null,
       };
 
     case 'waitlisted':
@@ -72,7 +85,11 @@ function contentFor(kind, payload = {}) {
         subject: `You are on the waiting list — ${eventTitle}`,
         heading: 'You are on the waiting list',
         intro: `Hi ${payload.participant_name || 'there'}, ${eventTitle} is currently at full capacity, so you have been placed on the official waiting list. If a confirmed participant cancels, the earliest person in the queue is promoted automatically and you will be e-mailed straight away.`,
-        cta: { label: 'View event details', url: link(`/events/${payload.event_id || ''}`) },
+        cta: manageCta || viewCta,
+        secondary: manageCta ? viewCta : null,
+        footnote: manageCta
+          ? 'Use that link to check your position or leave the waiting list.'
+          : null,
       };
 
     case 'promoted':
@@ -82,7 +99,7 @@ function contentFor(kind, payload = {}) {
         subject: `A seat opened up — you are confirmed for ${eventTitle}`,
         heading: 'A seat opened up',
         intro: `Hi ${payload.participant_name || 'there'}, a confirmed participant cancelled their slot, so you have been promoted from the waiting list and your registration for ${eventTitle} is now confirmed. No further action is needed.`,
-        cta: { label: 'View event details', url: link(`/events/${payload.event_id || ''}`) },
+        cta: viewCta,
       };
 
     case 'status_changed':
@@ -117,29 +134,34 @@ function contentFor(kind, payload = {}) {
       return {
         ...base,
         rows: [],
-        subject: 'Reset your EventReg password',
-        heading: 'Reset your password',
-        intro: `Hi ${payload.participant_name || 'there'}, we received a request to reset the password for ${payload.email || 'your account'}. This link expires in one hour and can only be used once.`,
+        subject: payload.is_new_account
+          ? 'Set a password for your EventReg account'
+          : 'Reset your EventReg password',
+        heading: payload.is_new_account ? 'Set a password' : 'Reset your password',
+        intro: payload.is_new_account
+          ? `Hi ${payload.participant_name || 'there'}, an account already exists for ${payload.email || 'your address'} from a previous registration, but it has no password yet. Choose one below to log in and see all your registrations.`
+          : `Hi ${payload.participant_name || 'there'}, we received a request to reset the password for ${payload.email || 'your account'}. This link expires in one hour and can only be used once.`,
         cta: { label: 'Choose a new password', url: payload.reset_url || link('/forgot-password') },
         footnote: 'If you did not request this, you can safely ignore this e-mail — your password will not change.',
       };
 
     case 'account_claim': {
-      // A brand-new account can also be waiting-listed, so the wording follows
-      // the actual status rather than assuming a confirmed seat.
+      // The person registered without an account; this message is both the
+      // receipt and the way in. Wording follows the actual status.
       const waiting = payload.status === 'waitlisted';
       return {
         ...base,
         tone: waiting ? 'warning' : 'success',
         subject: waiting
-          ? `You are on the waiting list for ${eventTitle} — set your password`
-          : `Your registration for ${eventTitle} — set your password`,
+          ? `You are on the waiting list for ${eventTitle}`
+          : `Your registration for ${eventTitle} is confirmed`,
         heading: waiting ? 'You are on the waiting list' : 'Your registration is confirmed',
         intro: waiting
-          ? `Hi ${payload.participant_name || 'there'}, ${eventTitle} is at full capacity, so you have been placed on the official waiting list. A profile was created for ${payload.email || 'your e-mail address'} — set a password to see your position and manage the booking yourself.`
-          : `Hi ${payload.participant_name || 'there'}, your registration for ${eventTitle} has been confirmed and a profile was created for ${payload.email || 'your e-mail address'}. Set a password to log in, see all your registrations and cancel a booking yourself.`,
-        cta: { label: 'Set your password', url: payload.claim_url || link('/forgot-password') },
-        footnote: 'This link expires in seven days. You can always request a new one from the Forgot Password page.',
+          ? `Hi ${payload.participant_name || 'there'}, ${eventTitle} is at full capacity, so you have been placed on the official waiting list. A profile was created for ${payload.email || 'your e-mail address'} — the link below is how you check your position or cancel.`
+          : `Hi ${payload.participant_name || 'there'}, your registration for ${eventTitle} is confirmed. A profile was created for ${payload.email || 'your e-mail address'}. The link below is yours: use it to view or cancel this registration, or to set a password if you would rather log in.`,
+        cta: manageCta || { label: 'Set your password', url: payload.claim_url || link('/forgot-password') },
+        secondary: manageCta ? viewCta : null,
+        footnote: 'No password is required — keep this link private, because anyone who has it can manage the booking.',
       };
     }
 
@@ -159,6 +181,7 @@ async function render(kind, payload) {
   const textLines = [view.heading, '', view.intro, ''];
   for (const [label, value] of view.rows) textLines.push(`${label}: ${value}`);
   if (view.cta) textLines.push('', `${view.cta.label}: ${view.cta.url}`);
+  if (view.secondary) textLines.push(`${view.secondary.label}: ${view.secondary.url}`);
   if (view.footnote) textLines.push('', view.footnote);
   textLines.push('', '— EventReg, Online Event Registration System');
   return { subject: view.subject, html, text: textLines.join('\n'), view };

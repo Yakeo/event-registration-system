@@ -121,7 +121,7 @@ files = [
     ('-', 'models/AuditLog.js', 'AUDIT_LOGS - administrator action trail'),
     ('-', 'models/Session.js', 'SESSIONS - persistent express-session store'),
     ('-', 'middlewares/rateLimit.js', 'IP rate limiting and per-account login lockout'),
-    ('-', 'docs/schema.sql', 'MySQL DDL (8 tables) with the constraints and reporting queries'),
+    ('-', 'docs/schema.sql', 'MySQL DDL (10 tables) with the constraints and reporting queries'),
     ('-', 'docs/DATABASE-AUDIT.md', 'Normalisation audit, fixes and remaining recommendations'),
 ]
 

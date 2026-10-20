@@ -93,7 +93,7 @@ reference specific IDs (`/admin/registrations/49/history`) keep working.
 
 ```sql
 USE event_registration;
-SHOW TABLES;                                  -- 9 tables
+SHOW TABLES;                                  -- 10 tables
 SELECT COUNT(*) FROM EVENTS;                  -- 11
 SELECT COUNT(*) FROM REGISTRATIONS;           -- 77
 SHOW CREATE TABLE REGISTRATIONS\G             -- InnoDB + unique index + FKs
