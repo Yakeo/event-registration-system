@@ -65,7 +65,7 @@ event-registration-system/
 │   ├── css/style.css            # responsive UI + print stylesheet
 │   └── js/main.js               # client-side form validation
 ├── seeders/
-│   ├── seed.js                  # demo users, events, registrations
+│   ├── seed.js                  # full demo dataset (18 users, 11 events, 77 registrations)
 │   └── reset.js                 # drop + recreate all tables
 ├── test/
 │   └── system.test.js           # automated test suite (25 tests, runs on an in-memory DB)
@@ -77,6 +77,7 @@ event-registration-system/
 │   ├── MVC-ARCHITECTURE.svg     # architecture diagram
 │   ├── DOCUMENTATION.md         # full system documentation
 │   ├── GETTING-STARTED.md       # ★ how to run it, initialise the DB, troubleshoot
+│   ├── DEMO-DATA.md             # ★ what the seed data contains and which screen it demos
 │   ├── DATABASE-AUDIT.md        # ★ normalisation audit, fixes, recommendations
 │   ├── schema.sql               # MySQL DDL for the running schema + reporting queries
 │   ├── schema-3nf.sql           # proposed normalised v2 schema (venue, attendance, tokens, audit)
@@ -99,7 +100,7 @@ npm install
 # 2. create the environment file
 cp .env.example .env          # Windows: copy .env.example .env
 
-# 3. load demo data (creates tables + 5 realistic events + seed accounts)
+# 3. load demo data (creates tables + 11 realistic events + seed accounts)
 npm run seed
 
 # 4. run automated test suite (verifies all 25 business rules & security controls)
@@ -120,7 +121,14 @@ Open <http://localhost:3000> in your browser.
 | Role | Email | Password | Purpose |
 |------|-------|----------|---------|
 | Admin / organiser | `admin@eventreg.test` | `admin123` | Full administrative control, event CRUD, user management, attendance reports |
+| Second admin | `organizer@eventreg.test` | `organizer123` | Shows the role switch and the `user.role_change` audit row |
 | Participant | `maria@email.com` | `maria123` | Event browsing, online registration, registration cancellation, password change |
+| Other participants | `juan@email.com` … `ella@email.com` | `password123` | Enough accounts to fill a waiting list |
+
+The seeded data covers every screen: 3 finished events with check-ins, a
+capacity-limited event, a full event with a waiting list, an empty event for a
+first registration demo, and an archived event. See
+[`docs/DEMO-DATA.md`](./docs/DEMO-DATA.md).
 
 ---
 

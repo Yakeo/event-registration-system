@@ -380,7 +380,7 @@ and automatic waitlist promotion never runs for concluded events.
 | `views/admin/{audit,venues,registration-history,archived}.ejs` | **new** pages |
 | `views/**` | venue helper, `data-*` hooks instead of inline handlers, attendance columns |
 | `public/js/main.js` | confirm / print / auto-submit handlers (CSP-safe) |
-| `seeders/seed.js` | 5 venues, 4 check-ins, 16 status-history rows, audit rows |
+| `seeders/seed.js` | 7 venues, 18 users, 11 events, 77 registrations, 20 check-ins, 81 status-history rows, 13 audit rows |
 | `test/system.test.js` | **25 tests** (was 16) — venues, attendance, history, audit, soft delete, rate limit, lockout, session store |
 | `docs/generate-diagrams.py`, `ERD.svg/.png` | rebuilt ERD: 8 tables, key-anchored connectors, cardinality marks |
 | `docs/schema.sql` | all 8 tables + updated reporting queries |

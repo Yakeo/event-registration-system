@@ -111,7 +111,7 @@ files = [
     ('-', 'middlewares/auth.js', 'Session auth, admin role guard, flash messages'),
     ('-', 'middlewares/validate.js', 'Required-field, email and event validators'),
     ('-', 'server.js', 'Express app bootstrap: views, session, routes, error pages, DB sync'),
-    ('-', 'seeders/seed.js', 'Demo users, 5 events and registrations (npm run seed)'),
+    ('-', 'seeders/seed.js', 'Demo users, 11 events and registrations (npm run seed)'),
     ('-', 'models/Venue.js', 'VENUES - venue master data (name, address, city)'),
     ('-', 'models/Attendance.js', 'ATTENDANCE - physical check-in, UNIQUE(registration_id)'),
     ('-', 'models/RegistrationStatusChange.js', 'REGISTRATION_STATUS_CHANGES - status timeline'),
