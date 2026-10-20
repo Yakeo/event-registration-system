@@ -3,14 +3,21 @@
  * Comprehensive automated test suite for academic defense evaluation.
  * Run with: npm test
  */
-const { describe, it, before, after } = require('node:test');
+const { describe, it, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert');
 const { Op } = require('sequelize');
 
 // The suite recreates the schema with { force: true }. Point it at an
 // in-memory database so `npm test` can never wipe the demo/development
 // database in database/event_registration.sqlite.
+//
+// DB_DIALECT must be pinned too: config/database.js calls dotenv, so a .env
+// left on `DB_DIALECT=mysql` would send sync({ force: true }) at the real
+// MySQL database and drop every table in it.
+process.env.DB_DIALECT = 'sqlite';
 process.env.DB_STORAGE = process.env.TEST_DB_STORAGE || ':memory:';
+// Never queue real mail while testing.
+process.env.MAIL_TRANSPORT = 'memory';
 
 const {
   sequelize,
@@ -28,6 +35,15 @@ const {
 const { validateRegistration, validateEvent, validatePassword } = require('../middlewares/validate');
 const { createRateLimiter, accountLoginLockout } = require('../middlewares/rateLimit');
 const { SequelizeSessionStore } = require('../config/sessionStore');
+const { Notification } = require('../models');
+const {
+  queue,
+  payloadFor,
+  render,
+  queueEventCancellation,
+} = require('../services/notifications');
+const { NotificationWorker } = require('../services/notificationWorker');
+const mailer = require('../services/mailer');
 
 describe('Event Registration System - Defense Verification Suite', () => {
   // Shared venue: EVENTS.venue_id is NOT NULL, so every event needs one.
@@ -541,6 +557,223 @@ describe('Event Registration System - Defense Verification Suite', () => {
 
       const valid = validatePassword('secret123', 'secret123');
       assert.strictEqual(valid.length, 0);
+    });
+  });
+
+  /* --------------------- 9. NOTIFICATION OUTBOX (NEW) ---------------------- */
+  describe('9. Notification outbox and delivery worker', () => {
+    let event;
+    let participant;
+
+    before(async () => {
+      event = await Event.create({
+        title: 'Outbox Test Event',
+        event_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+        venue_id: venue.venue_id,
+        max_participants: 5,
+      });
+      participant = await User.create({
+        full_name: 'Outbox Tester',
+        email: 'outbox@email.com',
+        password: 'password123',
+        role: 'participant',
+      });
+    });
+
+    beforeEach(async () => {
+      await Notification.destroy({ where: {}, truncate: true });
+      mailer.drainMemoryOutbox();
+    });
+
+    it('queues a row that starts life as "queued" with zero attempts', async () => {
+      const registration = await Registration.create({
+        user_id: participant.user_id,
+        event_id: event.event_id,
+        status: 'confirmed',
+      });
+
+      const row = await queue({
+        kind: 'registration_confirmed',
+        email: participant.email,
+        userId: participant.user_id,
+        registrationId: registration.registration_id,
+        eventId: event.event_id,
+        payload: payloadFor({ event, participant, registration }),
+      });
+
+      assert.strictEqual(row.status, 'queued');
+      assert.strictEqual(row.attempts, 0);
+      assert.strictEqual(row.kind, 'registration_confirmed');
+
+      const stored = Notification.findByPk(row.notification_id);
+      const parsed = (await stored).getPayload();
+      assert.strictEqual(parsed.event_title, 'Outbox Test Event');
+      assert.match(parsed.reference, /^REG-\d{5}-[0-9A-F]{6}$/);
+    });
+
+    it('renders a subject, HTML and text alternative for every kind', async () => {
+      for (const kind of Notification.KINDS) {
+        const message = await render(kind, {
+          participant_name: 'Outbox Tester',
+          event_title: 'Outbox Test Event',
+          event_date: new Date().toISOString(),
+          venue_name: 'Test Hall',
+          reference: 'REG-00001-ABCDEF',
+          status: 'confirmed',
+          reset_url: 'http://localhost/reset-password/abc',
+          claim_url: 'http://localhost/reset-password/abc',
+        });
+        assert.ok(message.subject.length > 0, `${kind} needs a subject`);
+        assert.match(message.html, /<!DOCTYPE html>/i, `${kind} should render the e-mail layout`);
+        assert.ok(message.text.includes('EventReg'), `${kind} needs a text alternative`);
+      }
+    });
+
+    it('escapes participant-controlled text instead of injecting HTML', async () => {
+      const message = await render('registration_confirmed', {
+        participant_name: '<script>alert(1)</script>',
+        event_title: 'XSS <b>Attempt</b>',
+        status: 'confirmed',
+      });
+      assert.ok(!message.html.includes('<script>alert(1)</script>'));
+      assert.ok(message.html.includes('&lt;script&gt;'));
+    });
+
+    it('delivers queued rows and stamps sent_at', async () => {
+      await queue({ kind: 'registration_confirmed', email: 'a@email.com', payload: { event_title: 'X' } });
+
+      const worker = new NotificationWorker({ maxAttempts: 3 });
+      const stats = await worker.drainOnce();
+
+      assert.strictEqual(stats.sent, 1);
+      const sent = await Notification.findOne({ where: { email: 'a@email.com' } });
+      assert.strictEqual(sent.status, 'sent');
+      assert.ok(sent.sent_at instanceof Date);
+      assert.strictEqual(mailer.drainMemoryOutbox().length, 1);
+    });
+
+    it('marks a row failed after the retry budget is spent, and keeps the error', async () => {
+      await queue({ kind: 'registration_confirmed', email: 'b@email.com', payload: { event_title: 'X' } });
+
+      const worker = new NotificationWorker({ maxAttempts: 1 });
+      // No transport can resolve 'smpt' (typo) - force a failure by making the
+      // template render throw on a circular payload.
+      const original = mailer.send;
+      mailer.send = async () => {
+        throw new Error('SMTP connection refused');
+      };
+
+      try {
+        await worker.drainOnce();
+        const row = await Notification.findOne({ where: { email: 'b@email.com' } });
+        assert.strictEqual(row.status, 'failed');
+        assert.strictEqual(row.attempts, 1);
+        assert.match(row.last_error, /SMTP connection refused/);
+      } finally {
+        mailer.send = original;
+      }
+    });
+
+    it('retries a failed row until it succeeds, then stops', async () => {
+      await queue({ kind: 'registration_confirmed', email: 'c@email.com', payload: { event_title: 'X' } });
+      const worker = new NotificationWorker({ maxAttempts: 3 });
+
+      const original = mailer.send;
+      let attempts = 0;
+      mailer.send = async (message) => {
+        attempts += 1;
+        if (attempts < 2) throw new Error('temporary failure');
+        return original(message);
+      };
+
+      try {
+        await worker.drainOnce(); // 1st attempt fails, row goes back to queued
+        let row = await Notification.findOne({ where: { email: 'c@email.com' } });
+        assert.strictEqual(row.status, 'queued');
+        assert.strictEqual(row.attempts, 1);
+
+        await worker.drainOnce(); // 2nd attempt succeeds
+        row = await Notification.findOne({ where: { email: 'c@email.com' } });
+        assert.strictEqual(row.status, 'sent');
+        assert.strictEqual(row.attempts, 2);
+      } finally {
+        mailer.send = original;
+      }
+    });
+
+    it('queues one cancellation notice per active registration', async () => {
+      // Own event: earlier tests in this suite already have registrations on
+      // the shared one, and this assertion counts rows.
+      const doomed = await Event.create({
+        title: 'Cancelled Trip',
+        event_date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        venue_id: venue.venue_id,
+        max_participants: 10,
+      });
+      const a = await User.create({ full_name: 'A', email: 'cancel-a@email.com', password: 'password123', role: 'participant' });
+      const b = await User.create({ full_name: 'B', email: 'cancel-b@email.com', password: 'password123', role: 'participant' });
+      const cancelled = await User.create({ full_name: 'C', email: 'cancel-c@email.com', password: 'password123', role: 'participant' });
+
+      const rows = [
+        { user_id: a.user_id, event_id: doomed.event_id, status: 'confirmed' },
+        { user_id: b.user_id, event_id: doomed.event_id, status: 'waitlisted' },
+        { user_id: cancelled.user_id, event_id: doomed.event_id, status: 'cancelled' },
+      ];
+      for (const row of rows) {
+        // eslint-disable-next-line no-await-in-loop
+        await Registration.create(row);
+      }
+
+      const affected = await Registration.findAll({
+        where: { event_id: doomed.event_id, status: ['confirmed', 'waitlisted'] },
+        include: [{ model: User, as: 'user' }],
+      });
+
+      const queued = await queueEventCancellation(doomed, affected);
+      assert.strictEqual(queued, 2, 'the already-cancelled registration gets no notice');
+
+      const all = await Notification.findAll();
+      assert.ok(all.every((n) => n.kind === 'event_cancelled'));
+    });
+
+    it('never queues a notification without a recipient', async () => {
+      await assert.rejects(
+        () => queue({ kind: 'registration_confirmed', email: '', payload: {} }),
+        /needs a recipient/
+      );
+    });
+
+    it('rejects an unknown notification kind at the model level', async () => {
+      await assert.rejects(
+        () => Notification.create({ kind: 'telepathy', email: 'x@email.com' }),
+        /Unknown notification kind/
+      );
+    });
+  });
+
+  /* ---------------------- 10. GUEST REFERENCE CODES ------------------------ */
+  describe('10. Signed guest reference codes', () => {
+    it('formats a reference as REG-<id>-<check>', () => {
+      assert.match(Registration.referenceFor(49), /^REG-00049-[0-9A-F]{6}$/);
+    });
+
+    it('round-trips a valid reference back to its registration id', () => {
+      const code = Registration.referenceFor(49);
+      assert.strictEqual(Registration.idFromReference(code), 49);
+    });
+
+    it('rejects a tampered or invented reference', () => {
+      const code = Registration.referenceFor(49);
+      assert.strictEqual(Registration.idFromReference('REG-00049-123456'), null);
+      assert.strictEqual(Registration.idFromReference('REG-00050-ABCDEF'), null);
+      assert.strictEqual(Registration.idFromReference('REG-49'), null);
+      assert.strictEqual(Registration.idFromReference(''), null);
+      assert.strictEqual(Registration.idFromReference(null), null);
+    });
+
+    it('gives a different code per registration, so ids cannot be enumerated', () => {
+      const codes = new Set([1, 2, 3, 4, 5, 6, 7, 8].map((id) => Registration.referenceFor(id)));
+      assert.strictEqual(codes.size, 8);
     });
   });
 });

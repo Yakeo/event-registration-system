@@ -25,9 +25,13 @@ npm start ──► node server.js
   creates any missing table. There are **no migration files** in this project —
   the models in `models/` are the source of truth.
 * **Seed data:** the committed `.sqlite` file is **already seeded** (18 users,
-  7 venues, 11 events, 77 registrations, 20 check-ins, status history and audit
-  rows). A fresh clone can just `npm start`. See
+  7 venues, 11 events, 77 registrations, 20 check-ins, status history, audit
+  rows and outbox history). A fresh clone can just `npm start`. See
   [`DEMO-DATA.md`](./DEMO-DATA.md) for a map of which row demonstrates what.
+* **E-mail:** an outbox table plus a background worker, not inline SMTP. The
+  default `MAIL_TRANSPORT=console` writes `.eml` files to `tmp/outbox/`, so the
+  whole notification flow works with no mail account. See
+  [`NOTIFICATIONS.md`](./NOTIFICATIONS.md).
 
 ---
 
@@ -118,9 +122,9 @@ delete the script (or keep it out of git).
 |--------|---------|-------|
 | `npm start` | `node server.js` | Creates missing tables, starts on port 3000. |
 | `npm run dev` | `node --watch server.js` | Auto-restart on save. |
-| `npm run seed` | `node seeders/seed.js` | **Destructive** reset + demo data. |
+| `npm run seed` | `node seeders/seed.js` | **Destructive** reset + demo data (incl. outbox history). |
 | `npm run reset` | `node seeders/reset.js` | **Destructive** reset, no data. |
-| `npm test` | `node --test test/system.test.js` | 25 tests on an **in-memory** DB — it never touches `database/`. |
+| `npm test` | `node --test test/system.test.js` | 38 tests on an **in-memory** DB — it never touches `database/` (or MySQL). |
 
 ---
 
@@ -167,6 +171,18 @@ DB_PORT=3306
 Create the empty database first (`CREATE DATABASE event_registration;`), then
 run `npm run seed` once to build the tables and demo rows. The MySQL DDL in
 `docs/schema.sql` is the same schema if you prefer to create it by hand.
+
+---
+
+## 6b. Health check
+
+```bash
+curl http://localhost:3000/healthz
+# {"status":"ok","dialect":"sqlite","notifications":"console","uptime":12}
+```
+
+`503` means the database connection is down. Point an uptime monitor (or a
+panel member's browser) at it.
 
 ---
 

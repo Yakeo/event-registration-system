@@ -12,6 +12,8 @@ const methodOverride = require('method-override');
 const { sequelize, dialect, Session } = require('./models');
 const { exposeUser, csrfProtection } = require('./middlewares/auth');
 const { SequelizeSessionStore } = require('./config/sessionStore');
+const { getNotificationWorker } = require('./services/notificationWorker');
+const mailer = require('./services/mailer');
 const routes = require('./routes');
 
 const app = express();
@@ -70,6 +72,10 @@ app.use(methodOverride('_method')); // lets HTML forms send PUT / DELETE
 const sessionStore =
   process.env.SESSION_STORE === 'memory' ? undefined : new SequelizeSessionStore();
 
+// Drains the NOTIFICATIONS outbox. MAIL_WORKER=off leaves rows queued, which is
+// what the admin "retry" button and the tests use.
+const notificationWorker = getNotificationWorker();
+
 app.use(
   session({
     name: 'eventreg.sid',
@@ -102,63 +108,38 @@ if (!sessionStore) {
 app.locals.currentUser = null;
 app.locals.flash = { success: null, error: null, info: null };
 app.locals.csrfToken = '';
+const format = require('./config/format');
+
 /**
  * Venue display helper. `event.venue` is the associated VENUES row (or null if
  * a query did not include it); older call sites passed a plain string.
+ * Shared with the e-mail templates so both render the same text.
  */
-app.locals.venueName = (value) => {
-  if (!value) return '-';
-  const venue = value.venue !== undefined ? value.venue : value;
-  if (!venue) return '-';
-  if (typeof venue === 'string') return venue;
-  const name = venue.name || '';
-  const city = venue.city || '';
-  if (!name) return '-';
-  return city ? `${name}, ${city}` : name;
-};
+app.locals.venueName = format.venueName;
 
-app.locals.money = (v) => Number(v || 0).toLocaleString();
-app.locals.fmtDate = (d) => {
-  if (!d) return '-';
-  const parsed = new Date(d);
-  if (Number.isNaN(parsed.getTime())) return '-';
-  return parsed.toLocaleString('en-PH', {
-    timeZone: 'Asia/Manila',
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-};
-app.locals.fmtDateOnly = (d) => {
-  if (!d) return '-';
-  const parsed = new Date(d);
-  if (Number.isNaN(parsed.getTime())) return '-';
-  return parsed.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'medium' });
-};
-app.locals.fmtTimeOnly = (d) => {
-  if (!d) return '-';
-  const parsed = new Date(d);
-  if (Number.isNaN(parsed.getTime())) return '-';
-  return parsed.toLocaleTimeString('en-PH', { timeZone: 'Asia/Manila', timeStyle: 'short' });
-};
-app.locals.formatDateTimeLocal = (d) => {
-  if (!d) return '';
-  const date = new Date(d);
-  if (Number.isNaN(date.getTime())) return '';
-  // Render in the same timezone the rest of the UI uses (Asia/Manila).
-  const formatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Manila',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  });
-  const parts = Object.fromEntries(
-    formatter.formatToParts(date).map((part) => [part.type, part.value])
-  );
-  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
-};
+app.locals.money = format.money;
+app.locals.fmtDate = format.fmtDate;
+app.locals.fmtDateOnly = format.fmtDateOnly;
+app.locals.fmtTimeOnly = format.fmtTimeOnly;
+app.locals.formatDateTimeLocal = format.formatDateTimeLocal;
+
+/* ------------------------------- HEALTHCHECK ------------------------------ */
+// Registered before the routes so it never needs a session, a CSRF token or a
+// database round-trip beyond a trivial query: that is what an uptime monitor
+// and a load balancer need to answer "is this instance alive?".
+app.get('/healthz', async (req, res) => {
+  try {
+    await sequelize.query('SELECT 1');
+    return res.json({
+      status: 'ok',
+      dialect,
+      notifications: process.env.MAIL_TRANSPORT || 'console',
+      uptime: Math.round(process.uptime()),
+    });
+  } catch (err) {
+    return res.status(503).json({ status: 'degraded', error: err.message });
+  }
+});
 
 /* -------------------------------- ROUTES ---------------------------------- */
 app.use('/', routes);
@@ -218,6 +199,11 @@ async function start() {
     console.log('✔ Sessions persisted in the SESSIONS table');
   }
 
+  if (notificationWorker) {
+    notificationWorker.start();
+    console.log(`✔ Notification worker started (transport: ${mailer.currentTransport()})`);
+  }
+
   return new Promise((resolve) => {
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`✔ Event Registration System running on http://localhost:${PORT}`);
@@ -227,10 +213,34 @@ async function start() {
 }
 
 if (require.main === module) {
-  start().catch((err) => {
-    console.error('✖ Failed to start:', err);
-    process.exit(1);
-  });
+  start()
+    .then((server) => {
+      // Graceful shutdown: stop taking new connections, give in-flight
+      // requests a moment to finish, then release the database pool. Without
+      // this a Ctrl+C or a deploy can cut a registration transaction in half.
+      const shutdown = async (signal) => {
+        console.log(`\n${signal} received - shutting down`);
+        if (notificationWorker) notificationWorker.stop();
+        if (sessionStore) sessionStore.stopCleanup();
+        server.close(async () => {
+          try {
+            await sequelize.close();
+          } catch (err) {
+            console.warn('Could not close the database pool:', err.message);
+          }
+          process.exit(0);
+        });
+        // Do not hang forever on a stuck socket.
+        setTimeout(() => process.exit(1), 10000).unref();
+      };
+
+      process.on('SIGTERM', () => shutdown('SIGTERM'));
+      process.on('SIGINT', () => shutdown('SIGINT'));
+    })
+    .catch((err) => {
+      console.error('✖ Failed to start:', err);
+      process.exit(1);
+    });
 }
 
-module.exports = { app, start, sessionStore };
+module.exports = { app, start, sessionStore, notificationWorker };

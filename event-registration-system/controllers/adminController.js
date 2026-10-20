@@ -21,6 +21,10 @@ const {
 const { decorateWithCapacity } = require('./eventController');
 const { promoteFromWaitlist } = require('./registrationController');
 const { validateAdminPassword } = require('../middlewares/validate');
+const { queue, payloadFor, render } = require('../services/notifications');
+const { Notification } = require('../models');
+const mailer = require('../services/mailer');
+const { getNotificationWorker } = require('../services/notificationWorker');
 
 /**
  * CSV escaping that also neutralises spreadsheet formula injection:
@@ -163,6 +167,31 @@ const adminController = {
         transaction: t,
       });
 
+      // The affected participant is told about every manual change: an admin
+      // silently moving someone to 'cancelled' is exactly the case a
+      // notification exists to prevent.
+      const owner = await User.findByPk(registration.user_id, { transaction: t });
+      const changedEvent = await Event.findByPk(registration.event_id, {
+        include: [eventVenueInclude],
+        transaction: t,
+      });
+      if (owner && changedEvent) {
+        await queue({
+          kind: next === 'cancelled' ? 'registration_cancelled' : 'status_changed',
+          email: owner.email,
+          userId: owner.user_id,
+          registrationId: registration.registration_id,
+          eventId: registration.event_id,
+          payload: payloadFor({
+            event: changedEvent,
+            participant: owner,
+            registration,
+            extra: { reason: 'Changed by an administrator' },
+          }),
+          transaction: t,
+        });
+      }
+
       // Auto-promote from waiting list if a confirmed slot was cancelled
       let promoted = null;
       if (next === 'cancelled' && previous === 'confirmed') {
@@ -252,6 +281,7 @@ const adminController = {
 
     const header = [
       'No.',
+      'Reference',
       'Participant Name',
       'Email',
       'Registration Date',
@@ -264,6 +294,7 @@ const adminController = {
       lines.push(
         [
           i + 1,
+          r.referenceCode(),
           r.user.full_name,
           r.user.email,
           new Date(r.registration_date).toLocaleString('en-PH'),
@@ -514,6 +545,104 @@ const adminController = {
       entity,
       entities: entities.map((e) => e.entity),
     });
+  },
+
+  /* ------------------------------ NOTIFICATIONS ---------------------------- */
+
+  /** GET /admin/notifications -> the outbox, newest first. */
+  async notificationsIndex(req, res) {
+    const pageSize = 25;
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const status = ['queued', 'sent', 'failed'].includes(req.query.status)
+      ? req.query.status
+      : '';
+    const kind = Notification.KINDS.includes(req.query.kind) ? req.query.kind : '';
+
+    const where = {};
+    if (status) where.status = status;
+    if (kind) where.kind = kind;
+
+    const { rows, count } = await Notification.findAndCountAll({
+      where,
+      order: [['created_at', 'DESC'], ['notification_id', 'DESC']],
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    });
+
+    const [queued, sent, failed] = await Promise.all([
+      Notification.count({ where: { status: 'queued' } }),
+      Notification.count({ where: { status: 'sent' } }),
+      Notification.count({ where: { status: 'failed' } }),
+    ]);
+
+    return res.render('admin/notifications', {
+      title: 'Notification outbox',
+      rows,
+      count,
+      page,
+      pageSize,
+      totalPages: Math.max(Math.ceil(count / pageSize), 1),
+      status,
+      kind,
+      kinds: Notification.KINDS,
+      totals: { queued, sent, failed },
+      transport: mailer.currentTransport(),
+    });
+  },
+
+  /** GET /admin/notifications/:id/preview -> the exact HTML that was sent. */
+  async previewNotification(req, res) {
+    const notification = await Notification.findByPk(req.params.id);
+    if (!notification) {
+      req.session.flashError = 'Notification not found.';
+      return res.redirect('/admin/notifications');
+    }
+
+    const message = await render(notification.kind, notification.getPayload());
+    const safeEmail = String(notification.email).replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[c]);
+    const banner = `
+      <div style="position:sticky;top:0;z-index:9;background:#1f2937;color:#fff;padding:10px 16px;
+                  font:13px/1.5 -apple-system,Segoe UI,Roboto,Arial,sans-serif;">
+        <strong>Preview</strong> — notification #${notification.notification_id}
+        (${notification.kind}) to ${safeEmail}
+        &nbsp;·&nbsp; status: ${notification.status}
+        &nbsp;·&nbsp; <a href="/admin/notifications" style="color:#93c5fd;">← back to the outbox</a>
+      </div>`;
+
+    // The banner is injected after <body> so the preview is the real e-mail
+    // with a way back - not a re-render that could drift from what was sent.
+    return res.type('html').send(message.html.replace(/(<body[^>]*>)/i, `$1${banner}`));
+  },
+
+  /** POST /admin/notifications/:id/retry -> requeue a failed notification. */
+  async retryNotification(req, res) {
+    const notification = await Notification.findByPk(req.params.id);
+    if (!notification) {
+      req.session.flashError = 'Notification not found.';
+      return res.redirect('/admin/notifications');
+    }
+
+    await notification.update({ status: 'queued', attempts: 0, last_error: null });
+    await logAudit({
+      req,
+      action: 'notification.retry',
+      entity: 'NOTIFICATION',
+      entityId: notification.notification_id,
+      detail: { kind: notification.kind, email: notification.email },
+    });
+
+    // Deliver immediately instead of waiting for the next tick, so the button
+    // visibly works during a demo.
+    const worker = getNotificationWorker();
+    if (worker) {
+      const stats = await worker.drainOnce();
+      req.session.flashSuccess = `Notification #${notification.notification_id} requeued (${stats.sent} sent, ${stats.failed} failed).`;
+    } else {
+      req.session.flashSuccess = `Notification #${notification.notification_id} requeued - the worker is disabled (MAIL_WORKER=off).`;
+    }
+    return res.redirect('/admin/notifications');
   },
 
   /* --------------------------------- VENUES -------------------------------- */

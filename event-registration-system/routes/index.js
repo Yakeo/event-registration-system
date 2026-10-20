@@ -107,6 +107,11 @@ router.post('/admin/attendance/:registrationId', requireLogin, requireAdmin, asy
 // Audit trail
 router.get('/admin/audit', requireLogin, requireAdmin, asyncHandler(adminController.auditIndex));
 
+// Notification outbox (e-mail delivery + retry)
+router.get('/admin/notifications', requireLogin, requireAdmin, asyncHandler(adminController.notificationsIndex));
+router.get('/admin/notifications/:id/preview', requireLogin, requireAdmin, asyncHandler(adminController.previewNotification));
+router.post('/admin/notifications/:id/retry', requireLogin, requireAdmin, asyncHandler(adminController.retryNotification));
+
 // Venue master data
 router.get('/admin/venues', requireLogin, requireAdmin, asyncHandler(adminController.venues));
 router.post('/admin/venues', requireLogin, requireAdmin, asyncHandler(adminController.createVenue));

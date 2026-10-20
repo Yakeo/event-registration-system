@@ -332,13 +332,34 @@ and automatic waitlist promotion never runs for concluded events.
 * **Capacity is enforced in application code.** A DB-level trigger (or a
   `confirmed_count` column with a `CHECK`) would also stop a direct SQL client
   from overbooking. Triggers are dialect-specific, so this was left out.
-* **E-mail delivery.** `NOTIFICATIONS` (outbox) is still only in
-  `docs/schema-3nf.sql`; promoted participants are still not e-mailed.
+* ~~**E-mail delivery.**~~ **Closed.** `NOTIFICATIONS` is now a real table
+  (transactional outbox) drained by `services/notificationWorker.js`; promoted
+  participants, cancellations and archived events all notify. See
+  [`NOTIFICATIONS.md`](./NOTIFICATIONS.md). What remains product-level: a
+  24-hour reminder job and per-event custom questions.
 * **Multi-process rate limiting.** The counters are in process memory; move them
   to Redis/the DB if you run more than one instance (the interface is isolated in
   `middlewares/rateLimit.js`).
 * **`sequelize.sync()`** is still the schema mechanism; adopt migrations
   (`sequelize-cli`/Umzug) before running against data you cannot rebuild.
+
+## 7.6 The nine-table schema (this round)
+
+| Table | Role | Added |
+|---|---|---|
+| `USERS` | accounts, roles, reset tokens | — |
+| `VENUES` | venue master data (3NF fix) | earlier round |
+| `EVENTS` | event + capacity + soft delete | — |
+| `REGISTRATIONS` | M:N junction with status | — |
+| `ATTENDANCE` | physical check-in, 1:0..1 | earlier round |
+| `REGISTRATION_STATUS_CHANGES` | append-only status timeline | earlier round |
+| `AUDIT_LOGS` | administrative action trail | earlier round |
+| `SESSIONS` | express-session store | earlier round |
+| **`NOTIFICATIONS`** | **transactional outbox for e-mail** | **this round** |
+
+Guest reference codes (`REG-00049-7F3A9C`) are **derived**, not stored: an
+HMAC of the primary key, so no column, no backfill and no uniqueness
+constraint — and a guessed code fails verification at the door.
 
 ## 8. What changed in this branch
 
@@ -380,8 +401,8 @@ and automatic waitlist promotion never runs for concluded events.
 | `views/admin/{audit,venues,registration-history,archived}.ejs` | **new** pages |
 | `views/**` | venue helper, `data-*` hooks instead of inline handlers, attendance columns |
 | `public/js/main.js` | confirm / print / auto-submit handlers (CSP-safe) |
-| `seeders/seed.js` | 7 venues, 18 users, 11 events, 77 registrations, 20 check-ins, 81 status-history rows, 13 audit rows |
-| `test/system.test.js` | **25 tests** (was 16) — venues, attendance, history, audit, soft delete, rate limit, lockout, session store |
+| `seeders/seed.js` | 7 venues, 18 users, 11 events, 77 registrations, 20 check-ins, 81 status-history rows, 13 audit rows, 7 outbox rows |
+| `test/system.test.js` | **38 tests** — venues, attendance, history, audit, soft delete, rate limit, lockout, session store, notification outbox, signed reference codes |
 | `docs/generate-diagrams.py`, `ERD.svg/.png` | rebuilt ERD: 8 tables, key-anchored connectors, cardinality marks |
 | `docs/schema.sql` | all 8 tables + updated reporting queries |
 | `docs/DOCUMENTATION.md` | data dictionary for the new tables, 14 business rules |

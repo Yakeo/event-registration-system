@@ -28,6 +28,7 @@
     <thead>
       <tr>
         <th style="width:48px">No.</th>
+        <th>Reference</th>
         <th>Participant name</th>
         <th>Email address</th>
         <th>Registration date</th>
@@ -40,6 +41,7 @@
       <% rows.forEach(function (r, i) { %>
         <tr>
           <td><%= i + 1 %></td>
+          <td><code><%= r.referenceCode() %></code></td>
           <td><strong><%= r.user.full_name %></strong></td>
           <td><%= r.user.email %></td>
           <td><%= fmtDate(r.registration_date) %></td>
@@ -66,7 +68,7 @@
           <td></td>
         </tr>
       <% }); %>
-      <% if (!rows.length) { %><tr><td colspan="7" class="muted">No confirmed registrations yet.</td></tr><% } %>
+      <% if (!rows.length) { %><tr><td colspan="8" class="muted">No confirmed registrations yet.</td></tr><% } %>
     </tbody>
   </table>
 

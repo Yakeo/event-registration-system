@@ -23,6 +23,7 @@ const {
   Attendance,
   RegistrationStatusChange,
   AuditLog,
+  Notification,
 } = require('../models');
 
 const day = 24 * 60 * 60 * 1000;
@@ -368,10 +369,68 @@ async function seed() {
   );
   await AuditLog.bulkCreate(auditRows);
 
+  /* ---------------------------- NOTIFICATIONS ---------------------------- */
+  // History for the outbox page: these are the e-mails that "would have been
+  // sent" for the registrations above, marked as delivered. New activity in
+  // the running app appends to this list rather than replacing it.
+  const venueByKey = Object.fromEntries(eventSpecs.map((spec) => [spec.key, spec.venue]));
+  venueByKey.camp = lab2;
+
+  const sentNotification = (kind, user, { reg = null, eventKey = null, extra = {} } = {}) => {
+    const key = eventKey || (reg && reg.eventKey);
+    const event = key ? events[key] : null;
+    return {
+      kind,
+      email: user.email,
+      user_id: user.user_id,
+      registration_id: reg ? reg.registration_id : null,
+      event_id: event ? event.event_id : null,
+      payload: JSON.stringify({
+        participant_name: user.full_name,
+        email: user.email,
+        event_title: event ? event.title : null,
+        event_date: event ? new Date(event.event_date).toISOString() : null,
+        venue_name: key ? `${venueByKey[key].name}, ${venueByKey[key].city}` : null,
+        reference: reg ? Registration.referenceFor(reg.registration_id) : null,
+        status: reg ? reg.status : null,
+        ...extra,
+      }),
+      status: 'sent',
+      attempts: 1,
+      created_at: daysAgo(20),
+      sent_at: daysAgo(20),
+    };
+  };
+
+  const withKey = (key, idx) => {
+    const reg = regs[`${key}|${idx}`];
+    reg.eventKey = key;
+    return reg;
+  };
+
+  await Notification.bulkCreate([
+    sentNotification('registration_confirmed', P[0], { reg: withKey('cyber', 0) }),
+    sentNotification('registration_confirmed', P[2], { reg: withKey('convention', 2) }),
+    sentNotification('waitlisted', P[5], { reg: withKey('photo', 5), extra: { waitlist_position: 1 } }),
+    sentNotification('promoted', P[0], {
+      reg: withKey('leadership', 0),
+      extra: { capacity_taken: 15, capacity_max: 15 },
+    }),
+    sentNotification('event_cancelled', P[0], { reg: withKey('camp', 0) }),
+    sentNotification('password_reset', P[3], {
+      extra: { reset_url: 'http://localhost:3000/reset-password/demo-token' },
+    }),
+    sentNotification('account_claim', P[6], {
+      reg: withKey('bootcamp', 6),
+      extra: { claim_url: 'http://localhost:3000/reset-password/demo-token' },
+    }),
+  ]);
+
   /* ------------------------------- SUMMARY ------------------------------- */
-  const [u, v, e, r, a, h, log] = await Promise.all([
+  const [u, v, e, r, a, h, log, notifications] = await Promise.all([
     User.count(), Venue.count(), Event.count(), Registration.count(),
     Attendance.count(), RegistrationStatusChange.count(), AuditLog.count(),
+    Notification.count(),
   ]);
   const allEvents = await Event.findAll({ paranoid: false, attributes: ['deleted_at'] });
   const archived = allEvents.filter((row) => row.deleted_at).length;
@@ -386,6 +445,7 @@ async function seed() {
   console.log(`  Attendance    : ${a} check-ins`);
   console.log(`  Status rows   : ${h}`);
   console.log(`  Audit rows    : ${log}`);
+  console.log(`  Notifications : ${notifications} (outbox history)`);
   console.log('\n  Admin        admin@eventreg.test / admin123');
   console.log('  Organiser    organizer@eventreg.test / organizer123');
   console.log('  Participant  maria@email.com / maria123');

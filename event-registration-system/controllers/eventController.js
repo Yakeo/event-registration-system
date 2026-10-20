@@ -11,12 +11,14 @@ const {
   Event,
   Venue,
   Registration,
+  User,
   sequelize,
   dialect,
   eventVenueInclude,
   logAudit,
 } = require('../models');
 const { validateEvent } = require('../middlewares/validate');
+const { queueEventCancellation } = require('../services/notifications');
 
 /**
  * Converts a Date/string to YYYY-MM-DDTHH:MM for <input type="datetime-local">.
@@ -356,7 +358,7 @@ const eventController = {
 
   // DELETE /admin/events/:id  -> soft delete (history is preserved)
   async destroy(req, res) {
-    const event = await Event.findByPk(req.params.id);
+    const event = await Event.findByPk(req.params.id, { include: [eventVenueInclude] });
     if (!event) {
       req.session.flashError = 'Event not found.';
       return res.redirect('/admin/events');
@@ -367,6 +369,14 @@ const eventController = {
     // Soft delete: registrations, attendance and status history stay in the
     // database, the event simply disappears from the listings.
     await event.destroy();
+
+    // Archiving cancels the event for everyone still holding a place, and
+    // nobody used to be told. Queue one e-mail per affected participant.
+    const affected = await Registration.findAll({
+      where: { event_id, status: { [Op.in]: ['confirmed', 'waitlisted'] } },
+      include: [{ model: User, as: 'user' }],
+    });
+    const notified = await queueEventCancellation(event, affected);
     await logAudit({
       req,
       action: 'event.archive',
@@ -375,7 +385,9 @@ const eventController = {
       detail: { title, registrations_preserved: registrationCount },
     });
 
-    req.session.flashSuccess = `Event "${title}" was archived. Its ${registrationCount} registration(s) and attendance history were preserved.`;
+    req.session.flashSuccess =
+      `Event "${title}" was archived. Its ${registrationCount} registration(s) and attendance history were preserved, ` +
+      `and ${notified} cancellation notice(s) were queued.`;
     return res.redirect('/admin/events');
   },
 

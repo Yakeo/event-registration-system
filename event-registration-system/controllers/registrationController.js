@@ -24,6 +24,9 @@ const {
   logStatusChange,
 } = require('../models');
 const { validateRegistration, normalizeEmail } = require('../middlewares/validate');
+const crypto = require('crypto');
+const { Op } = require('sequelize');
+const { queue, payloadFor, link } = require('../services/notifications');
 
 /**
  * The account that triggered a public registration action, when it is a
@@ -63,11 +66,95 @@ async function rerenderWithErrors(req, res, eventId, errors, old, status = 422) 
 }
 
 /**
+ * Number of people ahead of this registration in the waiting-list queue.
+ * Uses the same ordering as promoteFromWaitlist (registration_date, then id),
+ * so the number shown to the participant is the one that will actually apply.
+ */
+async function waitlistPosition(registration, transaction = null) {
+  const ahead = await Registration.count({
+    where: {
+      event_id: registration.event_id,
+      status: 'waitlisted',
+      ...(registration.registration_date
+        ? {
+            [Op.or]: [
+              { registration_date: { [Op.lt]: registration.registration_date } },
+              {
+                registration_date: registration.registration_date,
+                registration_id: { [Op.lte]: registration.registration_id },
+              },
+            ],
+          }
+        : {}),
+    },
+    transaction,
+  });
+  return ahead;
+}
+
+/**
+ * Queues the confirmation e-mail for a registration.
+ *
+ * Called INSIDE the caller's transaction: the mail row, the registration and
+ * the status-history row all commit together, so a crash can never produce a
+ * booking whose e-mail was silently skipped.
+ *
+ * A brand-new participant gets 'account_claim' instead of a plain receipt: the
+ * account was created with a random password nobody saw, so this is the only
+ * way they can ever log in. The token is written through the transaction (not
+ * user.generateResetToken(), which saves on its own connection and would block
+ * behind the row we are holding).
+ */
+async function notifyRegistration({
+  transaction,
+  event,
+  user,
+  registration,
+  isNewAccount = false,
+  actorId = null,
+}) {
+  const extra = {};
+  if (registration.status === 'waitlisted') {
+    extra.waitlist_position = await waitlistPosition(registration, transaction);
+  }
+
+  let kind = registration.status === 'waitlisted' ? 'waitlisted' : 'registration_confirmed';
+
+  if (isNewAccount) {
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    user.reset_password_token = User.hashResetToken(rawToken);
+    user.reset_password_expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    await user.save({ transaction });
+    extra.claim_url = link(`/reset-password/${rawToken}`);
+    kind = 'account_claim';
+  }
+
+  return queue({
+    kind,
+    email: user.email,
+    userId: user.user_id,
+    registrationId: registration.registration_id,
+    eventId: event.event_id,
+    payload: payloadFor({
+      event,
+      participant: user,
+      registration,
+      extra: { ...extra, actor_id: actorId },
+    }),
+    transaction,
+  });
+}
+
+/**
  * Promotes the earliest waitlisted registration into a free confirmed seat.
  * Must be called inside a transaction. Returns the promoted row or null.
  */
 async function promoteFromWaitlist(eventId, transaction) {
-  const event = await Event.findByPk(eventId, { transaction, lock: lockOption(transaction) });
+  const event = await Event.findByPk(eventId, {
+    include: [eventVenueInclude],
+    transaction,
+    lock: lockOption(transaction),
+  });
   if (!event) return null;
 
   // Never auto-promote for an event that has already happened.
@@ -99,6 +186,27 @@ async function promoteFromWaitlist(eventId, transaction) {
     reason: 'Automatically promoted from the waiting list',
     transaction,
   });
+
+  // Tell the person who just got a seat. This is the notification that used to
+  // be missing entirely: people were promoted and never found out.
+  await queue({
+    kind: 'promoted',
+    email: next.user.email,
+    userId: next.user.user_id,
+    registrationId: next.registration_id,
+    eventId: event.event_id,
+    payload: payloadFor({
+      event,
+      participant: next.user,
+      registration: next,
+      extra: {
+        capacity_taken: taken + 1,
+        capacity_max: Number(event.max_participants),
+      },
+    }),
+    transaction,
+  });
+
   return next;
 }
 
@@ -190,7 +298,9 @@ const registrationController = {
 
         // Reuse existing participant or create new one
         let user = existingUser;
+        let createdUser = false;
         if (!user) {
+          createdUser = true;
           user = await User.create(
             {
               full_name,
@@ -231,6 +341,14 @@ const registrationController = {
             transaction: t,
           });
           isReactivation = true;
+          await notifyRegistration({
+            transaction: t,
+            event,
+            user,
+            registration: priorReg,
+            isNewAccount: createdUser,
+            actorId: actorIdFor(req, email),
+          });
           return { registration: priorReg };
         }
 
@@ -251,6 +369,14 @@ const registrationController = {
           actorId: actorIdFor(req, email),
           reason: 'Online registration',
           transaction: t,
+        });
+        await notifyRegistration({
+          transaction: t,
+          event,
+          user,
+          registration: created,
+          isNewAccount: createdUser,
+          actorId: actorIdFor(req, email),
         });
         return { registration: created };
       });
@@ -392,6 +518,14 @@ const registrationController = {
           reason: 'Joined the waiting list',
           transaction: t,
         });
+        await notifyRegistration({
+          transaction: t,
+          event,
+          user,
+          registration: existing,
+          isNewAccount,
+          actorId: actorIdFor(req, email),
+        });
         return { registration: existing, user, isNewAccount };
       }
 
@@ -411,6 +545,14 @@ const registrationController = {
         actorId: actorIdFor(req, email),
         reason: 'Joined the waiting list',
         transaction: t,
+      });
+      await notifyRegistration({
+        transaction: t,
+        event,
+        user,
+        registration,
+        isNewAccount,
+        actorId: actorIdFor(req, email),
       });
       return { registration, user, isNewAccount };
     });
@@ -487,6 +629,33 @@ const registrationController = {
         reason: isAdmin && !isOwner ? 'Cancelled by an administrator' : 'Cancelled by the participant',
         transaction: t,
       });
+
+      // Confirm the cancellation to whoever asked for it.
+      const owner = await User.findByPk(registration.user_id, { transaction: t });
+      if (owner) {
+        const cancelEvent = await Event.findByPk(registration.event_id, {
+          include: [eventVenueInclude],
+          transaction: t,
+        });
+        await queue({
+          kind: 'registration_cancelled',
+          email: owner.email,
+          userId: owner.user_id,
+          registrationId: registration.registration_id,
+          eventId: registration.event_id,
+          payload: payloadFor({
+            event: cancelEvent,
+            participant: owner,
+            registration,
+            extra: {
+              reason: isAdmin && !isOwner
+                ? 'Cancelled by an administrator'
+                : 'Cancelled by the participant',
+            },
+          }),
+          transaction: t,
+        });
+      }
 
       // Promote the earliest person on the waiting list into the freed slot
       let promoted = null;

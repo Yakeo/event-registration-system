@@ -309,7 +309,7 @@ End
 
 ## 9. Automated Test Suite & Verification
 
-The system includes 25 automated tests in `test/system.test.js` (they run against an in-memory database, so `npm test` never touches the demo data):
+The system includes 38 automated tests in `test/system.test.js` (they run against an in-memory database, so `npm test` never touches the demo data). The suite pins `DB_DIALECT=sqlite` itself, so a `.env` configured for MySQL cannot be wiped by a test run:
 
 ```bash
 npm test
