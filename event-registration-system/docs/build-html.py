@@ -55,6 +55,9 @@ def table(headers, rows):
 
 erd = inline_svg('ERD.svg', 'e_')
 flow = inline_svg('FLOWCHART.svg', 'f_')
+flow_a = inline_svg('FLOWCHART-A.svg', 'fa_')
+flow_b = inline_svg('FLOWCHART-B.svg', 'fb_')
+flow_c = inline_svg('FLOWCHART-C.svg', 'fc_')
 mvc = inline_svg('MVC-ARCHITECTURE.svg', 'm_')
 
 FLOW_TEXT = """Start
@@ -217,6 +220,7 @@ html = f"""<!DOCTYPE html>
   .diagram {{ border:1px solid #e3e8f2; border-radius:14px; padding:14px; margin:18px 0 8px;
               background:#fbfcff; overflow:hidden; }}
   .diagram svg {{ display:block; width:100%; height:auto; max-width:100%; }}
+  .diagram.sheet svg {{ max-width:720px; margin:0 auto; }}
   .caption {{ color:#6b7691; font-size:.82rem; margin:6px 0 22px; }}
   pre {{ background:#15203a; color:#dbe4ff; padding:20px 22px; border-radius:12px;
          overflow:auto; font-size:.82rem; line-height:1.55;
@@ -306,8 +310,30 @@ html = f"""<!DOCTYPE html>
     </div>
 
     <h2><span class="num">3.</span> System Flowchart</h2>
+    <p>The flowchart uses the standard ISO&nbsp;5807 / ANSI symbol set: pills for
+    start and end, rectangles for process, <b>parallelograms for input and output</b>,
+    <b>cylinders for stored data</b> (every cylinder names the table and the statement it
+    runs), diamonds for decisions, double-barred rectangles for named subroutines, and
+    rectangles with a wavy base for documents. It is drawn as three A4 sheets &mdash;
+    one per actor &mdash; joined by off-page connector circles, so it also prints
+    cleanly on a hand-out.</p>
     <div class="diagram">{flow}</div>
-    <p class="caption">Source: <code>docs/FLOWCHART.svg</code> · raster copy <code>docs/FLOWCHART.png</code></p>
+    <p class="caption">All three sheets stacked · sources <code>docs/FLOWCHART.svg</code> and
+    <code>docs/FLOWCHART.png</code></p>
+
+    <h3>3.0 Sheet A — participant</h3>
+    <div class="diagram sheet">{flow_a}</div>
+    <p class="caption"><code>docs/FLOWCHART-A.svg</code> · browse, register, confirm, waiting list</p>
+
+    <h3>3.0.1 Sheet B — administration</h3>
+    <div class="diagram sheet">{flow_b}</div>
+    <p class="caption"><code>docs/FLOWCHART-B.svg</code> · login, dashboard, event, attendance and
+    status changes</p>
+
+    <h3>3.0.2 Sheet C — notification worker and guest self-service</h3>
+    <div class="diagram sheet">{flow_c}</div>
+    <p class="caption"><code>docs/FLOWCHART-C.svg</code> · outbox delivery, retries and
+    <code>/r/:token</code></p>
 
     <h3>3.1 Text form and code mapping</h3>
     <pre>{FLOW_TEXT}</pre>

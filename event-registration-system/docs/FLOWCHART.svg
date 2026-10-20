@@ -1,251 +1,358 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 2714" width="1600" height="2714" font-family="'Segoe UI','DejaVu Sans',Arial,Helvetica,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 794 3369" width="794" height="3369" font-family="'Segoe UI','DejaVu Sans',Arial,Helvetica,sans-serif">
+<g transform="translate(0 0)">
 <defs>
 <style>
-.box{fill:#fff;stroke:#2f5bff;stroke-width:1.8}
-.proc{fill:#15203a;font-size:14px;font-weight:600}
-.proc-s{fill:#15203a;font-size:12.5px;font-weight:600}
-.term{fill:#fff;font-size:14px;font-weight:700;letter-spacing:.04em}
-.arr{stroke:#46527a;stroke-width:1.9;fill:none}
-.yes{fill:#0c7a52;font-size:12.5px;font-weight:700}
-.no{fill:#e0425f;font-size:12.5px;font-weight:700}
-.h1{fill:#15203a;font-size:24px;font-weight:700}
-.sub{fill:#6b7691;font-size:13px}
-.sec{fill:#15203a;font-size:16px;font-weight:700}
-.secs{fill:#6b7691;font-size:12px}
-.colhead{fill:#2440a8;font-size:11.5px;font-weight:700;letter-spacing:.14em}
-.db{fill:#eef4ff;stroke:#2440a8;stroke-width:1.4}
-.dbn{fill:#f7f2fb;stroke:#5b4b8a;stroke-width:1.4}
-.dbt{fill:#15203a;font-family:'Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:11.5px}
-.dbn-t{fill:#3f3268;font-family:'Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:11.5px}
-.rw{fill:#0c7a52;font-size:10px;font-weight:700;letter-spacing:.1em}
-.ww{fill:#b42b45;font-size:10px;font-weight:700;letter-spacing:.1em}
-.note{fill:#5a6584;font-size:11.5px}
+.t-term{fill:#fff;font-size:11.5px;font-weight:700;letter-spacing:.03em}
+.t-proc{fill:#1b2536;font-size:10.5px;font-weight:600}
+.t-db{fill:#2f4f86;font-size:9.6px;font-weight:700;letter-spacing:.02em}
+.t-ops{fill:#1b2536;font-family:'Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:8.7px}
+.t-lab{fill:#5d6b85;font-size:8.8px}
+.t-yes{fill:#0c6b4a;font-size:9px;font-weight:700}
+.t-no{fill:#a52a3d;font-size:9px;font-weight:700}
+.t-h1{fill:#1b2536;font-size:15px;font-weight:700}
+.t-sub{fill:#5d6b85;font-size:8.8px}
+.t-con{fill:#1b2536;font-size:9.5px;font-weight:700}
+.t-leg{fill:#5d6b85;font-size:8.2px}
 </style>
-<marker id="ah" markerWidth="11" markerHeight="9" refX="9" refY="4.5" orient="auto"><path d="M0 0 L11 4.5 L0 9 z" fill="#46527a"/></marker>
-<marker id="ahs" markerWidth="11" markerHeight="9" refX="2" refY="4.5" orient="auto"><path d="M11 0 L0 4.5 L11 9 z" fill="#46527a"/></marker>
-<filter id="sh" x="-20%" y="-30%" width="140%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#15203a" flood-opacity="0.10"/></filter>
+<marker id="ahA" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0 0 L9 3.5 L0 7 z" fill="#2b3a55"/></marker>
 </defs>
-<rect width="1600" height="2714" fill="#f5f7fb"/>
-<text class="h1" x="40" y="50">System Flowchart &#8212; Online Event Registration</text>
-<text class="sub" x="40" y="74">Participant registration, administration, and the notification worker &#8212; with every database read and write shown in order.</text>
-<rect x="24" y="96" width="1552" height="1114" rx="16" fill="#ffffff" stroke="#dbe2f0"/>
-<text class="sec" x="48" y="128">A &#183; Participant &#8212; browse, register, confirm</text>
-<text class="secs" x="48" y="148">Public pages. No login: the e-mailed link is the credential, so a guest never has to invent a password.</text>
-<text class="colhead" x="830" y="128" text-anchor="middle">DATABASE</text>
-<text class="colhead" x="1345" y="128" text-anchor="middle">WAITING LIST</text>
-<g filter="url(#sh)"><rect x="225.0" y="170" width="250" height="46" rx="23.0" fill="#26407a"/></g>
-<text class="term" x="350" y="198.0" text-anchor="middle">Start</text>
-<path class="arr" d="M350 216 L350 242" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="box" x="160.0" y="242" width="380" height="62" rx="10"/></g>
-<text class="proc" x="350" y="277.5" text-anchor="middle">Opens the event list  ( GET / )</text>
-<g filter="url(#sh)"><rect class="db" x="595.0" y="233.5" width="470" height="79" rx="8"/></g>
-<rect x="595.0" y="233.5" width="5" height="79" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="613.0" y="257.5">SELECT EVENTS &#10227; VENUES</text>
-<text class="dbt" x="613.0" y="274.5">COUNT(*) WHERE status='confirmed'</text>
-<text class="dbt" x="613.0" y="291.5">remaining = max_participants - taken</text>
-<path class="arr" d="M540.0 273.0 L592.0 273.0" marker-end="url(#ah)" marker-start="url(#ahs)" fill="none"/>
-<text class="rw" x="567.5" y="265.0" text-anchor="middle">READ</text>
-<path class="arr" d="M350 304 L350 340" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="box" x="160.0" y="340" width="380" height="62" rx="10"/></g>
-<text class="proc" x="350" y="375.5" text-anchor="middle">Selects one event  ( GET /events/:id )</text>
-<g filter="url(#sh)"><rect class="db" x="595.0" y="340.0" width="470" height="62" rx="8"/></g>
-<rect x="595.0" y="340.0" width="5" height="62" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="613.0" y="364.0">SELECT event + venue</text>
-<text class="dbt" x="613.0" y="381.0">COUNT confirmed seats</text>
-<path class="arr" d="M540.0 371.0 L592.0 371.0" marker-end="url(#ah)" marker-start="url(#ahs)" fill="none"/>
-<text class="rw" x="567.5" y="363.0" text-anchor="middle">READ</text>
-<path class="arr" d="M350 402 L350 438" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><path d="M350 438 L480.0 492.0 L350 546 L220.0 492.0 Z" fill="#fff" stroke="#2f5bff" stroke-width="1.8"/></g>
-<text class="proc" x="350" y="488.0" text-anchor="middle">Seats still</text>
-<text class="proc" x="350" y="506.0" text-anchor="middle">available?</text>
-<path class="arr" d="M480 492 L1107.0 492" marker-end="url(#ah)" fill="none"/>
-<text class="no" x="518" y="482" text-anchor="start">No</text>
-<g filter="url(#sh)"><rect class="box" x="1110.0" y="466" width="470" height="62" rx="10"/></g>
-<text class="proc" x="1345" y="501.5" text-anchor="middle">Joins the waiting list</text>
-<path class="arr" d="M1345 528 L1345 558" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="db" x="1110.0" y="558" width="470" height="96" rx="8"/></g>
-<rect x="1110.0" y="558" width="5" height="96" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="1128.0" y="582">INSERT REGISTRATIONS</text>
-<text class="dbt" x="1128.0" y="599">  status = 'waitlisted'</text>
-<text class="dbt" x="1128.0" y="616">INSERT REGISTRATION_STATUS_CHANGES</text>
-<text class="dbt" x="1128.0" y="633">INSERT NOTIFICATIONS  ('queued')</text>
-<text class="ww" x="1536.0" y="548" text-anchor="start">WRITE</text>
-<path class="arr" d="M1345 654 L1345 682" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect x="1185.0" y="682" width="320" height="46" rx="23.0" fill="#5a6584"/></g>
-<text class="term" x="1345" y="710.0" text-anchor="middle">End &#8212; on the waiting list</text>
-<text class="note" x="1345" y="752" text-anchor="middle">Promoted to confirmed automatically when a seat frees up</text>
-<text class="note" x="1345" y="770" text-anchor="middle">(band C: FIFO by registration_date)</text>
-<path class="arr" d="M350 546 L350 580" marker-end="url(#ah)" fill="none"/>
-<text class="yes" x="360" y="570" text-anchor="start">Yes</text>
-<g filter="url(#sh)"><rect class="box" x="160.0" y="580" width="380" height="62" rx="10"/></g>
-<text class="proc" x="350" y="615.5" text-anchor="middle">Enters full name + e-mail address</text>
-<text class="note" x="830" y="628" text-anchor="middle">no write yet &#8212; nothing is stored before validation</text>
-<path class="arr" d="M350 642 L350 676" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="box" x="160.0" y="676" width="380" height="62" rx="10"/></g>
-<text class="proc" x="350" y="711.5" text-anchor="middle">Server validates fields and the duplicate rule</text>
-<g filter="url(#sh)"><rect class="db" x="595.0" y="676.0" width="470" height="62" rx="8"/></g>
-<rect x="595.0" y="676.0" width="5" height="62" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="613.0" y="700.0">SELECT USERS, REGISTRATIONS</text>
-<text class="dbt" x="613.0" y="717.0">WHERE (event_id, user_id)</text>
-<path class="arr" d="M540.0 707.0 L592.0 707.0" marker-end="url(#ah)" marker-start="url(#ahs)" fill="none"/>
-<text class="rw" x="567.5" y="699.0" text-anchor="middle">READ</text>
-<path class="arr" d="M350 738 L350 772" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="box" x="160.0" y="772" width="380" height="62" rx="10"/></g>
-<text class="proc" x="350" y="807.5" text-anchor="middle">Re-checks capacity inside a transaction</text>
-<g filter="url(#sh)"><rect class="db" x="595.0" y="772.0" width="470" height="62" rx="8"/></g>
-<rect x="595.0" y="772.0" width="5" height="62" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="613.0" y="796.0">SELECT event ... FOR UPDATE</text>
-<text class="dbt" x="613.0" y="813.0">COUNT confirmed (locked row)</text>
-<path class="arr" d="M540.0 803.0 L592.0 803.0" marker-end="url(#ah)" marker-start="url(#ahs)" fill="none"/>
-<text class="rw" x="567.5" y="795.0" text-anchor="middle">READ</text>
-<path class="arr" d="M350 834 L350 868" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="box" x="160.0" y="868" width="380" height="86" rx="10"/></g>
-<text class="proc-s" x="350" y="896.5" text-anchor="middle">BEGIN &#8594; INSERT registration</text>
-<text class="proc-s" x="350" y="915.5" text-anchor="middle">+ status history + notification</text>
-<text class="proc-s" x="350" y="934.5" text-anchor="middle">&#8594; COMMIT  (rollback on error)</text>
-<g filter="url(#sh)"><rect class="db" x="595.0" y="864" width="470" height="113" rx="8"/></g>
-<rect x="595.0" y="864" width="5" height="113" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="613.0" y="888">BEGIN</text>
-<text class="dbt" x="613.0" y="905">INSERT REGISTRATIONS</text>
-<text class="dbt" x="613.0" y="922">INSERT REGISTRATION_STATUS_CHANGES</text>
-<text class="dbt" x="613.0" y="939">INSERT NOTIFICATIONS ('queued')</text>
-<text class="dbt" x="613.0" y="956">COMMIT</text>
-<path class="arr" d="M540.0 911 L592.0 911" marker-end="url(#ah)" fill="none"/>
-<text class="ww" x="567.5" y="903" text-anchor="middle">WRITE</text>
-<text class="note" x="830" y="986" text-anchor="middle">one atomic unit: the booking, its history and the e-mail are all-or-nothing</text>
-<path class="arr" d="M350 954 L350 1004" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="box" x="160.0" y="1004" width="380" height="62" rx="10"/></g>
-<text class="proc" x="350" y="1039.5" text-anchor="middle">Renders the confirmation page</text>
-<g filter="url(#sh)"><rect class="db" x="595.0" y="995.5" width="470" height="79" rx="8"/></g>
-<rect x="595.0" y="995.5" width="5" height="79" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="613.0" y="1019.5">SELECT COUNT confirmed (fresh)</text>
-<text class="dbt" x="613.0" y="1036.5">reference = HMAC(registration_id)</text>
-<text class="dbt" x="613.0" y="1053.5">shown as REG-00049-7F3A9C</text>
-<path class="arr" d="M540.0 1035.0 L592.0 1035.0" marker-end="url(#ah)" marker-start="url(#ahs)" fill="none"/>
-<text class="rw" x="567.5" y="1027.0" text-anchor="middle">READ</text>
-<path class="arr" d="M350 1066 L350 1100" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect x="180.0" y="1100" width="340" height="46" rx="23.0" fill="#26407a"/></g>
-<text class="term" x="350" y="1128.0" text-anchor="middle">End &#8212; registration stored</text>
-<text class="note" x="350" y="1174" text-anchor="middle">the queued e-mail carries /r/:token &#8594; band C</text>
-<rect x="24" y="1234" width="1552" height="528" rx="16" fill="#ffffff" stroke="#dbe2f0"/>
-<text class="sec" x="48" y="1268">B &#183; Administration &#8212; authenticated session required</text>
-<text class="secs" x="48" y="1288">requireLogin + requireAdmin guard every route. Each action writes AUDIT_LOGS and queues a notification.</text>
-<text class="colhead" x="830" y="1268" text-anchor="middle">DATABASE</text>
-<g filter="url(#sh)"><rect x="195.0" y="1310" width="310" height="46" rx="23.0" fill="#26407a"/></g>
-<text class="term" x="350" y="1338.0" text-anchor="middle">Admin logs in  ( POST /login )</text>
-<g filter="url(#sh)"><rect class="db" x="595.0" y="1298" width="470" height="79" rx="8"/></g>
-<rect x="595.0" y="1298" width="5" height="79" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="613.0" y="1322">SELECT USERS WHERE email = ?</text>
-<text class="dbt" x="613.0" y="1339">bcrypt.compare(password, hash)</text>
-<text class="dbt" x="613.0" y="1356">INSERT / UPDATE SESSIONS</text>
-<path class="arr" d="M505 1333 L592.0 1347" marker-end="url(#ah)" fill="none"/>
-<text class="ww" x="550.0" y="1328" text-anchor="middle">WRITE</text>
-<path class="arr" d="M350 1356 L350 1386" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="box" x="160.0" y="1386" width="380" height="62" rx="10"/></g>
-<text class="proc" x="350" y="1421.5" text-anchor="middle">Dashboard  ( GET /admin )</text>
-<g filter="url(#sh)"><rect class="db" x="595.0" y="1377.5" width="470" height="79" rx="8"/></g>
-<rect x="595.0" y="1377.5" width="5" height="79" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="613.0" y="1401.5">SELECT aggregates:</text>
-<text class="dbt" x="613.0" y="1418.5">events &#183; confirmed &#183; waitlisted</text>
-<text class="dbt" x="613.0" y="1435.5">check-ins &#183; users</text>
-<path class="arr" d="M540.0 1417.0 L592.0 1417.0" marker-end="url(#ah)" marker-start="url(#ahs)" fill="none"/>
-<text class="rw" x="567.5" y="1409.0" text-anchor="middle">READ</text>
-<path class="arr" d="M350 1448 L350 1482" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="box" x="90.0" y="1482" width="420" height="81" rx="10"/></g>
-<text class="proc-s" x="300" y="1517.5" text-anchor="middle">Creates / edits /</text>
-<text class="proc-s" x="300" y="1536.5" text-anchor="middle">archives an event</text>
-<path class="arr" d="M300 1542 L300 1570" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="db" x="90.0" y="1570" width="420" height="79" rx="8"/></g>
-<rect x="90.0" y="1570" width="5" height="79" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="108.0" y="1594">INSERT / UPDATE EVENTS</text>
-<text class="dbt" x="108.0" y="1611">INSERT / UPDATE VENUES</text>
-<text class="dbt" x="108.0" y="1628">UPDATE deleted_at (archive)</text>
-<text class="ww" x="300" y="1678" text-anchor="middle">WRITE</text>
-<g filter="url(#sh)"><rect class="box" x="590.0" y="1482" width="420" height="62" rx="10"/></g>
-<text class="proc" x="800" y="1517.5" text-anchor="middle">Checks a participant in</text>
-<path class="arr" d="M800 1542 L800 1570" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="db" x="590.0" y="1570" width="420" height="79" rx="8"/></g>
-<rect x="590.0" y="1570" width="5" height="79" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="608.0" y="1594">INSERT ATTENDANCE</text>
-<text class="dbt" x="608.0" y="1611">UNIQUE(registration_id)</text>
-<text class="dbt" x="608.0" y="1628">INSERT AUDIT_LOGS</text>
-<text class="ww" x="800" y="1678" text-anchor="middle">WRITE</text>
-<g filter="url(#sh)"><rect class="box" x="1090.0" y="1482" width="420" height="81" rx="10"/></g>
-<text class="proc-s" x="1300" y="1517.5" text-anchor="middle">Cancels or changes</text>
-<text class="proc-s" x="1300" y="1536.5" text-anchor="middle">a status</text>
-<path class="arr" d="M1300 1542 L1300 1570" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="db" x="1090.0" y="1570" width="420" height="79" rx="8"/></g>
-<rect x="1090.0" y="1570" width="5" height="79" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="1108.0" y="1594">UPDATE REGISTRATIONS</text>
-<text class="dbt" x="1108.0" y="1611">INSERT STATUS_CHANGES</text>
-<text class="dbt" x="1108.0" y="1628">promote waitlist (FIFO)</text>
-<text class="ww" x="1300" y="1678" text-anchor="middle">WRITE</text>
-<rect x="48" y="1696" width="1504" height="46" rx="9" fill="#fdf2f5" stroke="#f3c9d4"/>
-<text class="note" x="68" y="1724">Every branch also writes <tspan font-weight="700">AUDIT_LOGS</tspan> (actor, action, entity, before/after) and queues <tspan font-weight="700">NOTIFICATIONS</tspan> rows &#8212; archiving an event queues one cancellation e-mail per affected participant.</text>
-<rect x="24" y="1786" width="1552" height="888" rx="16" fill="#ffffff" stroke="#dbe2f0"/>
-<text class="sec" x="48" y="1820">C &#183; Notification worker and guest self-service  ( /r/:token )</text>
-<text class="secs" x="48" y="1840">Delivery happens out of band, so an SMTP outage can never fail a registration; failures stay visible and retryable.</text>
-<text class="colhead" x="830" y="1820" text-anchor="middle">DATABASE</text>
-<text class="colhead" x="1345" y="1820" text-anchor="middle">ON FAILURE</text>
-<g filter="url(#sh)"><rect x="180.0" y="1868" width="340" height="46" rx="23.0" fill="#0f4c5c"/></g>
-<text class="term" x="350" y="1896.0" text-anchor="middle">Worker timer fires (every 15 s)</text>
-<g filter="url(#sh)"><rect class="db" x="595.0" y="1856" width="470" height="79" rx="8"/></g>
-<rect x="595.0" y="1856" width="5" height="79" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="613.0" y="1880">SELECT NOTIFICATIONS</text>
-<text class="dbt" x="613.0" y="1897">WHERE status = 'queued'</text>
-<text class="dbt" x="613.0" y="1914">ORDER BY created_at LIMIT 20</text>
-<path class="arr" d="M520 1891 L592.0 1902" marker-end="url(#ah)" fill="none"/>
-<text class="rw" x="557.5" y="1886" text-anchor="middle">READ</text>
-<path class="arr" d="M350 1914 L350 1944" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="box" x="160.0" y="1944" width="380" height="72" rx="10"/></g>
-<text class="proc-s" x="350" y="1975.0" text-anchor="middle">Renders the EJS e-mail template</text>
-<text class="proc-s" x="350" y="1994.0" text-anchor="middle">(subject + HTML + text alternative)</text>
-<path class="arr" d="M350 2016 L350 2046" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="box" x="160.0" y="2046" width="380" height="62" rx="10"/></g>
-<text class="proc" x="350" y="2081.5" text-anchor="middle">Sends through the transport (console .eml / SMTP)</text>
-<path class="arr" d="M350 2108 L350 2140" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><path d="M350 2140 L480.0 2192.0 L350 2244 L220.0 2192.0 Z" fill="#fff" stroke="#2f5bff" stroke-width="1.8"/></g>
-<text class="proc" x="350" y="2197.0" text-anchor="middle">Delivered?</text>
-<path class="arr" d="M480 2192 L1107.0 2192" marker-end="url(#ah)" fill="none"/>
-<text class="no" x="518" y="2182" text-anchor="start">No</text>
-<g filter="url(#sh)"><rect class="dbn" x="1110.0" y="2146" width="470" height="96" rx="8"/></g>
-<rect x="1110.0" y="2146" width="5" height="96" rx="2.5" fill="#5b4b8a"/>
-<text class="dbn-t" x="1128.0" y="2170">attempts = attempts + 1</text>
-<text class="dbn-t" x="1128.0" y="2187">requeue while attempts &lt; 3</text>
-<text class="dbn-t" x="1128.0" y="2204">then status = 'failed'</text>
-<text class="dbn-t" x="1128.0" y="2221">+ last_error (shown in the UI)</text>
-<text class="ww" x="1168.0" y="2182" text-anchor="middle">WRITE</text>
-<text class="note" x="1345" y="2272" text-anchor="middle">the Requeue button in /admin/notifications drains it immediately</text>
-<path class="arr" d="M350 2244 L350 2282" marker-end="url(#ah)" fill="none"/>
-<text class="yes" x="360" y="2270" text-anchor="start">Yes</text>
-<g filter="url(#sh)"><rect class="db" x="135.0" y="2282" width="430" height="62" rx="8"/></g>
-<rect x="135.0" y="2282" width="5" height="62" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="153.0" y="2306">UPDATE NOTIFICATIONS</text>
-<text class="dbt" x="153.0" y="2323">SET status = 'sent', sent_at = NOW()</text>
-<path class="arr" d="M350 2344 L350 2372" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="box" x="160.0" y="2372" width="380" height="62" rx="10"/></g>
-<text class="proc" x="350" y="2407.5" text-anchor="middle">Participant receives the e-mail</text>
-<path class="arr" d="M350 2434 L350 2464" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="box" x="160.0" y="2464" width="380" height="62" rx="10"/></g>
-<text class="proc" x="350" y="2499.5" text-anchor="middle">Opens /r/:token &#8212; no password required</text>
-<g filter="url(#sh)"><rect class="db" x="595.0" y="2455.5" width="470" height="79" rx="8"/></g>
-<rect x="595.0" y="2455.5" width="5" height="79" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="613.0" y="2479.5">SELECT MANAGE_TOKENS</text>
-<text class="dbt" x="613.0" y="2496.5">WHERE token_hash = SHA-256(token)</text>
-<text class="dbt" x="613.0" y="2513.5">JOIN USERS, REGISTRATIONS</text>
-<path class="arr" d="M540.0 2495.0 L592.0 2495.0" marker-end="url(#ah)" marker-start="url(#ahs)" fill="none"/>
-<text class="rw" x="567.5" y="2487.0" text-anchor="middle">READ</text>
-<path class="arr" d="M350 2526 L350 2556" marker-end="url(#ah)" fill="none"/>
-<g filter="url(#sh)"><rect class="box" x="180.0" y="2556" width="340" height="72" rx="10"/></g>
-<text class="proc-s" x="350" y="2587.0" text-anchor="middle">Views the booking, cancels it,</text>
-<text class="proc-s" x="350" y="2606.0" text-anchor="middle">or optionally sets a password</text>
-<g filter="url(#sh)"><rect class="db" x="595.0" y="2552" width="470" height="96" rx="8"/></g>
-<rect x="595.0" y="2552" width="5" height="96" rx="2.5" fill="#2440a8"/>
-<text class="dbt" x="613.0" y="2576">UPDATE status = 'cancelled'</text>
-<text class="dbt" x="613.0" y="2593">INSERT STATUS_CHANGES</text>
-<text class="dbt" x="613.0" y="2610">promote next waitlisted (FIFO)</text>
-<text class="dbt" x="613.0" y="2627">INSERT NOTIFICATIONS ('queued')</text>
-<path class="arr" d="M520 2592 L592.0 2592" marker-end="url(#ah)" fill="none"/>
-<text class="ww" x="557.5" y="2582" text-anchor="middle">WRITE</text>
-<text class="note" x="350" y="2660" text-anchor="middle">same engine as the logged-in cancel &#8212; cancelRegistration()</text>
+<rect width="794" height="1123" fill="#ffffff"/>
+<text class="t-h1" x="40" y="44">A · Participant — browse, register, confirm</text>
+<text class="t-sub" x="40" y="61">Public pages. No account is needed: the e-mailed link is the credential.</text>
+<text class="t-sub" x="754" y="44" text-anchor="end">Sheet A of 3</text>
+<line x1="40" y1="70" x2="754" y2="70" stroke="#dfe5ef"/>
+<rect x="126.0" y="84" width="220" height="36" rx="18.0" fill="#2b3a55"/>
+<text class="t-term" x="236" y="106.0" text-anchor="middle">Start</text>
+<path d="M236 120 L236 131" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
+<path d="M100.0 131 L386.0 131 L372.0 175 L86.0 175 Z" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="156.5" text-anchor="middle">Opens the event list  ( GET / )</text>
+<path d="M236 175 L236 186" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
+<path d="M86.0 193 A150.0 7 0 0 1 386.0 193 L386.0 262 A150.0 7 0 0 1 86.0 262 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M86.0 193 A150.0 7 0 0 0 386.0 193" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="236" y="208" text-anchor="middle">EVENTS ⋈ VENUES</text>
+<text class="t-ops" x="100.0" y="222">SELECT events + venues</text>
+<text class="t-ops" x="100.0" y="235">COUNT(*) WHERE status='confirmed'</text>
+<text class="t-ops" x="100.0" y="248">remaining = max_participants - taken</text>
+<path d="M236 269 L236 280" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
+<path d="M100.0 280 L386.0 280 L372.0 324 L86.0 324 Z" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="305.5" text-anchor="middle">Selects one event  ( GET /events/:id )</text>
+<path d="M236 324 L236 335" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
+<path d="M86.0 342 A150.0 7 0 0 1 386.0 342 L386.0 398 A150.0 7 0 0 1 86.0 398 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M86.0 342 A150.0 7 0 0 0 386.0 342" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="236" y="357" text-anchor="middle">EVENTS / REGISTRATIONS</text>
+<text class="t-ops" x="100.0" y="371">SELECT event + venue</text>
+<text class="t-ops" x="100.0" y="384">COUNT confirmed seats</text>
+<path d="M236 405 L236 416" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
+<path d="M236 416 L351.0 449.0 L236 482 L121.0 449.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="446.5" text-anchor="middle">Seats still</text>
+<text class="t-proc" x="236" y="458.5" text-anchor="middle">available?</text>
+<path d="M351 449.0 L446 449.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
+<text class="t-no" x="362" y="443.0" text-anchor="start">No</text>
+<path d="M450.0 431.0 L776.0 431.0 L762.0 475.0 L436.0 475.0 Z" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="606" y="456.5" text-anchor="middle">Joins the waiting list  ( POST /events/:id/register )</text>
+<path d="M606 475.0 L606 489.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
+<path d="M446.0 496.0 A160.0 7 0 0 1 766.0 496.0 L766.0 565.0 A160.0 7 0 0 1 446.0 565.0 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M446.0 496.0 A160.0 7 0 0 0 766.0 496.0" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="606" y="511.0" text-anchor="middle">REGISTRATIONS</text>
+<text class="t-ops" x="460.0" y="525.0">INSERT status = 'waitlisted'</text>
+<text class="t-ops" x="460.0" y="538.0">INSERT REGISTRATION_STATUS_CHANGES</text>
+<text class="t-ops" x="460.0" y="551.0">INSERT NOTIFICATIONS ('queued')</text>
+<path d="M606 572.0 L606 586.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
+<rect x="466.0" y="586.0" width="280" height="36" rx="18.0" fill="#2b3a55"/>
+<text class="t-term" x="606" y="608.0" text-anchor="middle">On the waiting list</text>
+<text class="t-lab" x="606" y="638.0" text-anchor="middle">promoted automatically when a seat frees up (sheet C)</text>
+<path d="M236 482 L236 493" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
+<text class="t-yes" x="242" y="491" text-anchor="start">Yes</text>
+<path d="M100.0 493 L386.0 493 L372.0 537 L86.0 537 Z" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="518.5" text-anchor="middle">Enters full name + e-mail address</text>
+<path d="M236 537 L236 548" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
+<path d="M86.0 555 A150.0 7 0 0 1 386.0 555 L386.0 611 A150.0 7 0 0 1 86.0 611 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M86.0 555 A150.0 7 0 0 0 386.0 555" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="236" y="570" text-anchor="middle">USERS / REGISTRATIONS</text>
+<text class="t-ops" x="100.0" y="584">SELECT WHERE (event_id, user_id)</text>
+<text class="t-ops" x="100.0" y="597">validation + duplicate rule</text>
+<path d="M236 618 L236 629" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
+<path d="M86.0 636 A150.0 7 0 0 1 386.0 636 L386.0 692 A150.0 7 0 0 1 86.0 692 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M86.0 636 A150.0 7 0 0 0 386.0 636" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="236" y="651" text-anchor="middle">EVENTS / REGISTRATIONS</text>
+<text class="t-ops" x="100.0" y="665">SELECT event ... FOR UPDATE</text>
+<text class="t-ops" x="100.0" y="678">COUNT confirmed (locked row)</text>
+<path d="M236 699 L236 710" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
+<path d="M86.0 717 A150.0 7 0 0 1 386.0 717 L386.0 824 A150.0 7 0 0 1 86.0 824 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M86.0 717 A150.0 7 0 0 0 386.0 717" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="236" y="732" text-anchor="middle">REGISTRATIONS</text>
+<text class="t-db" x="236" y="744" text-anchor="middle">STATUS_CHANGES · NOTIFICATIONS</text>
+<text class="t-ops" x="100.0" y="758">BEGIN</text>
+<text class="t-ops" x="100.0" y="771">INSERT registration</text>
+<text class="t-ops" x="100.0" y="784">INSERT status history</text>
+<text class="t-ops" x="100.0" y="797">INSERT notification ('queued')</text>
+<text class="t-ops" x="100.0" y="810">COMMIT</text>
+<path d="M236 831 L236 842" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
+<rect x="106.0" y="842" width="260" height="41" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
+<line x1="117.0" y1="842" x2="117.0" y2="883" stroke="#2b3a55" stroke-width="1.1"/>
+<line x1="355.0" y1="842" x2="355.0" y2="883" stroke="#2b3a55" stroke-width="1.1"/>
+<text class="t-proc" x="236" y="866.0" text-anchor="middle">notifyRegistration()</text>
+<path d="M236 883 L236 894" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
+<path d="M86.0 894 L386.0 894 L386.0 929 Q311.0 917 236 929 Q161.0 941 86.0 929 Z" fill="#f7f9fc" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="911" text-anchor="middle">Confirmation page + e-mail with /r/:token</text>
+<path d="M236 939 L236 950" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahA)"/>
+<rect x="116.0" y="950" width="240" height="36" rx="18.0" fill="#2b3a55"/>
+<text class="t-term" x="236" y="972.0" text-anchor="middle">Registration stored</text>
+<circle cx="388" cy="968.0" r="12" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-con" x="388" y="971.5" text-anchor="middle">C</text>
+<text class="t-lab" x="406" y="971.0" text-anchor="start">e-mail path continues on sheet C</text>
+<line x1="40" y1="1006" x2="754" y2="1006" stroke="#dfe5ef"/>
+<text class="t-leg" x="40" y="1022">Symbols (ISO 5807 / ANSI X3.5):</text>
+<rect x="115" y="1034" width="34" height="16" rx="8" fill="#2b3a55"/>
+<text class="t-leg" x="132" y="1066" text-anchor="middle">start / end</text>
+<rect x="220" y="1034" width="32" height="16" fill="#fff" stroke="#2b3a55"/>
+<text class="t-leg" x="236" y="1066" text-anchor="middle">process</text>
+<path d="M330 1034 L358 1034 L350 1050 L322 1050 Z" fill="#fff" stroke="#2b3a55"/>
+<text class="t-leg" x="340" y="1066" text-anchor="middle">input / output</text>
+<path d="M429 1036 A15 4 0 0 1 459 1036 L459 1048 A15 4 0 0 1 429 1048 Z" fill="#eaf1fb" stroke="#2f4f86"/>
+<text class="t-leg" x="444" y="1066" text-anchor="middle">stored data</text>
+<path d="M548 1033 L567 1042 L548 1051 L529 1042 Z" fill="#fffdf3" stroke="#2b3a55"/>
+<text class="t-leg" x="548" y="1066" text-anchor="middle">decision</text>
+<rect x="636" y="1034" width="32" height="16" fill="#fff" stroke="#2b3a55"/><line x1="641" y1="1034" x2="641" y2="1050" stroke="#2b3a55"/><line x1="663" y1="1034" x2="663" y2="1050" stroke="#2b3a55"/>
+<text class="t-leg" x="652" y="1066" text-anchor="middle">subroutine</text>
+<path d="M740 1033 L772 1033 L772 1047 Q764 1039 756 1047 Q748 1055 740 1047 Z" fill="#f7f9fc" stroke="#2b3a55"/>
+<text class="t-leg" x="756" y="1066" text-anchor="middle">document</text>
+<circle cx="628" cy="1035" r="9" fill="#ffffff" stroke="#2b3a55" stroke-width="1.4"/>
+<text class="t-leg" x="644" y="1039">off-page connector</text>
+<text class="t-leg" x="40" y="1102">Online Event Registration System · sheet A of 3 · regenerate with python3 docs/generate-diagrams.py</text>
+</g>
+<g transform="translate(0 1123)">
+<defs>
+<style>
+.t-term{fill:#fff;font-size:11.5px;font-weight:700;letter-spacing:.03em}
+.t-proc{fill:#1b2536;font-size:10.5px;font-weight:600}
+.t-db{fill:#2f4f86;font-size:9.6px;font-weight:700;letter-spacing:.02em}
+.t-ops{fill:#1b2536;font-family:'Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:8.7px}
+.t-lab{fill:#5d6b85;font-size:8.8px}
+.t-yes{fill:#0c6b4a;font-size:9px;font-weight:700}
+.t-no{fill:#a52a3d;font-size:9px;font-weight:700}
+.t-h1{fill:#1b2536;font-size:15px;font-weight:700}
+.t-sub{fill:#5d6b85;font-size:8.8px}
+.t-con{fill:#1b2536;font-size:9.5px;font-weight:700}
+.t-leg{fill:#5d6b85;font-size:8.2px}
+</style>
+<marker id="ahB" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0 0 L9 3.5 L0 7 z" fill="#2b3a55"/></marker>
+</defs>
+<rect width="794" height="1123" fill="#ffffff"/>
+<text class="t-h1" x="40" y="44">B · Administration — authenticated session required</text>
+<text class="t-sub" x="40" y="61">requireLogin + requireAdmin. Every branch audits and queues a notification.</text>
+<text class="t-sub" x="754" y="44" text-anchor="end">Sheet B of 3</text>
+<line x1="40" y1="70" x2="754" y2="70" stroke="#dfe5ef"/>
+<rect x="116.0" y="84" width="240" height="36" rx="18.0" fill="#2b3a55"/>
+<text class="t-term" x="236" y="106.0" text-anchor="middle">Admin opens /admin</text>
+<path d="M236 120 L236 131" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
+<path d="M236 131 L351.0 164.0 L236 197 L121.0 164.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="161.5" text-anchor="middle">Signed in with</text>
+<text class="t-proc" x="236" y="173.5" text-anchor="middle">an admin role?</text>
+<path d="M351 164.0 L446 164.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
+<text class="t-no" x="362" y="158.0" text-anchor="start">No</text>
+<path d="M460.0 144.0 L766.0 144.0 L752.0 188.0 L446.0 188.0 Z" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="606" y="169.5" text-anchor="middle">Login form  ( POST /login )</text>
+<path d="M606 188.0 L606 200.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
+<path d="M446.0 207.0 A160.0 7 0 0 1 766.0 207.0 L766.0 263.0 A160.0 7 0 0 1 446.0 263.0 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M446.0 207.0 A160.0 7 0 0 0 766.0 207.0" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="606" y="222.0" text-anchor="middle">USERS</text>
+<text class="t-ops" x="460.0" y="236.0">SELECT WHERE email = ?</text>
+<text class="t-ops" x="460.0" y="249.0">bcrypt.compare(password, hash)</text>
+<path d="M606 270.0 L606 282.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
+<path d="M446.0 289.0 A160.0 7 0 0 1 766.0 289.0 L766.0 332.0 A160.0 7 0 0 1 446.0 332.0 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M446.0 289.0 A160.0 7 0 0 0 766.0 289.0" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="606" y="304.0" text-anchor="middle">SESSIONS</text>
+<text class="t-ops" x="460.0" y="318.0">INSERT / UPDATE session row</text>
+<path d="M606 339.0 L606 351.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
+<rect x="466.0" y="351.0" width="280" height="36" rx="18.0" fill="#2b3a55"/>
+<text class="t-term" x="606" y="373.0" text-anchor="middle">Redirects to /admin</text>
+<text class="t-lab" x="606" y="401.0" text-anchor="middle">the session row carries the login from here on</text>
+<path d="M236 197 L236 208" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
+<text class="t-yes" x="242" y="206" text-anchor="start">Yes</text>
+<path d="M100.0 208 L386.0 208 L372.0 252 L86.0 252 Z" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="233.5" text-anchor="middle">Dashboard  ( GET /admin )</text>
+<path d="M236 252 L236 263" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
+<path d="M86.0 270 A150.0 7 0 0 1 386.0 270 L386.0 339 A150.0 7 0 0 1 86.0 339 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M86.0 270 A150.0 7 0 0 0 386.0 270" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="236" y="285" text-anchor="middle">EVENTS / REGISTRATIONS</text>
+<text class="t-ops" x="100.0" y="299">SELECT aggregates:</text>
+<text class="t-ops" x="100.0" y="312">events · confirmed · waitlisted</text>
+<text class="t-ops" x="100.0" y="325">check-ins · users</text>
+<path d="M236 346 L236 357" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
+<path d="M236 357 L351.0 390.0 L236 423 L121.0 390.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="393.5" text-anchor="middle">Which action?</text>
+<path d="M236 423 L236 891" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
+<path d="M236 510.5 L444 510.5" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
+<path d="M446.0 476 A160.0 7 0 0 1 766.0 476 L766.0 545 A160.0 7 0 0 1 446.0 545 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M446.0 476 A160.0 7 0 0 0 766.0 476" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="606" y="491" text-anchor="middle">EVENTS / VENUES</text>
+<text class="t-ops" x="460.0" y="505">INSERT / UPDATE EVENTS</text>
+<text class="t-ops" x="460.0" y="518">INSERT / UPDATE VENUES</text>
+<text class="t-ops" x="460.0" y="531">UPDATE deleted_at (archive)</text>
+<text class="t-lab" x="438" y="505.5" text-anchor="end">event</text>
+<text class="t-lab" x="446" y="462" text-anchor="start">creates / edits / archives an event</text>
+<path d="M236 633.0 L444 633.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
+<path d="M446.0 605 A160.0 7 0 0 1 766.0 605 L766.0 661 A160.0 7 0 0 1 446.0 661 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M446.0 605 A160.0 7 0 0 0 766.0 605" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="606" y="620" text-anchor="middle">ATTENDANCE / AUDIT_LOGS</text>
+<text class="t-ops" x="460.0" y="634">INSERT ATTENDANCE</text>
+<text class="t-ops" x="460.0" y="647">INSERT AUDIT_LOGS</text>
+<text class="t-lab" x="438" y="628.0" text-anchor="end">check-in</text>
+<text class="t-lab" x="446" y="591" text-anchor="start">checks a participant in</text>
+<path d="M236 787.5 L444 787.5" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
+<rect x="446.0" y="714" width="320" height="41" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
+<line x1="457.0" y1="714" x2="457.0" y2="755" stroke="#2b3a55" stroke-width="1.1"/>
+<line x1="755.0" y1="714" x2="755.0" y2="755" stroke="#2b3a55" stroke-width="1.1"/>
+<text class="t-proc" x="606" y="738.0" text-anchor="middle">cancelRegistration()</text>
+<path d="M606 755 L606 765" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahB)"/>
+<path d="M446.0 772 A160.0 7 0 0 1 766.0 772 L766.0 854 A160.0 7 0 0 1 446.0 854 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M446.0 772 A160.0 7 0 0 0 766.0 772" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="606" y="787" text-anchor="middle">REGISTRATIONS / STATUS_CHANGES</text>
+<text class="t-ops" x="460.0" y="801">UPDATE status</text>
+<text class="t-ops" x="460.0" y="814">INSERT status change</text>
+<text class="t-ops" x="460.0" y="827">promote next waitlisted (FIFO)</text>
+<text class="t-ops" x="460.0" y="840">INSERT NOTIFICATIONS ('queued')</text>
+<text class="t-lab" x="438" y="782.5" text-anchor="end">status</text>
+<text class="t-lab" x="446" y="707" text-anchor="start">cancels or changes a status</text>
+<rect x="121.0" y="891" width="230" height="36" rx="18.0" fill="#2b3a55"/>
+<text class="t-term" x="236" y="913.0" text-anchor="middle">Action committed</text>
+<text class="t-lab" x="236" y="945" text-anchor="middle">every path above writes AUDIT_LOGS and queues NOTIFICATIONS</text>
+<line x1="40" y1="1006" x2="754" y2="1006" stroke="#dfe5ef"/>
+<text class="t-leg" x="40" y="1022">Symbols (ISO 5807 / ANSI X3.5):</text>
+<rect x="115" y="1034" width="34" height="16" rx="8" fill="#2b3a55"/>
+<text class="t-leg" x="132" y="1066" text-anchor="middle">start / end</text>
+<rect x="220" y="1034" width="32" height="16" fill="#fff" stroke="#2b3a55"/>
+<text class="t-leg" x="236" y="1066" text-anchor="middle">process</text>
+<path d="M330 1034 L358 1034 L350 1050 L322 1050 Z" fill="#fff" stroke="#2b3a55"/>
+<text class="t-leg" x="340" y="1066" text-anchor="middle">input / output</text>
+<path d="M429 1036 A15 4 0 0 1 459 1036 L459 1048 A15 4 0 0 1 429 1048 Z" fill="#eaf1fb" stroke="#2f4f86"/>
+<text class="t-leg" x="444" y="1066" text-anchor="middle">stored data</text>
+<path d="M548 1033 L567 1042 L548 1051 L529 1042 Z" fill="#fffdf3" stroke="#2b3a55"/>
+<text class="t-leg" x="548" y="1066" text-anchor="middle">decision</text>
+<rect x="636" y="1034" width="32" height="16" fill="#fff" stroke="#2b3a55"/><line x1="641" y1="1034" x2="641" y2="1050" stroke="#2b3a55"/><line x1="663" y1="1034" x2="663" y2="1050" stroke="#2b3a55"/>
+<text class="t-leg" x="652" y="1066" text-anchor="middle">subroutine</text>
+<path d="M740 1033 L772 1033 L772 1047 Q764 1039 756 1047 Q748 1055 740 1047 Z" fill="#f7f9fc" stroke="#2b3a55"/>
+<text class="t-leg" x="756" y="1066" text-anchor="middle">document</text>
+<circle cx="628" cy="1035" r="9" fill="#ffffff" stroke="#2b3a55" stroke-width="1.4"/>
+<text class="t-leg" x="644" y="1039">off-page connector</text>
+<text class="t-leg" x="40" y="1102">Online Event Registration System · sheet B of 3 · regenerate with python3 docs/generate-diagrams.py</text>
+</g>
+<g transform="translate(0 2246)">
+<defs>
+<style>
+.t-term{fill:#fff;font-size:11.5px;font-weight:700;letter-spacing:.03em}
+.t-proc{fill:#1b2536;font-size:10.5px;font-weight:600}
+.t-db{fill:#2f4f86;font-size:9.6px;font-weight:700;letter-spacing:.02em}
+.t-ops{fill:#1b2536;font-family:'Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:8.7px}
+.t-lab{fill:#5d6b85;font-size:8.8px}
+.t-yes{fill:#0c6b4a;font-size:9px;font-weight:700}
+.t-no{fill:#a52a3d;font-size:9px;font-weight:700}
+.t-h1{fill:#1b2536;font-size:15px;font-weight:700}
+.t-sub{fill:#5d6b85;font-size:8.8px}
+.t-con{fill:#1b2536;font-size:9.5px;font-weight:700}
+.t-leg{fill:#5d6b85;font-size:8.2px}
+</style>
+<marker id="ahC" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0 0 L9 3.5 L0 7 z" fill="#2b3a55"/></marker>
+</defs>
+<rect width="794" height="1123" fill="#ffffff"/>
+<text class="t-h1" x="40" y="44">C · Notification worker and guest self-service</text>
+<text class="t-sub" x="40" y="61">Delivery runs out of band, so an SMTP failure can never roll back a booking.</text>
+<text class="t-sub" x="754" y="44" text-anchor="end">Sheet C of 3</text>
+<line x1="40" y1="70" x2="754" y2="70" stroke="#dfe5ef"/>
+<rect x="86.0" y="84" width="300" height="36" rx="18.0" fill="#2b3a55"/>
+<text class="t-term" x="236" y="106.0" text-anchor="middle">Worker timer fires (every 15 s)</text>
+<path d="M236 120 L236 127" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
+<path d="M86.0 134 A150.0 7 0 0 1 386.0 134 L386.0 190 A150.0 7 0 0 1 86.0 190 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M86.0 134 A150.0 7 0 0 0 386.0 134" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="236" y="149" text-anchor="middle">NOTIFICATIONS</text>
+<text class="t-ops" x="100.0" y="163">SELECT WHERE status = 'queued'</text>
+<text class="t-ops" x="100.0" y="176">ORDER BY created_at LIMIT 20</text>
+<path d="M236 197 L236 204" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
+<rect x="86.0" y="204" width="300" height="58" rx="3" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="229.5" text-anchor="middle">Renders the e-mail template, then sends it</text>
+<text class="t-proc" x="236" y="243.5" text-anchor="middle">through the transport (console .eml / SMTP)</text>
+<path d="M236 262 L236 269" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
+<path d="M236 269 L351.0 302.0 L236 335 L121.0 302.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="305.5" text-anchor="middle">Delivered?</text>
+<path d="M351 302.0 L446 302.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
+<text class="t-no" x="362" y="296.0" text-anchor="start">No</text>
+<path d="M446.0 281.0 A160.0 7 0 0 1 766.0 281.0 L766.0 363.0 A160.0 7 0 0 1 446.0 363.0 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M446.0 281.0 A160.0 7 0 0 0 766.0 281.0" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="606" y="296.0" text-anchor="middle">NOTIFICATIONS</text>
+<text class="t-ops" x="460.0" y="310.0">attempts = attempts + 1</text>
+<text class="t-ops" x="460.0" y="323.0">requeue while attempts &lt; 3</text>
+<text class="t-ops" x="460.0" y="336.0">then status = 'failed'</text>
+<text class="t-ops" x="460.0" y="349.0">+ last_error (shown in /admin)</text>
+<text class="t-lab" x="606" y="378.0" text-anchor="middle">Requeue button drains it immediately</text>
+<path d="M236 335 L236 357" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
+<text class="t-yes" x="228" y="350" text-anchor="end">Yes</text>
+<path d="M86.0 364 A150.0 7 0 0 1 386.0 364 L386.0 420 A150.0 7 0 0 1 86.0 420 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M86.0 364 A150.0 7 0 0 0 386.0 364" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="236" y="379" text-anchor="middle">NOTIFICATIONS</text>
+<text class="t-ops" x="100.0" y="393">UPDATE status = 'sent'</text>
+<text class="t-ops" x="100.0" y="406">SET sent_at = NOW()</text>
+<path d="M236 427 L236 434" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
+<path d="M100.0 434 L386.0 434 L372.0 478 L86.0 478 Z" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="459.5" text-anchor="middle">Recipient opens /r/:token</text>
+<circle cx="388" cy="456.0" r="12" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-con" x="388" y="459.5" text-anchor="middle">A</text>
+<text class="t-lab" x="406" y="459.0" text-anchor="start">from sheet A</text>
+<path d="M236 478 L236 485" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
+<path d="M86.0 492 A150.0 7 0 0 1 386.0 492 L386.0 548 A150.0 7 0 0 1 86.0 548 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M86.0 492 A150.0 7 0 0 0 386.0 492" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="236" y="507" text-anchor="middle">MANAGE_TOKENS</text>
+<text class="t-ops" x="100.0" y="521">SELECT by token_hash = SHA-256(token)</text>
+<text class="t-ops" x="100.0" y="534">JOIN USERS, REGISTRATIONS</text>
+<path d="M236 555 L236 562" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
+<path d="M236 562 L351.0 595.0 L236 628 L121.0 595.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="592.5" text-anchor="middle">What does the</text>
+<text class="t-proc" x="236" y="604.5" text-anchor="middle">guest do?</text>
+<path d="M236 628 L236 928" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
+<path d="M236 672.5 L444 672.5" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
+<path d="M446.0 650 L766.0 650 L766.0 685 Q686.0 673 606 685 Q526.0 697 446.0 685 Z" fill="#f7f9fc" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="606" y="667" text-anchor="middle">Booking page: event, venue, seats</text>
+<text class="t-lab" x="438" y="668.5" text-anchor="end">view</text>
+<text class="t-lab" x="446" y="643" text-anchor="start">views the booking</text>
+<path d="M236 765.5 L444 765.5" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
+<path d="M446.0 718 A160.0 7 0 0 1 766.0 718 L766.0 813 A160.0 7 0 0 1 446.0 813 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M446.0 718 A160.0 7 0 0 0 766.0 718" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="606" y="733" text-anchor="middle">REGISTRATIONS / STATUS_CHANGES</text>
+<text class="t-ops" x="460.0" y="747">cancelRegistration()</text>
+<text class="t-ops" x="460.0" y="760">UPDATE status = 'cancelled'</text>
+<text class="t-ops" x="460.0" y="773">INSERT status change</text>
+<text class="t-ops" x="460.0" y="786">promote next waitlisted (FIFO)</text>
+<text class="t-ops" x="460.0" y="799">INSERT NOTIFICATIONS ('queued')</text>
+<text class="t-lab" x="438" y="761.5" text-anchor="end">cancel</text>
+<text class="t-lab" x="446" y="704" text-anchor="start">cancels it · promotes the next waitlisted participant</text>
+<path d="M236 871.0 L444 871.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ahC)"/>
+<path d="M446.0 843 A160.0 7 0 0 1 766.0 843 L766.0 899 A160.0 7 0 0 1 446.0 899 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M446.0 843 A160.0 7 0 0 0 766.0 843" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="606" y="858" text-anchor="middle">USERS / MANAGE_TOKENS</text>
+<text class="t-ops" x="460.0" y="872">UPDATE password + claimed_at</text>
+<text class="t-ops" x="460.0" y="885">UPDATE used_at (consume link)</text>
+<text class="t-lab" x="438" y="867.0" text-anchor="end">claim</text>
+<text class="t-lab" x="446" y="829" text-anchor="start">sets a password (optional)</text>
+<rect x="136.0" y="928" width="200" height="36" rx="18.0" fill="#2b3a55"/>
+<text class="t-term" x="236" y="950.0" text-anchor="middle">End</text>
+<line x1="40" y1="1006" x2="754" y2="1006" stroke="#dfe5ef"/>
+<text class="t-leg" x="40" y="1022">Symbols (ISO 5807 / ANSI X3.5):</text>
+<rect x="115" y="1034" width="34" height="16" rx="8" fill="#2b3a55"/>
+<text class="t-leg" x="132" y="1066" text-anchor="middle">start / end</text>
+<rect x="220" y="1034" width="32" height="16" fill="#fff" stroke="#2b3a55"/>
+<text class="t-leg" x="236" y="1066" text-anchor="middle">process</text>
+<path d="M330 1034 L358 1034 L350 1050 L322 1050 Z" fill="#fff" stroke="#2b3a55"/>
+<text class="t-leg" x="340" y="1066" text-anchor="middle">input / output</text>
+<path d="M429 1036 A15 4 0 0 1 459 1036 L459 1048 A15 4 0 0 1 429 1048 Z" fill="#eaf1fb" stroke="#2f4f86"/>
+<text class="t-leg" x="444" y="1066" text-anchor="middle">stored data</text>
+<path d="M548 1033 L567 1042 L548 1051 L529 1042 Z" fill="#fffdf3" stroke="#2b3a55"/>
+<text class="t-leg" x="548" y="1066" text-anchor="middle">decision</text>
+<rect x="636" y="1034" width="32" height="16" fill="#fff" stroke="#2b3a55"/><line x1="641" y1="1034" x2="641" y2="1050" stroke="#2b3a55"/><line x1="663" y1="1034" x2="663" y2="1050" stroke="#2b3a55"/>
+<text class="t-leg" x="652" y="1066" text-anchor="middle">subroutine</text>
+<path d="M740 1033 L772 1033 L772 1047 Q764 1039 756 1047 Q748 1055 740 1047 Z" fill="#f7f9fc" stroke="#2b3a55"/>
+<text class="t-leg" x="756" y="1066" text-anchor="middle">document</text>
+<circle cx="628" cy="1035" r="9" fill="#ffffff" stroke="#2b3a55" stroke-width="1.4"/>
+<text class="t-leg" x="644" y="1039">off-page connector</text>
+<text class="t-leg" x="40" y="1102">Online Event Registration System · sheet C of 3 · regenerate with python3 docs/generate-diagrams.py</text>
+</g>
 </svg>

@@ -77,7 +77,8 @@ event-registration-system/
 │   ├── DEFENSE-GUIDE.md         # ★ comprehensive academic defense presentation manual
 │   ├── SYSTEM-DOCS.html / .pdf  # ★ full documentation sheet (diagrams inlined)
 │   ├── ERD.svg / ERD.png        # entity relationship diagram (crow's foot notation)
-│   ├── FLOWCHART.svg / .png     # system flowchart
+│   ├── FLOWCHART.svg / .png     # system flowchart (all three sheets stacked)
+│   ├── FLOWCHART-A/B/C.svg/.png # the same flowchart as three A4 sheets (ISO 5807 symbols)
 │   ├── MVC-ARCHITECTURE.svg     # architecture diagram
 │   ├── DOCUMENTATION.md         # full system documentation
 │   ├── GETTING-STARTED.md       # ★ how to run it, initialise the DB, troubleshoot
@@ -215,7 +216,7 @@ All 16 tests passing
 * **`docs/DEFENSE-GUIDE.md`** — Step-by-step live demo script, architectural answers to panel questions, and defense rubric alignment.
 * **`docs/SYSTEM-DOCS.html`** — Comprehensive printable system documentation with inlined vector diagrams.
 * **`docs/schema.sql`** — Production MySQL DDL script with analytical queries.
-* **`docs/ERD.svg`** · **`docs/FLOWCHART.svg`** · **`docs/MVC-ARCHITECTURE.svg`** — Complete visual documentation.
+* **`docs/ERD.svg`** · **`docs/FLOWCHART.svg`** (plus the printable `FLOWCHART-A/B/C` sheets) · **`docs/MVC-ARCHITECTURE.svg`** — Complete visual documentation.
 
 ---
 

@@ -175,7 +175,18 @@
 
 ## 4. System Flowchart
 
+Drawn with the standard ISO 5807 / ANSI symbol set: pills for start and end,
+rectangles for process, **parallelograms for input/output**, **cylinders for
+stored data** (each naming the table and the statement it runs), diamonds for
+decisions, double-barred rectangles for named subroutines and wavy-based
+rectangles for documents. It is split into three A4 sheets, one per actor, and
+joined by off-page connector circles.
+
 ![System Flowchart](./FLOWCHART.svg)
+
+Sheets, individually printable: [`FLOWCHART-A.svg`](./FLOWCHART-A.svg) (participant) ·
+[`FLOWCHART-B.svg`](./FLOWCHART-B.svg) (administration) ·
+[`FLOWCHART-C.svg`](./FLOWCHART-C.svg) (worker and guest self-service).
 
 ```
 Start

@@ -324,21 +324,4 @@
 <line x1="1384" y1="105" x2="1414" y2="105" stroke="#46527a" stroke-width="1.7"/><text class="legend" x="1420" y="109">1</text>
 <text class="legend" x="1436" y="109">bar</text>
 <text class="legend" x="1044" y="128">0..* = zero or many &#183; 0..1 = optional one &#183; dashed = nullable reference</text>
-<rect x="40" y="1332" width="1420" height="416" rx="14" fill="#e8eeff" stroke="#c6d3fb"/>
-<text class="note-b" x="66" y="1362">Keys, constraints and rules enforced by the schema</text>
-<text class="note" x="66" y="1388"><tspan font-weight="700">Duplicate rule:</tspan> UNIQUE (event_id, user_id) on REGISTRATIONS &#8212; one registration per participant per event.</text>
-<text class="note" x="66" y="1412"><tspan font-weight="700">Capacity rule:</tspan> COUNT(status = 'confirmed') may never exceed EVENTS.max_participants; checked inside a transaction with a row lock.</text>
-<text class="note" x="66" y="1436"><tspan font-weight="700">Attendance rule:</tspan> UNIQUE (registration_id) on ATTENDANCE &#8212; a participant can be checked in only once, and only while confirmed.</text>
-<text class="note" x="66" y="1460"><tspan font-weight="700">Venue rule:</tspan> UNIQUE (name, city) on VENUES; EVENTS.venue_id is NOT NULL, so the venue name is stored once.</text>
-<text class="note" x="66" y="1484"><tspan font-weight="700">Referential integrity:</tspan> REGISTRATIONS &#8594; USERS/EVENTS, ATTENDANCE &#8594; REGISTRATIONS, REGISTRATION_STATUS_CHANGES &#8594; REGISTRATIONS &#8594; ON DELETE CASCADE;</text>
-<text class="note" x="66" y="1504">AUDIT_LOGS.actor_id and the audit columns use ON DELETE SET NULL so history survives a deleted user.</text>
-<text class="note" x="66" y="1528"><tspan font-weight="700">Soft delete:</tspan> EVENTS.deleted_at keeps an archived event&#8217;s registrations, attendance and status history available for reports.</text>
-<text class="note" x="66" y="1552"><tspan font-weight="700">Indexes:</tspan> USERS(email UQ, reset_password_token UQ, role), VENUES(name, city UQ), EVENTS(event_date, venue_id),</text>
-<text class="note" x="66" y="1572">REGISTRATIONS(event_id,status), (user_id,status), (status,registration_date) &#8212; the FIFO waitlist queue; ATTENDANCE(registration_id UQ);</text>
-<text class="note" x="66" y="1592">REGISTRATION_STATUS_CHANGES(registration_id, changed_at); AUDIT_LOGS(entity, entity_id), (created_at); SESSIONS(expires_at).</text>
-<text class="note" x="66" y="1618"><tspan font-weight="700">Outbox:</tspan> NOTIFICATIONS is written in the same transaction as the change it describes, then drained by the worker and retried up to 3 times.</text>
-<text class="note" x="66" y="1642"><tspan font-weight="700">Guest access:</tspan> MANAGE_TOKENS stores only the SHA-256 of the link token; USERS.password is NULL until the account is claimed (claimed_at), so a guest never needs a password to cancel.</text>
-<text class="note" x="66" y="1666"><tspan font-weight="700">SESSIONS:</tspan> no foreign key &#8212; it stores the serialised express-session payload and is purged by expiry.</text>
-<text class="note" x="66" y="1698" fill="#8a3b12"><tspan font-weight="700">Normalisation:</tspan> 1NF/2NF/3NF are satisfied for every table shown; the one remaining 3NF exception is the single-use reset token on USERS.</text>
-<text class="note" x="66" y="1722" fill="#8a3b12">A stricter variant (PASSWORD_RESET_TOKENS, lookup tables, NOTIFICATIONS) is proposed in docs/schema-3nf.sql.</text>
 </svg>
