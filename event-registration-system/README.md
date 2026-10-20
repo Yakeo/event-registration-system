@@ -76,6 +76,7 @@ event-registration-system/
 │   ├── FLOWCHART.svg / .png     # system flowchart
 │   ├── MVC-ARCHITECTURE.svg     # architecture diagram
 │   ├── DOCUMENTATION.md         # full system documentation
+│   ├── GETTING-STARTED.md       # ★ how to run it, initialise the DB, troubleshoot
 │   ├── DATABASE-AUDIT.md        # ★ normalisation audit, fixes, recommendations
 │   ├── schema.sql               # MySQL DDL for the running schema + reporting queries
 │   ├── schema-3nf.sql           # proposed normalised v2 schema (venue, attendance, tokens, audit)
@@ -109,6 +110,10 @@ npm start                     # or: npm run dev   (auto-restart on change)
 ```
 
 Open <http://localhost:3000> in your browser.
+
+> **New to the project?** Read [`docs/GETTING-STARTED.md`](./docs/GETTING-STARTED.md)
+> first — it explains how the database is created at runtime, which commands are
+> destructive, and how to fix the errors you are most likely to hit.
 
 ### Demo accounts (after `npm run seed`)
 
