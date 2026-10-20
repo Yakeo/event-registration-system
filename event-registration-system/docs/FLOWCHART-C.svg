@@ -24,84 +24,72 @@
 <rect x="76.0" y="84" width="320" height="36" rx="18.0" fill="#2b3a55"/>
 <text class="t-term" x="236" y="106.0" text-anchor="middle">Mail worker wakes up (every 15 s)</text>
 <path d="M236 120 L236 127" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
-<path d="M86.0 134 A150.0 7 0 0 1 386.0 134 L386.0 201 A150.0 7 0 0 1 86.0 201 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M86.0 134 A150.0 7 0 0 1 386.0 134 L386.0 188 A150.0 7 0 0 1 86.0 188 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
 <path d="M86.0 134 A150.0 7 0 0 0 386.0 134" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
 <text class="t-db" x="236" y="149" text-anchor="middle">Mail waiting to go out</text>
 <text class="t-tbl" x="236" y="162" text-anchor="middle">outgoing mail</text>
-<text class="t-ops" x="236" y="181" text-anchor="middle">Takes the next few messages that</text>
-<text class="t-ops" x="236" y="194" text-anchor="middle">are still waiting, oldest first.</text>
-<path d="M236 208 L236 215" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="86.0" y="215" width="300" height="58" rx="3" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
-<text class="t-proc" x="236" y="240.5" text-anchor="middle">Fills in the message template, then hands</text>
-<text class="t-proc" x="236" y="254.5" text-anchor="middle">it to the mail service (files or a server)</text>
-<path d="M236 273 L236 280" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
-<path d="M236 280 L356.0 313.0 L236 346 L116.0 313.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
-<text class="t-proc" x="236" y="316.5" text-anchor="middle">Did it go out?</text>
-<path d="M356 313.0 L436 313.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
-<text class="t-no" x="367" y="307.0" text-anchor="start">No</text>
-<path d="M436.0 290.0 A170.0 7 0 0 1 776.0 290.0 L776.0 383.0 A170.0 7 0 0 1 436.0 383.0 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
-<path d="M436.0 290.0 A170.0 7 0 0 0 776.0 290.0" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
-<text class="t-db" x="606" y="305.0" text-anchor="middle">Tries again later</text>
-<text class="t-tbl" x="606" y="318.0" text-anchor="middle">outgoing mail</text>
-<text class="t-ops" x="606" y="337.0" text-anchor="middle">Notes the failed attempt and tries</text>
-<text class="t-ops" x="606" y="350.0" text-anchor="middle">again, up to three times. After that it</text>
-<text class="t-ops" x="606" y="363.0" text-anchor="middle">is marked as failed, with the reason</text>
-<text class="t-ops" x="606" y="376.0" text-anchor="middle">kept so the organizer can see it.</text>
-<text class="t-lab" x="606" y="405.0" text-anchor="middle">the Requeue button sends it again at once</text>
-<path d="M236 346 L236 368" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
-<text class="t-yes" x="228" y="361" text-anchor="end">Yes</text>
-<path d="M86.0 375 A150.0 7 0 0 1 386.0 375 L386.0 442 A150.0 7 0 0 1 86.0 442 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
-<path d="M86.0 375 A150.0 7 0 0 0 386.0 375" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
-<text class="t-db" x="236" y="390" text-anchor="middle">Marks it as sent</text>
-<text class="t-tbl" x="236" y="403" text-anchor="middle">outgoing mail</text>
-<text class="t-ops" x="236" y="422" text-anchor="middle">Notes that the message went out,</text>
-<text class="t-ops" x="236" y="435" text-anchor="middle">and when.</text>
-<path d="M236 449 L236 456" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
-<path d="M85.0 456 L401.0 456 L387.0 500 L71.0 500 Z" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
-<text class="t-proc" x="236" y="481.5" text-anchor="middle">Participant clicks the link in the e-mail</text>
-<circle cx="401" cy="478.0" r="12" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
-<text class="t-con" x="401" y="481.5" text-anchor="middle">A</text>
-<text class="t-lab" x="419" y="481.0" text-anchor="start">that link came from sheet A</text>
-<path d="M236 500 L236 507" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
-<path d="M86.0 514 A150.0 7 0 0 1 386.0 514 L386.0 594 A150.0 7 0 0 1 86.0 594 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
-<path d="M86.0 514 A150.0 7 0 0 0 386.0 514" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
-<text class="t-db" x="236" y="529" text-anchor="middle">Looks the link up</text>
-<text class="t-tbl" x="236" y="542" text-anchor="middle">personal links and people</text>
-<text class="t-ops" x="236" y="561" text-anchor="middle">Finds the link, the person and the</text>
-<text class="t-ops" x="236" y="574" text-anchor="middle">booking. Checks it has not expired</text>
-<text class="t-ops" x="236" y="587" text-anchor="middle">and has not been used already.</text>
-<path d="M236 601 L236 608" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
-<path d="M236 608 L356.0 641.0 L236 674 L116.0 641.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
-<text class="t-proc" x="236" y="638.5" text-anchor="middle">What do they</text>
-<text class="t-proc" x="236" y="650.5" text-anchor="middle">want to do?</text>
-<path d="M236 674 L236 975" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
-<path d="M236 718.5 L432 718.5" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
-<path d="M436.0 696 L776.0 696 L776.0 731 Q691.0 719 606 731 Q521.0 743 436.0 731 Z" fill="#f7f9fc" stroke="#2b3a55" stroke-width="1.5"/>
-<text class="t-proc" x="606" y="713" text-anchor="middle">Sees the booking: event, date, place, seats left</text>
-<text class="t-lab" x="434" y="713.5" text-anchor="end">look</text>
-<text class="t-lab" x="448" y="689" text-anchor="start">just looks</text>
-<path d="M236 802.0 L432 802.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
-<path d="M436.0 762 A170.0 7 0 0 1 776.0 762 L776.0 842 A170.0 7 0 0 1 436.0 842 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
-<path d="M436.0 762 A170.0 7 0 0 0 776.0 762" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
-<text class="t-db" x="606" y="777" text-anchor="middle">Cancels the booking</text>
-<text class="t-tbl" x="606" y="790" text-anchor="middle">booking, history, outgoing mail</text>
-<text class="t-ops" x="606" y="809" text-anchor="middle">The same cancellation as the signed-in</text>
-<text class="t-ops" x="606" y="822" text-anchor="middle">page: the seat is freed and offered to</text>
-<text class="t-ops" x="606" y="835" text-anchor="middle">the next person waiting.</text>
-<text class="t-lab" x="434" y="797.0" text-anchor="end">cancel</text>
-<text class="t-lab" x="448" y="748" text-anchor="start">cancels</text>
-<path d="M236 910.0 L432 910.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
-<path d="M436.0 870 A170.0 7 0 0 1 776.0 870 L776.0 950 A170.0 7 0 0 1 436.0 950 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
-<path d="M436.0 870 A170.0 7 0 0 0 776.0 870" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
-<text class="t-db" x="606" y="885" text-anchor="middle">Sets a password</text>
-<text class="t-tbl" x="606" y="898" text-anchor="middle">people and their links</text>
-<text class="t-ops" x="606" y="917" text-anchor="middle">Saves the password, notes the day</text>
-<text class="t-ops" x="606" y="930" text-anchor="middle">the account was claimed, and marks</text>
-<text class="t-ops" x="606" y="943" text-anchor="middle">the link as used.</text>
-<text class="t-lab" x="434" y="905.0" text-anchor="end">claim</text>
-<text class="t-lab" x="448" y="856" text-anchor="start">turns the guest into an account</text>
-<rect x="136.0" y="975" width="200" height="36" rx="18.0" fill="#2b3a55"/>
-<text class="t-term" x="236" y="997.0" text-anchor="middle">Done</text>
+<text class="t-ops" x="236" y="181" text-anchor="middle">Takes the oldest messages first.</text>
+<path d="M236 195 L236 202" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="86.0" y="202" width="300" height="44" rx="3" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="227.5" text-anchor="middle">Fills in the template, then sends it</text>
+<path d="M236 246 L236 253" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
+<path d="M236 253 L356.0 286.0 L236 319 L116.0 286.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="289.5" text-anchor="middle">Did it go out?</text>
+<path d="M356 286.0 L436 286.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
+<text class="t-no" x="367" y="280.0" text-anchor="start">No</text>
+<path d="M436.0 263.0 A170.0 7 0 0 1 776.0 263.0 L776.0 317.0 A170.0 7 0 0 1 436.0 317.0 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M436.0 263.0 A170.0 7 0 0 0 776.0 263.0" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="606" y="278.0" text-anchor="middle">Tries again later</text>
+<text class="t-tbl" x="606" y="291.0" text-anchor="middle">outgoing mail</text>
+<text class="t-ops" x="606" y="310.0" text-anchor="middle">Retries up to three times, then marks it failed.</text>
+<text class="t-lab" x="606" y="378.0" text-anchor="middle">the Requeue button sends it again at once</text>
+<path d="M236 319 L236 341" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
+<text class="t-yes" x="228" y="334" text-anchor="end">Yes</text>
+<path d="M86.0 348 A150.0 7 0 0 1 386.0 348 L386.0 402 A150.0 7 0 0 1 86.0 402 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M86.0 348 A150.0 7 0 0 0 386.0 348" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="236" y="363" text-anchor="middle">Marks it as sent</text>
+<text class="t-tbl" x="236" y="376" text-anchor="middle">outgoing mail</text>
+<text class="t-ops" x="236" y="395" text-anchor="middle">Notes that it went out, and when.</text>
+<path d="M236 409 L236 416" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
+<path d="M85.0 416 L401.0 416 L387.0 460 L71.0 460 Z" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="441.5" text-anchor="middle">Participant clicks the e-mailed link</text>
+<circle cx="401" cy="438.0" r="12" fill="#ffffff" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-con" x="401" y="441.5" text-anchor="middle">A</text>
+<text class="t-lab" x="419" y="441.0" text-anchor="start">that link came from sheet A</text>
+<path d="M236 460 L236 467" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
+<path d="M86.0 474 A150.0 7 0 0 1 386.0 474 L386.0 528 A150.0 7 0 0 1 86.0 528 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M86.0 474 A150.0 7 0 0 0 386.0 474" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="236" y="489" text-anchor="middle">Looks the link up</text>
+<text class="t-tbl" x="236" y="502" text-anchor="middle">personal links and people</text>
+<text class="t-ops" x="236" y="521" text-anchor="middle">Finds the person and booking; checks it is still valid.</text>
+<path d="M236 535 L236 542" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
+<path d="M236 542 L356.0 575.0 L236 608 L116.0 575.0 Z" fill="#fffdf3" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="236" y="572.5" text-anchor="middle">What do they</text>
+<text class="t-proc" x="236" y="584.5" text-anchor="middle">want to do?</text>
+<path d="M236 608 L236 857" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
+<path d="M236 652.5 L432 652.5" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
+<path d="M436.0 630 L776.0 630 L776.0 665 Q691.0 653 606 665 Q521.0 677 436.0 665 Z" fill="#f7f9fc" stroke="#2b3a55" stroke-width="1.5"/>
+<text class="t-proc" x="606" y="647" text-anchor="middle">Sees the booking: event, date, place</text>
+<text class="t-lab" x="434" y="647.5" text-anchor="end">look</text>
+<text class="t-lab" x="448" y="623" text-anchor="start">just looks</text>
+<path d="M236 723.0 L432 723.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
+<path d="M436.0 696 A170.0 7 0 0 1 776.0 696 L776.0 750 A170.0 7 0 0 1 436.0 750 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M436.0 696 A170.0 7 0 0 0 776.0 696" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="606" y="711" text-anchor="middle">Cancels the booking</text>
+<text class="t-tbl" x="606" y="724" text-anchor="middle">booking, history, mail</text>
+<text class="t-ops" x="606" y="743" text-anchor="middle">Same as the signed-in page: seat freed, next one offered it.</text>
+<text class="t-lab" x="434" y="718.0" text-anchor="end">cancel</text>
+<text class="t-lab" x="448" y="682" text-anchor="start">cancels</text>
+<path d="M236 805.0 L432 805.0" fill="none" stroke="#2b3a55" stroke-width="1.4" marker-end="url(#ah)"/>
+<path d="M436.0 778 A170.0 7 0 0 1 776.0 778 L776.0 832 A170.0 7 0 0 1 436.0 832 Z" fill="#eaf1fb" stroke="#2f4f86" stroke-width="1.4"/>
+<path d="M436.0 778 A170.0 7 0 0 0 776.0 778" fill="none" stroke="#2f4f86" stroke-width="1.1"/>
+<text class="t-db" x="606" y="793" text-anchor="middle">Sets a password</text>
+<text class="t-tbl" x="606" y="806" text-anchor="middle">people and their links</text>
+<text class="t-ops" x="606" y="825" text-anchor="middle">Saves it and marks the link as used.</text>
+<text class="t-lab" x="434" y="800.0" text-anchor="end">claim</text>
+<text class="t-lab" x="448" y="764" text-anchor="start">turns the guest into an account</text>
+<rect x="136.0" y="857" width="200" height="36" rx="18.0" fill="#2b3a55"/>
+<text class="t-term" x="236" y="879.0" text-anchor="middle">Done</text>
 <line x1="40" y1="1006" x2="754" y2="1006" stroke="#dfe5ef"/>
 <text class="t-leg" x="40" y="1022">Symbols (ISO 5807 / ANSI X3.5):</text>
 <rect x="115" y="1034" width="34" height="16" rx="8" fill="#2b3a55"/>

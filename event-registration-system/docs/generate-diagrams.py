@@ -581,8 +581,7 @@ def sheet_a():
     parts.append(s_wire([(cx, y - GAP), (cx, y)]))
 
     out, h = s_db(cx, y, 'Event list',
-                  ['Shows every event with its date and',
-                   'place, and how many seats are left.'],
+                  ['Every event, its date and seats left.'],
                   tag='events and venues')
     parts += out
     y += h + GAP
@@ -594,8 +593,7 @@ def sheet_a():
     parts.append(s_wire([(cx, y - GAP), (cx, y)]))
 
     out, h = s_db(cx, y, 'Event page',
-                  ['Shows the details of that event',
-                   'and how full it already is.'],
+                  ['That one event, and how full it is.'],
                   tag='one event and its bookings')
     parts += out
     y += h + GAP
@@ -614,10 +612,8 @@ def sheet_a():
     out, hh = s_io(LANE, wl, 'Asks to join the waiting list', w=340)
     parts += out
     out, h2 = s_db(LANE, wl + hh + 14, 'Waiting list',
-                   ['Puts the person on the waiting list,',
-                    'notes the change, and writes the',
-                    'message that tells them so.'],
-                   tag='bookings, their history, outgoing mail', w=340)
+                   ['Joins the queue; the message is written.'],
+                   tag='bookings, history, mail', w=340)
     parts += [s_wire([(LANE, wl + hh), (LANE, wl + hh + 14)])] + out
     pill = wl + hh + 14 + h2 + 14
     parts.append(s_wire([(LANE, wl + hh + 14 + h2), (LANE, pill)]))
@@ -631,33 +627,28 @@ def sheet_a():
     parts.append(s_lbl(cx - 7, dec_y + h + 15, 'Yes', 't-yes', 'end'))
     y = dec_y + h + 22
 
-    out, h = s_io(cx, y, 'Types name and e-mail, presses Register')
+    out, h = s_io(cx, y, 'Types name and e-mail, registers')
     parts += out
     y += h + GAP
     parts.append(s_wire([(cx, y - GAP), (cx, y)]))
 
     out, h = s_db(cx, y, 'Checks the form',
-                  ['Makes sure nothing is missing, and',
-                   'that this person has not already',
-                   'booked this event.'],
+                  ['Nothing missing, no double booking.'],
                   tag='people and bookings')
     parts += out
     y += h + GAP
     parts.append(s_wire([(cx, y - GAP), (cx, y)]))
 
     out, h = s_db(cx, y, 'Counts the seats again',
-                  ['Takes one last count of the booked',
-                   'seats, so two people cannot take',
-                   'the same last place.'],
+                  ['Recounts, so the last seat is not sold twice.'],
                   tag='the event and its bookings')
     parts += out
     y += h + GAP
     parts.append(s_wire([(cx, y - GAP), (cx, y)]))
 
     out, h = s_db(cx, y, 'Saves the booking',
-                  ['Saves the booking, its history and the',
-                   'message to send — all together, or not at all.'],
-                  tag='booking, history, outgoing mail')
+                  ['Booking, history and e-mail, all at once.'],
+                  tag='booking, history, mail')
     parts += out
     y += h + GAP
     parts.append(s_wire([(cx, y - GAP), (cx, y)]))
@@ -708,14 +699,11 @@ def sheet_b():
     out, h1 = s_io(LANE, ly, 'Types e-mail and password', w=340)
     parts += out
     out, h2 = s_db(LANE, ly + h1 + 12, 'Checks the password',
-                   ['Finds the account and compares the',
-                    'typed password with the one kept',
-                    'on file.'],
+                   ['Matches it against the one on file.'],
                    tag='people', w=340)
     parts += [s_wire([(LANE, ly + h1), (LANE, ly + h1 + 12)])] + out
     out, h3 = s_db(LANE, ly + h1 + h2 + 24, 'Remembers the visit',
-                   ['Keeps them signed in, so the next',
-                    'page does not ask again.'],
+                   ['Stays signed in, so it is not asked again.'],
                    tag='sign-ins', w=340)
     parts += [s_wire([(LANE, ly + h1 + h2 + 12), (LANE, ly + h1 + h2 + 24)])] + out
     tail = ly + h1 + h2 + h3 + 24
@@ -734,9 +722,7 @@ def sheet_b():
     parts.append(s_wire([(cx, y - GAP), (cx, y)]))
 
     out, h = s_db(cx, y, 'Summary counters',
-                  ['Counts the events, the booked seats,',
-                   'the people waiting and who has',
-                   'arrived so far.'],
+                  ['Counts events, booked seats, waiting and arrivals.'],
                   tag='events, bookings, attendance')
     parts += out
     y += h + GAP
@@ -750,23 +736,18 @@ def sheet_b():
     # ---- three day-to-day jobs ----------------------------------------------
     def g_event(yy):
         return s_db(LANE, yy, 'Edits an event',
-                    ['Saves a new or changed event and',
-                     'its place — or puts it away, which',
-                     'hides it from the public list.'],
+                    ['Saves it, or hides it from the public list.'],
                     tag='events and venues', w=340)
 
     def g_checkin(yy):
         return s_db(LANE, yy, 'Checks someone in',
-                    ['Marks the person as arrived, and',
-                     'notes who did the check-in.'],
+                    ['Marks them arrived, notes who did it.'],
                     tag='attendance and its history', w=340)
 
     def g_cancel(yy):
         return s_db(LANE, yy, 'Cancels or changes a booking',
-                    ['Moves or cancels the booking, notes',
-                     'the change, and offers the freed',
-                     'seat to the next person waiting.'],
-                    tag='booking, history, outgoing mail', w=340)
+                    ['Frees the seat and offers it to the next one waiting.'],
+                    tag='booking, history, mail', w=340)
 
     groups = [
         ('works on an event', 'event', g_event),
@@ -814,15 +795,13 @@ def sheet_c():
 
     parts.append(s_wire([(cx, y - g), (cx, y)]))
     out, h = s_db(cx, y, 'Mail waiting to go out',
-                  ['Takes the next few messages that',
-                   'are still waiting, oldest first.'],
+                  ['Takes the oldest messages first.'],
                   tag='outgoing mail')
     parts += out
     y += h + g
 
     parts.append(s_wire([(cx, y - g), (cx, y)]))
-    out, h = s_proc(cx, y, ['Fills in the message template, then hands',
-                            'it to the mail service (files or a server)'])
+    out, h = s_proc(cx, y, ['Fills in the template, then sends it'])
     parts += out
     y += h + g
 
@@ -837,10 +816,7 @@ def sheet_c():
     parts.append(s_wire([(cx + 120, no_y), (LANE - 170, no_y)]))
     parts.append(s_lbl(cx + 131, no_y - 6, 'No', 't-no', 'start'))
     out, h2 = s_db(LANE, no_y - 30, 'Tries again later',
-                   ['Notes the failed attempt and tries',
-                    'again, up to three times. After that it',
-                    'is marked as failed, with the reason',
-                    'kept so the organizer can see it.'],
+                   ['Retries up to three times, then marks it failed.'],
                    tag='outgoing mail', w=340)
     parts += out
     parts.append(s_lbl(LANE, no_y + 92, 'the Requeue button sends it again at once'))
@@ -851,15 +827,14 @@ def sheet_c():
     parts.append(s_lbl(cx - 8, dec_y + h + 15, 'Yes', 't-yes', 'end'))
 
     out, h = s_db(cx, y, 'Marks it as sent',
-                  ['Notes that the message went out,',
-                   'and when.'],
+                  ['Notes that it went out, and when.'],
                   tag='outgoing mail')
     parts += out
     y += h + g
 
     parts.append(s_wire([(cx, y - g), (cx, y)]))
     io_y = y
-    out, h = s_io(cx, io_y, 'Participant clicks the link in the e-mail', w=330)
+    out, h = s_io(cx, io_y, 'Participant clicks the e-mailed link', w=330)
     parts += out
     out, _ = s_conn(cx + 165, io_y + h / 2, 'A')
     parts += out
@@ -868,9 +843,7 @@ def sheet_c():
 
     parts.append(s_wire([(cx, y - g), (cx, y)]))
     out, h = s_db(cx, y, 'Looks the link up',
-                  ['Finds the link, the person and the',
-                   'booking. Checks it has not expired',
-                   'and has not been used already.'],
+                  ['Finds the person and booking; checks it is still valid.'],
                   tag='personal links and people')
     parts += out
     y += h + g
@@ -882,20 +855,16 @@ def sheet_c():
     y = dec_y + h
 
     def g_view(yy):
-        return s_doc(LANE, yy, 'Sees the booking: event, date, place, seats left', w=340)
+        return s_doc(LANE, yy, 'Sees the booking: event, date, place', w=340)
 
     def g_cancel(yy):
         return s_db(LANE, yy, 'Cancels the booking',
-                    ['The same cancellation as the signed-in',
-                     'page: the seat is freed and offered to',
-                     'the next person waiting.'],
-                    tag='booking, history, outgoing mail', w=340)
+                    ['Same as the signed-in page: seat freed, next one offered it.'],
+                    tag='booking, history, mail', w=340)
 
     def g_claim(yy):
         return s_db(LANE, yy, 'Sets a password',
-                    ['Saves the password, notes the day',
-                     'the account was claimed, and marks',
-                     'the link as used.'],
+                    ['Saves it and marks the link as used.'],
                     tag='people and their links', w=340)
 
     groups = [
