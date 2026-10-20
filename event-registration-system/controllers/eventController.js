@@ -6,18 +6,48 @@ const { Op } = require('sequelize');
 const { Event, Registration, sequelize, dialect } = require('../models');
 const { validateEvent } = require('../middlewares/validate');
 
-/** Converts Date object or string to YYYY-MM-DDTHH:MM for <input type="datetime-local"> */
+/**
+ * Converts a Date/string to YYYY-MM-DDTHH:MM for <input type="datetime-local">.
+ * The value is rendered in Asia/Manila (the timezone used across the UI), not
+ * in whatever timezone the Node process happens to run in. Previously a UTC
+ * server showed every event 8 hours earlier in the edit form.
+ */
 function formatDateTimeLocal(d) {
   if (!d) return '';
   const date = new Date(d);
   if (Number.isNaN(date.getTime())) return '';
-  const pad = (n) => String(n).padStart(2, '0');
-  const y = date.getFullYear();
-  const m = pad(date.getMonth() + 1);
-  const day = pad(date.getDate());
-  const h = pad(date.getHours());
-  const min = pad(date.getMinutes());
-  return `${y}-${m}-${day}T${h}:${min}`;
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  });
+  const parts = Object.fromEntries(
+    formatter.formatToParts(date).map((part) => [part.type, part.value])
+  );
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+}
+
+/**
+ * Parses the timezone-less value submitted by <input type="datetime-local">
+ * as Asia/Manila time (UTC+8, no DST), so the instant stored in the database
+ * matches what the organiser actually typed.
+ */
+function parseEventDate(value) {
+  if (!value) return value;
+  const raw = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(raw)) {
+    return new Date(`${raw}:00+08:00`);
+  }
+  return new Date(raw);
+}
+
+/** Escapes LIKE wildcards so a search for "100%" is not a wildcard query. */
+function escapeLike(value) {
+  return String(value).replace(/[\\%_]/g, (match) => `\\${match}`);
 }
 
 /** Adds taken/remaining/isFull/isPast counters to a list of events (2 queries, no N+1). */
@@ -58,10 +88,11 @@ const eventController = {
     const where = {};
     if (q) {
       const likeOp = dialect === 'postgres' ? Op.iLike : Op.like;
+      const needle = `%${escapeLike(q)}%`;
       where[Op.or] = [
-        { title: { [likeOp]: `%${q}%` } },
-        { venue: { [likeOp]: `%${q}%` } },
-        { description: { [likeOp]: `%${q}%` } },
+        { title: { [likeOp]: needle } },
+        { venue: { [likeOp]: needle } },
+        { description: { [likeOp]: needle } },
       ];
     }
     const events = await Event.findAll({ where, order: [['event_date', 'ASC']] });
@@ -130,7 +161,7 @@ const eventController = {
       venue: (req.body.venue || '').trim(),
       max_participants: req.body.max_participants,
     };
-    const errors = validateEvent(payload);
+    const errors = validateEvent(payload, { requireFuture: true });
     if (errors.length) {
       return res.status(422).render('admin/event-form', {
         title: 'Create event',
@@ -141,7 +172,11 @@ const eventController = {
       });
     }
 
-    await Event.create({ ...payload, max_participants: Number(payload.max_participants) });
+    await Event.create({
+      ...payload,
+      event_date: parseEventDate(payload.event_date),
+      max_participants: Number(payload.max_participants),
+    });
     req.session.flashSuccess = `Event "${payload.title}" was created successfully.`;
     return res.redirect('/admin/events');
   },
@@ -205,7 +240,11 @@ const eventController = {
       });
     }
 
-    await event.update({ ...payload, max_participants: Number(payload.max_participants) });
+    await event.update({
+      ...payload,
+      event_date: parseEventDate(payload.event_date),
+      max_participants: Number(payload.max_participants),
+    });
     req.session.flashSuccess = `Event "${event.title}" was updated successfully.`;
     return res.redirect('/admin/events');
   },
@@ -227,4 +266,10 @@ const eventController = {
   },
 };
 
-module.exports = { eventController, decorateWithCapacity, formatDateTimeLocal };
+module.exports = {
+  eventController,
+  decorateWithCapacity,
+  formatDateTimeLocal,
+  parseEventDate,
+  escapeLike,
+};

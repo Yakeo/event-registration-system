@@ -8,6 +8,7 @@
 
   <form class="card-form" method="POST"
         action="<%= event ? '/admin/events/' + event.event_id + '?_method=PUT' : '/admin/events' %>">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
     <label>Event title *
       <input type="text" name="title" value="<%= old.title || '' %>" placeholder="Annual IT Convention 2026" required />
     </label>

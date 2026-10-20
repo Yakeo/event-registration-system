@@ -51,6 +51,7 @@
             <a class="link" href="/admin/events/<%= e.event_id %>/edit">Edit</a>
             <form action="/admin/events/<%= e.event_id %>?_method=DELETE" method="POST" class="inline"
                   onsubmit="return confirm('Delete this event and all of its registrations?');">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
               <button class="link danger" type="submit">Delete</button>
             </form>
           </td>

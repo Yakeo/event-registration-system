@@ -7,10 +7,19 @@
  *   3. Re-registration capability (safely reactivates cancelled records)
  *   4. Past event protection (blocks registration on concluded events)
  *   5. Automatic waitlist promotion upon cancellation
+ *
+ * Every state change that touches capacity runs inside a transaction, and
+ * the waitlist promotion helper re-counts confirmed seats before promoting -
+ * otherwise two simultaneous cancellations could each promote a person and
+ * overbook the event.
  */
-const { Op } = require('sequelize');
 const { User, Event, Registration, sequelize, dialect, getEventCapacity } = require('../models');
 const { validateRegistration, normalizeEmail } = require('../middlewares/validate');
+
+/** Row lock that is a no-op on SQLite (single writer, no FOR UPDATE support). */
+function lockOption(transaction) {
+  return dialect === 'sqlite' ? undefined : transaction.LOCK.UPDATE;
+}
 
 /** Renders the event page again with validation errors. */
 async function rerenderWithErrors(req, res, eventId, errors, old, status = 422) {
@@ -30,6 +39,36 @@ async function rerenderWithErrors(req, res, eventId, errors, old, status = 422) 
     errors,
     old,
   });
+}
+
+/**
+ * Promotes the earliest waitlisted registration into a free confirmed seat.
+ * Must be called inside a transaction. Returns the promoted row or null.
+ */
+async function promoteFromWaitlist(eventId, transaction) {
+  const event = await Event.findByPk(eventId, { transaction, lock: lockOption(transaction) });
+  if (!event) return null;
+
+  // Never auto-promote for an event that has already happened.
+  if (new Date(event.event_date) <= new Date()) return null;
+
+  const taken = await Registration.count({
+    where: { event_id: eventId, status: 'confirmed' },
+    transaction,
+  });
+  if (taken >= Number(event.max_participants)) return null;
+
+  const next = await Registration.findOne({
+    where: { event_id: eventId, status: 'waitlisted' },
+    include: [{ model: User, as: 'user' }],
+    order: [['registration_date', 'ASC'], ['registration_id', 'ASC']],
+    transaction,
+    lock: lockOption(transaction),
+  });
+  if (!next) return null;
+
+  await next.update({ status: 'confirmed' }, { transaction });
+  return next;
 }
 
 const registrationController = {
@@ -99,11 +138,11 @@ const registrationController = {
     let registration;
     let isReactivation = false;
     try {
-      registration = await sequelize.transaction(async (t) => {
+      const outcome = await sequelize.transaction(async (t) => {
         // Concurrency control: Lock the parent Event row (cross-dialect safe)
         const lockedEvent = await Event.findByPk(eventId, {
           transaction: t,
-          lock: dialect === 'sqlite' ? undefined : t.LOCK.UPDATE,
+          lock: lockOption(t),
         });
 
         // Re-check capacity inside transaction to guarantee no overbooking
@@ -141,7 +180,10 @@ const registrationController = {
           }));
 
         if (priorReg) {
-          // Reactivate cancelled registration record
+          // A concurrent request may have reactivated it already.
+          if (priorReg.status !== 'cancelled') {
+            return { conflict: true, registration: priorReg };
+          }
           await priorReg.update(
             {
               status: 'confirmed',
@@ -150,20 +192,32 @@ const registrationController = {
             { transaction: t }
           );
           isReactivation = true;
-          return priorReg;
+          return { registration: priorReg };
         }
 
         // Fresh registration
-        return Registration.create(
-          {
-            user_id: user.user_id,
-            event_id: eventId,
-            registration_date: new Date(),
-            status: 'confirmed',
-          },
-          { transaction: t }
-        );
+        return {
+          registration: await Registration.create(
+            {
+              user_id: user.user_id,
+              event_id: eventId,
+              registration_date: new Date(),
+              status: 'confirmed',
+            },
+            { transaction: t }
+          ),
+        };
       });
+
+      if (outcome.conflict) {
+        return res.status(409).render('events/duplicate', {
+          title: 'Already registered',
+          event,
+          participant: { full_name, email },
+          registration: outcome.registration,
+        });
+      }
+      registration = outcome.registration;
     } catch (err) {
       if (err.code === 'EVENT_FULL') {
         const fresh = await getEventCapacity(event);
@@ -202,7 +256,9 @@ const registrationController = {
 
   /**
    * POST /events/:id/waitlist
-   * Waitlist enrollment when event has reached maximum capacity.
+   * Waitlist enrollment. Only permitted once the event is actually full -
+   * otherwise a visitor could park themselves on the waiting list while
+   * confirmed seats are still available.
    */
   async waitlist(req, res) {
     const eventId = Number(req.params.id);
@@ -227,48 +283,93 @@ const registrationController = {
     }
 
     const errors = validateRegistration({ full_name, email });
-    const capacity = await getEventCapacity(event);
     if (errors.length) {
       return rerenderWithErrors(req, res, eventId, errors, { full_name, email });
     }
 
-    let user = await User.findOne({ where: { email } });
-    const isNewAccount = !user;
-    if (!user) {
-      user = await User.create({
-        full_name,
-        email,
-        password: Math.random().toString(36).slice(-10) + 'Aa1!',
-        role: 'participant',
-      });
+    const capacity = await getEventCapacity(event);
+    if (!capacity.isFull) {
+      return rerenderWithErrors(
+        req,
+        res,
+        eventId,
+        ['Seats are still available for this event - please use the registration form instead of the waiting list.'],
+        { full_name, email },
+        409
+      );
     }
 
-    const existing = await Registration.findOne({
-      where: { event_id: eventId, user_id: user.user_id },
+    const outcome = await sequelize.transaction(async (t) => {
+      const lockedEvent = await Event.findByPk(eventId, { transaction: t, lock: lockOption(t) });
+      const taken = await Registration.count({
+        where: { event_id: eventId, status: 'confirmed' },
+        transaction: t,
+      });
+      if (taken < Number(lockedEvent.max_participants)) {
+        return { seatsOpen: true };
+      }
+
+      let user = await User.findOne({ where: { email }, transaction: t });
+      const isNewAccount = !user;
+      if (!user) {
+        user = await User.create(
+          {
+            full_name,
+            email,
+            password: Math.random().toString(36).slice(-10) + 'Aa1!',
+            role: 'participant',
+          },
+          { transaction: t }
+        );
+      }
+
+      const existing = await Registration.findOne({
+        where: { event_id: eventId, user_id: user.user_id },
+        transaction: t,
+      });
+
+      if (existing && existing.status !== 'cancelled') {
+        return { conflict: true, registration: existing, user };
+      }
+
+      if (existing) {
+        // Reactivate cancelled registration into waitlisted
+        await existing.update(
+          { status: 'waitlisted', registration_date: new Date() },
+          { transaction: t }
+        );
+        return { registration: existing, user, isNewAccount };
+      }
+
+      const registration = await Registration.create(
+        {
+          user_id: user.user_id,
+          event_id: eventId,
+          registration_date: new Date(),
+          status: 'waitlisted',
+        },
+        { transaction: t }
+      );
+      return { registration, user, isNewAccount };
     });
 
-    let registration;
-    if (existing) {
-      if (existing.status !== 'cancelled') {
-        return res.status(409).render('events/duplicate', {
-          title: 'Already registered',
-          event,
-          participant: { full_name: user.full_name, email },
-          registration: existing,
-        });
-      }
-      // Reactivate cancelled registration into waitlisted
-      await existing.update({
-        status: 'waitlisted',
-        registration_date: new Date(),
-      });
-      registration = existing;
-    } else {
-      registration = await Registration.create({
-        user_id: user.user_id,
-        event_id: eventId,
-        registration_date: new Date(),
-        status: 'waitlisted',
+    if (outcome.seatsOpen) {
+      return rerenderWithErrors(
+        req,
+        res,
+        eventId,
+        ['A seat just became available - please submit the registration form instead.'],
+        { full_name, email },
+        409
+      );
+    }
+
+    if (outcome.conflict) {
+      return res.status(409).render('events/duplicate', {
+        title: 'Already registered',
+        event,
+        participant: { full_name: outcome.user.full_name, email },
+        registration: outcome.registration,
       });
     }
 
@@ -277,22 +378,21 @@ const registrationController = {
       title: 'Added to waiting list',
       event,
       participant: { full_name, email },
-      registration,
+      registration: outcome.registration,
       capacity,
-      isNewAccount,
+      isNewAccount: outcome.isNewAccount,
     });
   },
 
   /** POST /registrations/:id/cancel  (participant cancels own registration) */
   async cancel(req, res) {
-    const registration = await Registration.findByPk(req.params.id, {
-      include: [{ model: Event, as: 'event' }],
-    });
-    if (!registration) {
+    const preview = await Registration.findByPk(req.params.id);
+    if (!preview) {
       req.session.flashError = 'Registration not found.';
       return res.redirect('/my-registrations');
     }
-    const isOwner = req.session.user && req.session.user.user_id === registration.user_id;
+
+    const isOwner = req.session.user && req.session.user.user_id === preview.user_id;
     const isAdmin = req.session.user && req.session.user.role === 'admin';
     if (!isOwner && !isAdmin) {
       return res.status(403).render('error', {
@@ -302,33 +402,48 @@ const registrationController = {
       });
     }
 
-    const previousStatus = registration.status;
-    await registration.update({ status: 'cancelled' });
+    const redirectTo =
+      isAdmin && !isOwner
+        ? `/admin/events/${preview.event_id}/participants`
+        : '/my-registrations';
 
-    // Promote the earliest person on the waiting list into the freed slot
-    let promoted = null;
-    if (previousStatus === 'confirmed') {
-      const next = await Registration.findOne({
-        where: { event_id: registration.event_id, status: 'waitlisted' },
-        include: [{ model: User, as: 'user' }],
-        order: [['registration_date', 'ASC'], ['registration_id', 'ASC']],
+    const outcome = await sequelize.transaction(async (t) => {
+      const registration = await Registration.findByPk(req.params.id, {
+        transaction: t,
+        lock: lockOption(t),
       });
-      if (next) {
-        await next.update({ status: 'confirmed' });
-        promoted = next;
+      if (!registration) return { notFound: true };
+      if (registration.status === 'cancelled') return { alreadyCancelled: true };
+
+      const previousStatus = registration.status;
+      await registration.update({ status: 'cancelled' }, { transaction: t });
+
+      // Promote the earliest person on the waiting list into the freed slot
+      let promoted = null;
+      if (previousStatus === 'confirmed') {
+        promoted = await promoteFromWaitlist(registration.event_id, t);
       }
+      return { promoted, previousStatus };
+    });
+
+    if (outcome.notFound) {
+      req.session.flashError = 'Registration not found.';
+      return res.redirect('/my-registrations');
+    }
+    if (outcome.alreadyCancelled) {
+      req.session.flashInfo = 'That registration was already cancelled.';
+      return res.redirect(redirectTo);
     }
 
-    req.session.flashSuccess = promoted
-      ? `Registration cancelled. Participant ${promoted.user ? promoted.user.full_name : ''} on the waiting list was automatically promoted to confirmed.`
+    req.session.flashSuccess = outcome.promoted
+      ? `Registration cancelled. Participant ${
+          outcome.promoted.user ? outcome.promoted.user.full_name : ''
+        } on the waiting list was automatically promoted to confirmed.`
       : 'Registration cancelled. The slot is now available.';
 
-    return res.redirect(
-      isAdmin && !isOwner
-        ? `/admin/events/${registration.event_id}/participants`
-        : '/my-registrations'
-    );
+    return res.redirect(redirectTo);
   },
 };
 
 module.exports = registrationController;
+module.exports.promoteFromWaitlist = promoteFromWaitlist;

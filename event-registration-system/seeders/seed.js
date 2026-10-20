@@ -10,10 +10,16 @@
 const { sequelize, User, Event, Registration } = require('../models');
 
 const day = 24 * 60 * 60 * 1000;
+/**
+ * Builds a timestamp at `hour:00` Asia/Manila (UTC+8) on the day that is
+ * `daysFromNow` days ahead. Using the server's setHours() made the demo data
+ * depend on the machine's timezone (an 8 AM event showed as 4 PM in Manila).
+ */
 const at = (daysFromNow, hour = 9) => {
-  const d = new Date(Date.now() + daysFromNow * day);
-  d.setHours(hour, 0, 0, 0);
-  return d;
+  const base = new Date(Date.now() + daysFromNow * day);
+  return new Date(
+    Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate(), hour - 8, 0, 0, 0)
+  );
 };
 
 async function seed() {

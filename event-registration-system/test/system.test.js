@@ -7,6 +7,11 @@ const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert');
 const { Op } = require('sequelize');
 
+// The suite recreates the schema with { force: true }. Point it at an
+// in-memory database so `npm test` can never wipe the demo/development
+// database in database/event_registration.sqlite.
+process.env.DB_STORAGE = process.env.TEST_DB_STORAGE || ':memory:';
+
 const { sequelize, User, Event, Registration, getEventCapacity } = require('../models');
 const { validateRegistration, validateEvent, validatePassword } = require('../middlewares/validate');
 
@@ -69,18 +74,22 @@ describe('Event Registration System - Defense Verification Suite', () => {
       });
     });
 
-    it('should generate a 64-char crypto reset token with 1-hour expiration', async () => {
+    it('should generate a 64-char crypto reset token and store only its hash', async () => {
       token = await user.generateResetToken();
       assert.ok(token, 'Token must exist');
       assert.strictEqual(token.length, 64, 'Token must be 64 hexadecimal characters');
-      assert.strictEqual(user.reset_password_token, token);
+      assert.match(token, /^[a-f0-9]{64}$/, 'Token must be hexadecimal');
+
+      // Security: the raw token is handed to the user, never persisted.
+      assert.notStrictEqual(user.reset_password_token, token, 'Raw token must not be stored');
+      assert.strictEqual(user.reset_password_token, User.hashResetToken(token));
       assert.ok(user.reset_password_expires > new Date(), 'Expiry must be in the future');
     });
 
     it('should locate user by valid unexpired token', async () => {
       const found = await User.findOne({
         where: {
-          reset_password_token: token,
+          reset_password_token: User.hashResetToken(token),
           reset_password_expires: { [Op.gt]: new Date() },
         },
       });
@@ -106,13 +115,13 @@ describe('Event Registration System - Defense Verification Suite', () => {
 
     it('should reject expired tokens', async () => {
       // Simulate expired token
-      user.reset_password_token = 'expired-token-xyz';
+      user.reset_password_token = User.hashResetToken('expired-token-xyz');
       user.reset_password_expires = new Date(Date.now() - 1000 * 60); // 1 minute ago
       await user.save();
 
       const found = await User.findOne({
         where: {
-          reset_password_token: 'expired-token-xyz',
+          reset_password_token: User.hashResetToken('expired-token-xyz'),
           reset_password_expires: { [Op.gt]: new Date() },
         },
       });

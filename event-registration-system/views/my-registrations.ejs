@@ -23,6 +23,7 @@
             <% if (r.status !== 'cancelled') { %>
               <form action="/registrations/<%= r.registration_id %>/cancel" method="POST" class="inline"
                     onsubmit="return confirm('Cancel this registration?');">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
                 <button class="link danger" type="submit">Cancel</button>
               </form>
             <% } else { %><span class="muted">—</span><% } %>

@@ -30,6 +30,7 @@
           <a href="/change-password" title="Change your password">Security</a>
           <span class="nav-user">Hi, <%= currentUser.full_name.split(' ')[0] %> (<%= currentUser.role %>)</span>
           <form action="/logout" method="POST" class="inline">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
             <button class="btn btn-ghost btn-sm" type="submit">Log out</button>
           </form>
         <% } else { %>

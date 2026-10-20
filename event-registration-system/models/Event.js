@@ -50,9 +50,10 @@ module.exports = (sequelize) => {
     {
       tableName: 'EVENTS',
       timestamps: false,
-      scopes: {
-        upcoming: { where: {}, order: [['event_date', 'ASC']] },
-      },
+      indexes: [
+        // Listing/search pages always ORDER BY event_date.
+        { name: 'idx_events_date', fields: ['event_date'] },
+      ],
     }
   );
 

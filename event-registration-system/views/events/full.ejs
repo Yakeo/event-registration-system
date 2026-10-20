@@ -20,6 +20,7 @@
     <% if (joinWaitlist) { %>
       <h3>Join the waiting list</h3>
       <form action="/events/<%= event.event_id %>/waitlist" method="POST">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
         <label>Full name <input type="text" name="full_name" required /></label>
         <label>Email address <input type="email" name="email" required /></label>
         <button class="btn btn-outline btn-block" type="submit">Join waiting list</button>

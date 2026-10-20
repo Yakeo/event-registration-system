@@ -7,7 +7,7 @@
 <rect x="30" y="150" width="6" height="158" rx="3" fill="#6b7691"/>
 <text class="t" x="52" y="180">Browser (Client)</text>
 <text class="s" x="52" y="206">EJS-rendered HTML + CSS</text>
-<text class="s" x="52" y="225">GET  /  &#8594; event list</text>
+<text class="s" x="52" y="225">GET  /                &#8594; event list</text>
 <text class="s" x="52" y="244">GET  /events/:id</text>
 <text class="s" x="52" y="263">POST /events/:id/register</text>
 <text class="s" x="52" y="282">public/js/main.js  (client validation)</text>
@@ -17,8 +17,8 @@
 <text class="s" x="352" y="206">routes/index.js</text>
 <text class="s" x="352" y="225">Maps URL + HTTP verb</text>
 <text class="s" x="352" y="244">to a controller action,</text>
-<text class="s" x="352" y="263">then applies auth / role /</text>
-<text class="s" x="352" y="282">asyncHandler guards</text>
+<text class="s" x="352" y="263">then applies the auth /</text>
+<text class="s" x="352" y="282">role guards</text>
 <g filter="url(#sh3)"><rect x="630" y="150" width="260" height="158" rx="12" fill="#fff" stroke="#dbe2f0"/></g>
 <rect x="630" y="150" width="6" height="158" rx="3" fill="#2f5bff"/>
 <text class="t" x="652" y="180">Controller</text>
@@ -26,7 +26,7 @@
 <text class="s" x="652" y="225">registrationController</text>
 <text class="s" x="652" y="244">adminController / authController</text>
 <text class="s" x="652" y="263">Validates input, enforces</text>
-<text class="s" x="652" y="282">capacity, duplicate + reset tokens</text>
+<text class="s" x="652" y="282">capacity + duplicate rules</text>
 <g filter="url(#sh3)"><rect x="630" y="360" width="260" height="158" rx="12" fill="#fff" stroke="#dbe2f0"/></g>
 <rect x="630" y="360" width="6" height="158" rx="3" fill="#10a36b"/>
 <text class="t" x="652" y="390">Model (Sequelize)</text>
@@ -39,7 +39,7 @@
 <rect x="950" y="360" width="6" height="158" rx="3" fill="#2440a8"/>
 <text class="t" x="972" y="390">Database</text>
 <text class="s" x="972" y="416">MySQL / PostgreSQL</text>
-<text class="s" x="972" y="435">(SQLite for demo/local)</text>
+<text class="s" x="972" y="435">(SQLite for the demo)</text>
 <text class="s" x="972" y="454">Tables: USERS &#183; EVENTS</text>
 <text class="s" x="972" y="473">&#183; REGISTRATIONS</text>
 <text class="s" x="972" y="492">Seeded via npm run seed</text>
@@ -48,9 +48,9 @@
 <text class="t" x="352" y="390">View (EJS)</text>
 <text class="s" x="352" y="416">views/events/*.ejs</text>
 <text class="s" x="352" y="435">views/admin/*.ejs</text>
-<text class="s" x="352" y="454">views/auth/*.ejs</text>
-<text class="s" x="352" y="473">Attendance, full, duplicate,</text>
-<text class="s" x="352" y="492">and password-reset views</text>
+<text class="s" x="352" y="454">views/partials/header|footer</text>
+<text class="s" x="352" y="473">Confirmation, &#8220;Event full&#8221;</text>
+<text class="s" x="352" y="492">and duplicate pages</text>
 <path d="M290 229 L322 229" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#a3)"/>
 <text class="lab" x="306" y="218" text-anchor="middle">request</text>
 <path d="M590 229 L622 229" fill="none" stroke="#46527a" stroke-width="1.8" marker-end="url(#a3)"/>

@@ -6,10 +6,18 @@
 const { Op } = require('sequelize');
 const { User, Event, Registration, sequelize, getEventCapacity } = require('../models');
 const { decorateWithCapacity } = require('./eventController');
+const { promoteFromWaitlist } = require('./registrationController');
+const { validateAdminPassword } = require('../middlewares/validate');
 
+/**
+ * CSV escaping that also neutralises spreadsheet formula injection:
+ * a participant called "=HYPERLINK(...)" must not execute when the exported
+ * attendance file is opened in Excel/Sheets.
+ */
 function csvEscape(value) {
-  const s = value === null || value === undefined ? '' : String(value);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  let s = value === null || value === undefined ? '' : String(value);
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
 const adminController = {
@@ -61,7 +69,10 @@ const adminController = {
       });
     }
 
-    const status = (req.query.status || 'all').toLowerCase();
+    const requested = (req.query.status || 'all').toLowerCase();
+    const status = ['all', 'confirmed', 'waitlisted', 'cancelled'].includes(requested)
+      ? requested
+      : 'all';
     const where = { event_id: event.event_id };
     if (status !== 'all') where.status = status;
 
@@ -82,51 +93,71 @@ const adminController = {
 
   /** POST /admin/registrations/:id/status -> confirm / cancel / waitlist */
   async updateStatus(req, res) {
-    const registration = await Registration.findByPk(req.params.id, {
-      include: [{ model: Event, as: 'event' }],
-    });
+    const preview = await Registration.findByPk(req.params.id);
     const next = (req.body.status || '').toLowerCase();
-    const fallbackUrl = registration
-      ? `/admin/events/${registration.event_id}/participants`
+    const fallbackUrl = preview
+      ? `/admin/events/${preview.event_id}/participants`
       : '/admin/events';
-    const redirectUrl = req.get('Referrer') || fallbackUrl;
 
-    if (!registration || !['confirmed', 'waitlisted', 'cancelled'].includes(next)) {
+    if (!preview || !['confirmed', 'waitlisted', 'cancelled'].includes(next)) {
       req.session.flashError = 'Invalid registration update requested.';
-      return res.redirect(redirectUrl);
+      return res.redirect(fallbackUrl);
     }
 
-    const previous = registration.status;
-    const event = registration.event;
-
-    // Capacity safeguard: prevent setting to 'confirmed' if event is already full
-    if (next === 'confirmed' && previous !== 'confirmed') {
-      const capacity = await getEventCapacity(event);
-      if (capacity.isFull) {
-        req.session.flashError = `Cannot confirm registration #${registration.registration_id}: Event is at maximum capacity (${capacity.taken}/${capacity.max} slots). Increase event capacity first to admit more participants.`;
-        return res.redirect(redirectUrl);
-      }
-    }
-
-    await registration.update({ status: next });
-
-    // Auto-promote from waiting list if confirmed slot was cancelled
-    let promoted = null;
-    if (next === 'cancelled' && previous === 'confirmed') {
-      const waiting = await Registration.findOne({
-        where: { event_id: registration.event_id, status: 'waitlisted' },
-        include: [{ model: User, as: 'user' }],
-        order: [['registration_date', 'ASC'], ['registration_id', 'ASC']],
+    // Never redirect back to an attacker-controlled Referer header.
+    const outcome = await sequelize.transaction(async (t) => {
+      const registration = await Registration.findByPk(req.params.id, {
+        transaction: t,
+        lock: sequelize.getDialect() === 'sqlite' ? undefined : t.LOCK.UPDATE,
       });
-      if (waiting) {
-        await waiting.update({ status: 'confirmed' });
-        promoted = waiting;
+      if (!registration) return { notFound: true };
+
+      const previous = registration.status;
+      if (previous === next) return { unchanged: true };
+
+      // Capacity safeguard: prevent setting to 'confirmed' if event is already full
+      if (next === 'confirmed' && previous !== 'confirmed') {
+        const event = await Event.findByPk(registration.event_id, {
+          transaction: t,
+          lock: sequelize.getDialect() === 'sqlite' ? undefined : t.LOCK.UPDATE,
+        });
+        const taken = await Registration.count({
+          where: { event_id: registration.event_id, status: 'confirmed' },
+          transaction: t,
+        });
+        if (taken >= Number(event.max_participants)) {
+          return { full: true, taken, max: Number(event.max_participants) };
+        }
       }
+
+      await registration.update({ status: next }, { transaction: t });
+
+      // Auto-promote from waiting list if a confirmed slot was cancelled
+      let promoted = null;
+      if (next === 'cancelled' && previous === 'confirmed') {
+        promoted = await promoteFromWaitlist(registration.event_id, t);
+      }
+      return { registration, next, promoted };
+    });
+
+    if (outcome.notFound) {
+      req.session.flashError = 'Registration not found.';
+      return res.redirect('/admin/events');
+    }
+    if (outcome.full) {
+      req.session.flashError = `Cannot confirm registration #${req.params.id}: Event is at maximum capacity (${outcome.taken}/${outcome.max} slots). Increase event capacity first to admit more participants.`;
+      return res.redirect(fallbackUrl);
+    }
+    if (outcome.unchanged) {
+      req.session.flashInfo = 'That registration already has the requested status.';
+      return res.redirect(fallbackUrl);
     }
 
-    req.session.flashSuccess = promoted
-      ? `Registration #${registration.registration_id} set to "${next}". Waitlisted participant ${promoted.user ? promoted.user.full_name : ''} was automatically promoted to confirmed.`
-      : `Registration #${registration.registration_id} set to "${next}".`;
+    req.session.flashSuccess = outcome.promoted
+      ? `Registration #${req.params.id} set to "${next}". Waitlisted participant ${
+          outcome.promoted.user ? outcome.promoted.user.full_name : ''
+        } was automatically promoted to confirmed.`
+      : `Registration #${req.params.id} set to "${next}".`;
 
     return res.redirect(fallbackUrl);
   },
@@ -201,6 +232,8 @@ const adminController = {
   async users(req, res) {
     const users = await User.findAll({
       order: [['user_id', 'ASC']],
+      // Password hashes and reset tokens must never reach the template layer.
+      attributes: { exclude: ['password', 'reset_password_token', 'reset_password_expires'] },
       include: [{ model: Registration, as: 'registrations', attributes: ['registration_id', 'status'] }],
     });
 
@@ -249,7 +282,7 @@ const adminController = {
     return res.redirect('/admin/users');
   },
 
-  /** POST /admin/users/:id/reset-password -> admin manually resets a user password */
+  /** POST /admin/users/:id/reset-password -> admin sets a temporary password */
   async adminResetPassword(req, res) {
     const target = await User.findByPk(req.params.id);
     if (!target) {
@@ -257,18 +290,23 @@ const adminController = {
       return res.redirect('/admin/users');
     }
 
-    const tempPassword = (req.body.new_password || '').trim() || 'password123';
-    if (tempPassword.length < 6) {
-      req.session.flashError = 'Password must be at least 6 characters.';
+    // An empty field used to silently fall back to the public string
+    // "password123" for every account. Require an explicit password instead.
+    const newPassword = req.body.new_password || '';
+    const errors = validateAdminPassword(newPassword);
+    if (errors.length) {
+      req.session.flashError = `Password not changed: ${errors.join(' ')}`;
       return res.redirect('/admin/users');
     }
 
-    target.password = tempPassword;
+    target.password = newPassword;
     target.reset_password_token = null;
     target.reset_password_expires = null;
     await target.save();
 
-    req.session.flashSuccess = `Password for ${target.full_name} was reset to "${tempPassword}".`;
+    // The plaintext password is intentionally NOT echoed back into a flash
+    // message (it would end up in logs, browser history and session storage).
+    req.session.flashSuccess = `Password for ${target.full_name} (${target.email}) was reset. Share the new password securely and ask the user to change it after signing in.`;
     return res.redirect('/admin/users');
   },
 };

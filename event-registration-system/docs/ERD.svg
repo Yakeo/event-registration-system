@@ -1,116 +1,121 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1460 720" width="1460" height="720" font-family="'Segoe UI',Arial,Helvetica,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 880" width="1540" height="880" font-family="'Segoe UI',Arial,Helvetica,sans-serif">
 <defs>
 <linearGradient id="hd" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#26407a"/><stop offset="100%" stop-color="#2f5bff"/></linearGradient>
-<style>.ent-title{fill:#fff;font-size:18px;font-weight:700;letter-spacing:.06em}.fld{fill:#15203a;font-size:13.5px}.typ{fill:#6b7691;font-size:11px}.pk{fill:#b42b45;font-size:11px;font-weight:700}.fk{fill:#2440a8;font-size:11px;font-weight:700}.rel{fill:#15203a;font-size:14px;font-weight:700}.card{fill:#46527a;font-size:12.5px}.note{fill:#33406b;font-size:12.5px}.h1{fill:#15203a;font-size:23px;font-weight:700}.sub{fill:#6b7691;font-size:13px}</style>
+<style>.ent-title{fill:#fff;font-size:18px;font-weight:700;letter-spacing:.06em}.fld{fill:#15203a;font-size:13.5px}.typ{fill:#6b7691;font-size:11.5px}.pk{fill:#b42b45;font-size:10.5px;font-weight:700}.fk{fill:#2440a8;font-size:10.5px;font-weight:700}.uq{fill:#0c7a52;font-size:10.5px;font-weight:700}.rel{fill:#15203a;font-size:13.5px;font-weight:700}.card{fill:#46527a;font-size:12px}.note{fill:#33406b;font-size:12.5px}.note-b{fill:#15203a;font-size:12.5px;font-weight:700}.h1{fill:#15203a;font-size:23px;font-weight:700}.sub{fill:#6b7691;font-size:13px}.legend{fill:#46527a;font-size:12px}</style>
 <filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#15203a" flood-opacity="0.13"/></filter>
+<marker id="many" markerWidth="1" markerHeight="1"/>
 </defs>
-<rect width="1460" height="720" fill="#f5f7fb"/>
-<text class="h1" x="30" y="52">Entity Relationship Diagram</text>
-<text class="sub" x="30" y="76">Event Registration System &#183; USERS / EVENTS / REGISTRATIONS &#183; crow&#8217;s foot notation</text>
+<rect width="1540" height="880" fill="#f5f7fb"/>
+<text class="h1" x="40" y="54">Entity Relationship Diagram (current schema)</text>
+<text class="sub" x="40" y="78">Event Registration System &#183; USERS / EVENTS / REGISTRATIONS &#183; crow&#8217;s-foot notation &#183; field-level anchors</text>
+<rect x="1030" y="40" width="470" height="62" rx="10" fill="#fff" stroke="#dbe2f0"/>
+<rect x="1044" y="54" width="26" height="15" rx="4" fill="#fdeaee"/><text class="pk" x="1051" y="65">PK</text><text class="legend" x="1078" y="66">primary key</text>
+<rect x="1180" y="54" width="26" height="15" rx="4" fill="#e8eeff"/><text class="fk" x="1187" y="65">FK</text><text class="legend" x="1214" y="66">foreign key</text>
+<rect x="1320" y="54" width="26" height="15" rx="4" fill="#e6f7ef"/><text class="uq" x="1324" y="65">UQ</text><text class="legend" x="1354" y="66">unique</text>
+<text class="legend" x="1044" y="88">&#8226; NOT NULL unless marked NULL &#183; 1 = exactly one &#183; 0..* = zero or many</text>
+<polyline points="420,215.0 500.0,215.0 500.0,249.0 580,249.0" fill="none" stroke="#46527a" stroke-width="1.8"/>
+<line x1="436" y1="204.0" x2="436" y2="226.0" stroke="#46527a" stroke-width="2.4"/>
+<line x1="580" y1="238.0" x2="560" y2="249.0" stroke="#46527a" stroke-width="1.8"/>
+<line x1="580" y1="260.0" x2="560" y2="249.0" stroke="#46527a" stroke-width="1.8"/>
+<polyline points="1120,215.0 1040.0,215.0 1040.0,283.0 960,283.0" fill="none" stroke="#46527a" stroke-width="1.8"/>
+<line x1="1104" y1="204.0" x2="1104" y2="226.0" stroke="#46527a" stroke-width="2.4"/>
+<line x1="960" y1="272.0" x2="980" y2="283.0" stroke="#46527a" stroke-width="1.8"/>
+<line x1="960" y1="294.0" x2="980" y2="283.0" stroke="#46527a" stroke-width="1.8"/>
 <g filter="url(#sh)">
-<rect x="30" y="118" width="340" height="258" rx="12" fill="#fff" stroke="#dbe2f0"/>
-<path d="M30 130 a12 12 0 0 1 12-12 h316 a12 12 0 0 1 12 12 v36 h-340 z" fill="url(#hd)"/>
-<text class="ent-title" x="48" y="150">USERS</text>
+<rect x="40" y="148" width="380" height="288" rx="12" fill="#fff" stroke="#dbe2f0"/>
+<path d="M40 160 a12 12 0 0 1 12-12 h356 a12 12 0 0 1 12 12 v38 h-380 z" fill="url(#hd)"/>
+<text class="ent-title" x="58" y="181">USERS</text>
 </g>
-<rect x="44" y="174" width="26" height="15" rx="4" fill="#fdeaee"/><text class="pk" x="51" y="185">PK</text>
-<text class="fld" x="80" y="186">user_id</text>
-<text class="typ" x="356" y="186" text-anchor="end">INT</text>
-<line x1="30" y1="196" x2="370" y2="196" stroke="#eef1f8"/>
-<text class="fld" x="80" y="216">full_name</text>
-<text class="typ" x="356" y="216" text-anchor="end">VARCHAR(120)</text>
-<line x1="30" y1="226" x2="370" y2="226" stroke="#eef1f8"/>
-<text class="fld" x="80" y="246">email</text>
-<text class="typ" x="356" y="246" text-anchor="end">VARCHAR(160) UNIQUE</text>
-<line x1="30" y1="256" x2="370" y2="256" stroke="#eef1f8"/>
-<text class="fld" x="80" y="276">password</text>
-<text class="typ" x="356" y="276" text-anchor="end">VARCHAR(255) hashed</text>
-<line x1="30" y1="286" x2="370" y2="286" stroke="#eef1f8"/>
-<text class="fld" x="80" y="306">role</text>
-<text class="typ" x="356" y="306" text-anchor="end">ENUM(admin|participant)</text>
-<line x1="30" y1="316" x2="370" y2="316" stroke="#eef1f8"/>
-<text class="fld" x="80" y="336">reset_password_token</text>
-<text class="typ" x="356" y="336" text-anchor="end">VARCHAR(255) NULL</text>
-<line x1="30" y1="346" x2="370" y2="346" stroke="#eef1f8"/>
-<text class="fld" x="80" y="366">reset_password_expires</text>
-<text class="typ" x="356" y="366" text-anchor="end">DATETIME NULL</text>
+<rect x="54" y="207" width="26" height="15" rx="4" fill="#fdeaee"/><text class="pk" x="61" y="218">PK</text>
+<text class="fld" x="90" y="220">user_id</text>
+<text class="typ" x="406" y="220" text-anchor="end">INT AI</text>
+<line x1="40" y1="232" x2="420" y2="232" stroke="#eef1f8"/>
+<text class="fld" x="90" y="254">full_name</text>
+<text class="typ" x="406" y="254" text-anchor="end">VARCHAR(120)</text>
+<line x1="40" y1="266" x2="420" y2="266" stroke="#eef1f8"/>
+<rect x="54" y="275" width="26" height="15" rx="4" fill="#e6f7ef"/><text class="uq" x="61" y="286">UQ</text>
+<text class="fld" x="90" y="288">email</text>
+<text class="typ" x="406" y="288" text-anchor="end">VARCHAR(160)</text>
+<line x1="40" y1="300" x2="420" y2="300" stroke="#eef1f8"/>
+<text class="fld" x="90" y="322">password</text>
+<text class="typ" x="406" y="322" text-anchor="end">VARCHAR(255) bcrypt</text>
+<line x1="40" y1="334" x2="420" y2="334" stroke="#eef1f8"/>
+<text class="fld" x="90" y="356">role</text>
+<text class="typ" x="406" y="356" text-anchor="end">ENUM('admin','participant')</text>
+<line x1="40" y1="368" x2="420" y2="368" stroke="#eef1f8"/>
+<text class="fld" x="90" y="390">reset_password_token</text>
+<text class="typ" x="406" y="390" text-anchor="end">CHAR(64) sha256 &#183; NULL</text>
+<line x1="40" y1="402" x2="420" y2="402" stroke="#eef1f8"/>
+<text class="fld" x="90" y="424">reset_password_expires</text>
+<text class="typ" x="406" y="424" text-anchor="end">DATETIME &#183; NULL</text>
 <g filter="url(#sh)">
-<rect x="570" y="118" width="340" height="198" rx="12" fill="#fff" stroke="#dbe2f0"/>
-<path d="M570 130 a12 12 0 0 1 12-12 h316 a12 12 0 0 1 12 12 v36 h-340 z" fill="url(#hd)"/>
-<text class="ent-title" x="588" y="150">REGISTRATIONS</text>
+<rect x="580" y="148" width="380" height="220" rx="12" fill="#fff" stroke="#dbe2f0"/>
+<path d="M580 160 a12 12 0 0 1 12-12 h356 a12 12 0 0 1 12 12 v38 h-380 z" fill="url(#hd)"/>
+<text class="ent-title" x="598" y="181">REGISTRATIONS</text>
 </g>
-<rect x="584" y="174" width="26" height="15" rx="4" fill="#fdeaee"/><text class="pk" x="591" y="185">PK</text>
-<text class="fld" x="620" y="186">registration_id</text>
-<text class="typ" x="896" y="186" text-anchor="end">INT</text>
-<line x1="570" y1="196" x2="910" y2="196" stroke="#eef1f8"/>
-<rect x="584" y="204" width="26" height="15" rx="4" fill="#e8eeff"/><text class="fk" x="591" y="215">FK</text>
-<text class="fld" x="620" y="216">user_id</text>
-<text class="typ" x="896" y="216" text-anchor="end">INT &#8594; USERS</text>
-<line x1="570" y1="226" x2="910" y2="226" stroke="#eef1f8"/>
-<rect x="584" y="234" width="26" height="15" rx="4" fill="#e8eeff"/><text class="fk" x="591" y="245">FK</text>
-<text class="fld" x="620" y="246">event_id</text>
-<text class="typ" x="896" y="246" text-anchor="end">INT &#8594; EVENTS</text>
-<line x1="570" y1="256" x2="910" y2="256" stroke="#eef1f8"/>
-<text class="fld" x="620" y="276">registration_date</text>
-<text class="typ" x="896" y="276" text-anchor="end">DATETIME</text>
-<line x1="570" y1="286" x2="910" y2="286" stroke="#eef1f8"/>
-<text class="fld" x="620" y="306">status</text>
-<text class="typ" x="896" y="306" text-anchor="end">ENUM(confirmed|waitlisted|cancelled)</text>
+<rect x="594" y="207" width="26" height="15" rx="4" fill="#fdeaee"/><text class="pk" x="601" y="218">PK</text>
+<text class="fld" x="630" y="220">registration_id</text>
+<text class="typ" x="946" y="220" text-anchor="end">INT AI</text>
+<line x1="580" y1="232" x2="960" y2="232" stroke="#eef1f8"/>
+<rect x="594" y="241" width="26" height="15" rx="4" fill="#e8eeff"/><text class="fk" x="601" y="252">FK</text>
+<text class="fld" x="630" y="254">user_id</text>
+<text class="typ" x="946" y="254" text-anchor="end">INT &#8594; USERS</text>
+<line x1="580" y1="266" x2="960" y2="266" stroke="#eef1f8"/>
+<rect x="594" y="275" width="26" height="15" rx="4" fill="#e8eeff"/><text class="fk" x="601" y="286">FK</text>
+<text class="fld" x="630" y="288">event_id</text>
+<text class="typ" x="946" y="288" text-anchor="end">INT &#8594; EVENTS</text>
+<line x1="580" y1="300" x2="960" y2="300" stroke="#eef1f8"/>
+<text class="fld" x="630" y="322">registration_date</text>
+<text class="typ" x="946" y="322" text-anchor="end">DATETIME</text>
+<line x1="580" y1="334" x2="960" y2="334" stroke="#eef1f8"/>
+<text class="fld" x="630" y="356">status</text>
+<text class="typ" x="946" y="356" text-anchor="end">ENUM('confirmed','waitlisted','cancelled')</text>
 <g filter="url(#sh)">
-<rect x="1110" y="118" width="340" height="228" rx="12" fill="#fff" stroke="#dbe2f0"/>
-<path d="M1110 130 a12 12 0 0 1 12-12 h316 a12 12 0 0 1 12 12 v36 h-340 z" fill="url(#hd)"/>
-<text class="ent-title" x="1128" y="150">EVENTS</text>
+<rect x="1120" y="148" width="380" height="254" rx="12" fill="#fff" stroke="#dbe2f0"/>
+<path d="M1120 160 a12 12 0 0 1 12-12 h356 a12 12 0 0 1 12 12 v38 h-380 z" fill="url(#hd)"/>
+<text class="ent-title" x="1138" y="181">EVENTS</text>
 </g>
-<rect x="1124" y="174" width="26" height="15" rx="4" fill="#fdeaee"/><text class="pk" x="1131" y="185">PK</text>
-<text class="fld" x="1160" y="186">event_id</text>
-<text class="typ" x="1436" y="186" text-anchor="end">INT</text>
-<line x1="1110" y1="196" x2="1450" y2="196" stroke="#eef1f8"/>
-<text class="fld" x="1160" y="216">title</text>
-<text class="typ" x="1436" y="216" text-anchor="end">VARCHAR(180)</text>
-<line x1="1110" y1="226" x2="1450" y2="226" stroke="#eef1f8"/>
-<text class="fld" x="1160" y="246">description</text>
-<text class="typ" x="1436" y="246" text-anchor="end">TEXT</text>
-<line x1="1110" y1="256" x2="1450" y2="256" stroke="#eef1f8"/>
-<text class="fld" x="1160" y="276">event_date</text>
-<text class="typ" x="1436" y="276" text-anchor="end">DATETIME</text>
-<line x1="1110" y1="286" x2="1450" y2="286" stroke="#eef1f8"/>
-<text class="fld" x="1160" y="306">venue</text>
-<text class="typ" x="1436" y="306" text-anchor="end">VARCHAR(180)</text>
-<line x1="1110" y1="316" x2="1450" y2="316" stroke="#eef1f8"/>
-<text class="fld" x="1160" y="336">max_participants</text>
-<text class="typ" x="1436" y="336" text-anchor="end">INT</text>
-<line x1="370" y1="211.0" x2="570" y2="211.0" stroke="#46527a" stroke-width="1.8"/>
-<line x1="377" y1="200.0" x2="377" y2="222.0" stroke="#46527a" stroke-width="2"/>
-<line x1="570" y1="198.0" x2="550" y2="211.0" stroke="#46527a" stroke-width="1.8"/>
-<line x1="570" y1="224.0" x2="550" y2="211.0" stroke="#46527a" stroke-width="1.8"/>
-<line x1="570" y1="211.0" x2="550" y2="211.0" stroke="#46527a" stroke-width="1.8"/>
-<text class="rel" x="388" y="195.0">1</text>
-<text class="rel" x="540" y="195.0" text-anchor="end">0..*</text>
-<text class="card" x="470.0" y="243.0" text-anchor="middle">one user places</text>
-<text class="card" x="470.0" y="259.0" text-anchor="middle">many registrations</text>
-<line x1="910" y1="241.0" x2="1110" y2="241.0" stroke="#46527a" stroke-width="1.8"/>
-<line x1="910" y1="228.0" x2="930" y2="241.0" stroke="#46527a" stroke-width="1.8"/>
-<line x1="910" y1="254.0" x2="930" y2="241.0" stroke="#46527a" stroke-width="1.8"/>
-<line x1="910" y1="241.0" x2="930" y2="241.0" stroke="#46527a" stroke-width="1.8"/>
-<line x1="1103" y1="230.0" x2="1103" y2="252.0" stroke="#46527a" stroke-width="2"/>
-<text class="rel" x="940" y="225.0">0..*</text>
-<text class="rel" x="1092" y="225.0" text-anchor="end">1</text>
-<text class="card" x="1010.0" y="273.0" text-anchor="middle">each registration</text>
-<text class="card" x="1010.0" y="289.0" text-anchor="middle">is for one event</text>
-<rect x="30" y="430" width="1400" height="106" rx="14" fill="#fff" stroke="#dbe2f0"/>
-<text class="rel" x="60" y="466">[EVENTS]</text>
-<text class="rel" x="152" y="466">1</text>
-<line x1="168" y1="461" x2="268" y2="461" stroke="#46527a" stroke-width="1.8"/>
-<text class="rel" x="284" y="466">0..*</text>
-<text class="rel" x="332" y="466">[REGISTRATIONS]</text>
-<text class="rel" x="514" y="466">0..*</text>
-<line x1="556" y1="461" x2="656" y2="461" stroke="#46527a" stroke-width="1.8"/>
-<text class="rel" x="672" y="466">1</text>
-<text class="rel" x="694" y="466">[USERS]</text>
-<text class="card" x="60" y="498">An EVENT has zero or many REGISTRATIONS, but each REGISTRATION is for exactly one EVENT.</text>
-<text class="card" x="60" y="520">A USER has zero or many REGISTRATIONS, but each REGISTRATION belongs to exactly one USER.</text>
-<rect x="30" y="554" width="1400" height="136" rx="14" fill="#e8eeff" stroke="#c6d3fb"/>
-<text class="note" x="56" y="586"><tspan font-weight="700">Duplicate rule: </tspan>a composite UNIQUE index on REGISTRATIONS(event_id, user_id) guarantees one registration per email per event.</text>
-<text class="note" x="56" y="610"><tspan font-weight="700">Capacity rule: </tspan>COUNT(REGISTRATIONS WHERE status = 'confirmed') &lt;= EVENTS.max_participants, enforced within transaction.</text>
-<text class="note" x="56" y="634"><tspan font-weight="700">Password Reset: </tspan>USERS.reset_password_token stores a 64-character SHA-256 / crypto hex token with 1-hour expiration.</text>
-<text class="note" x="56" y="658"><tspan font-weight="700">Referential Integrity: </tspan>REGISTRATIONS.user_id &#8594; USERS.user_id and REGISTRATIONS.event_id &#8594; EVENTS.event_id (ON DELETE CASCADE, ON UPDATE CASCADE).</text>
+<rect x="1134" y="207" width="26" height="15" rx="4" fill="#fdeaee"/><text class="pk" x="1141" y="218">PK</text>
+<text class="fld" x="1170" y="220">event_id</text>
+<text class="typ" x="1486" y="220" text-anchor="end">INT AI</text>
+<line x1="1120" y1="232" x2="1500" y2="232" stroke="#eef1f8"/>
+<text class="fld" x="1170" y="254">title</text>
+<text class="typ" x="1486" y="254" text-anchor="end">VARCHAR(180)</text>
+<line x1="1120" y1="266" x2="1500" y2="266" stroke="#eef1f8"/>
+<text class="fld" x="1170" y="288">description</text>
+<text class="typ" x="1486" y="288" text-anchor="end">TEXT &#183; NULL</text>
+<line x1="1120" y1="300" x2="1500" y2="300" stroke="#eef1f8"/>
+<text class="fld" x="1170" y="322">event_date</text>
+<text class="typ" x="1486" y="322" text-anchor="end">DATETIME</text>
+<line x1="1120" y1="334" x2="1500" y2="334" stroke="#eef1f8"/>
+<text class="fld" x="1170" y="356">venue</text>
+<text class="typ" x="1486" y="356" text-anchor="end">VARCHAR(180)</text>
+<line x1="1120" y1="368" x2="1500" y2="368" stroke="#eef1f8"/>
+<text class="fld" x="1170" y="390">max_participants</text>
+<text class="typ" x="1486" y="390" text-anchor="end">INT &#8805; 1</text>
+<text class="rel" x="446" y="199.0">1</text>
+<text class="rel" x="534" y="231.0" text-anchor="end">0..*</text>
+<text class="rel" x="1090" y="199.0" text-anchor="end">1</text>
+<text class="rel" x="990" y="265.0">0..*</text>
+<rect x="40" y="520" width="1460" height="96" rx="14" fill="#fff" stroke="#dbe2f0"/>
+<text class="rel" x="70" y="556">[USERS]</text>
+<text class="rel" x="156" y="556">1</text>
+<line x1="172" y1="551" x2="252" y2="551" stroke="#46527a" stroke-width="1.8"/>
+<text class="rel" x="268" y="556">0..*</text>
+<text class="rel" x="322" y="556">[REGISTRATIONS]</text>
+<text class="rel" x="500" y="556">0..*</text>
+<line x1="542" y1="551" x2="622" y2="551" stroke="#46527a" stroke-width="1.8"/>
+<text class="rel" x="638" y="556">1</text>
+<text class="rel" x="660" y="556">[EVENTS]</text>
+<text class="card" x="70" y="586">A USER has zero or many REGISTRATIONS; each REGISTRATION belongs to exactly one USER (REGISTRATIONS.user_id is NOT NULL).</text>
+<text class="card" x="70" y="606">An EVENT has zero or many REGISTRATIONS; each REGISTRATION is for exactly one EVENT (REGISTRATIONS.event_id is NOT NULL).</text>
+<rect x="40" y="636" width="1460" height="212" rx="14" fill="#e8eeff" stroke="#c6d3fb"/>
+<text class="note-b" x="66" y="666">Constraints and indexes shown in the database</text>
+<text class="note" x="66" y="692"><tspan font-weight="700">Duplicate rule:</tspan> UNIQUE (event_id, user_id) on REGISTRATIONS &#8212; one registration per participant per event (also backs the cancelled-then-reactivated flow).</text>
+<text class="note" x="66" y="716"><tspan font-weight="700">Capacity rule:</tspan> COUNT(status = &#8217;confirmed&#8217;) may never exceed EVENTS.max_participants; enforced in a transaction with row locking.</text>
+<text class="note" x="66" y="740"><tspan font-weight="700">Referential integrity:</tspan> REGISTRATIONS.user_id &#8594; USERS.user_id and REGISTRATIONS.event_id &#8594; EVENTS.event_id (ON DELETE CASCADE, ON UPDATE CASCADE).</text>
+<text class="note" x="66" y="764"><tspan font-weight="700">Indexes:</tspan> USERS(email UNIQUE, reset_password_token UNIQUE, role), EVENTS(event_date), REGISTRATIONS(event_id, status),</text>
+<text class="note" x="66" y="784">REGISTRATIONS(user_id, status), REGISTRATIONS(status, registration_date) for the waitlist FIFO queue.</text>
+<text class="note" x="66" y="812" fill="#8a3b12"><tspan font-weight="700">Normalisation caveat:</tspan> USERS still carries the single-use reset token. Because that token has its own key and lifetime, the</text>
+<text class="note" x="66" y="832" fill="#8a3b12">strictly 3NF form is a separate PASSWORD_RESET_TOKENS table &#8212; see docs/DATABASE-AUDIT.md for the proposed schema.</text>
 </svg>

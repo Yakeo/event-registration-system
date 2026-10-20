@@ -41,6 +41,7 @@
           <td><span class="badge <%= r.status === 'confirmed' ? 'badge-success' : r.status === 'waitlisted' ? 'badge-warn' : 'badge-muted' %>"><%= r.status %></span></td>
           <td>
             <form action="/admin/registrations/<%= r.registration_id %>/status" method="POST" class="inline">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
               <select name="status" onchange="this.form.submit()">
                 <% ['confirmed','waitlisted','cancelled'].forEach(function (s) { %>
                   <option value="<%= s %>" <%= r.status === s ? 'selected' : '' %>><%= s %></option>

@@ -50,6 +50,10 @@ module.exports = (sequelize) => {
           unique: true,
           fields: ['event_id', 'user_id'],
         },
+        // Capacity counts, participant filters and waitlist FIFO lookups.
+        { name: 'idx_reg_event_status', fields: ['event_id', 'status'] },
+        { name: 'idx_reg_user_status', fields: ['user_id', 'status'] },
+        { name: 'idx_reg_status_date', fields: ['status', 'registration_date'] },
       ],
     }
   );

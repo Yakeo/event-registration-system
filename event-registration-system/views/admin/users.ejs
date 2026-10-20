@@ -38,6 +38,7 @@
           <td>
             <form action="/admin/users/<%= u.user_id %>/role" method="POST" class="inline"
                   onsubmit="return confirm('Change role of <%= u.full_name %> to <%= u.role === 'admin' ? 'participant' : 'admin' %>?');">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
               <input type="hidden" name="role" value="<%= u.role === 'admin' ? 'participant' : 'admin' %>" />
               <button class="link <%= u.role === 'admin' ? 'danger' : '' %>" type="submit">
                 <%= u.role === 'admin' ? 'Demote to Participant' : 'Promote to Admin' %>
@@ -46,9 +47,11 @@
           </td>
           <td>
             <form action="/admin/users/<%= u.user_id %>/reset-password" method="POST" class="inline"
-                  onsubmit="return confirm('Reset password for <%= u.full_name %> to default temp password?');">
-              <input type="hidden" name="new_password" value="password123" />
-              <button class="btn btn-outline btn-sm" type="submit">Reset to "password123"</button>
+                  onsubmit="return confirm('Set a new password for <%= u.full_name %>?');">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+              <input type="password" name="new_password" minlength="6" maxlength="72"
+                     placeholder="New temp password" required class="input-inline" />
+              <button class="btn btn-outline btn-sm" type="submit">Reset</button>
             </form>
           </td>
         </tr>

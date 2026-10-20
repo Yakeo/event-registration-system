@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# local environment / secrets
+.env
+.env.*
+!.env.example
+
+# runtime + logs
+*.log
+npm-debug.log*
+logs/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# scratch databases created by tests (the demo DB in database/ is tracked)
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+tmp/

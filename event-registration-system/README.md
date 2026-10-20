@@ -56,7 +56,7 @@ event-registration-system/
 │   ├── seed.js                  # demo users, events, registrations
 │   └── reset.js                 # drop + recreate all tables
 ├── test/
-│   └── system.test.js           # automated test suite (16 tests for defense verification)
+│   └── system.test.js           # automated test suite (16 tests, runs on an in-memory DB)
 ├── docs/
 │   ├── DEFENSE-GUIDE.md         # ★ comprehensive academic defense presentation manual
 │   ├── SYSTEM-DOCS.html / .pdf  # ★ full documentation sheet (diagrams inlined)
@@ -64,12 +64,14 @@ event-registration-system/
 │   ├── FLOWCHART.svg / .png     # system flowchart
 │   ├── MVC-ARCHITECTURE.svg     # architecture diagram
 │   ├── DOCUMENTATION.md         # full system documentation
-│   ├── schema.sql               # MySQL DDL schema + reporting queries
+│   ├── DATABASE-AUDIT.md        # ★ normalisation audit, fixes, recommendations
+│   ├── schema.sql               # MySQL DDL for the running schema + reporting queries
+│   ├── schema-3nf.sql           # proposed normalised v2 schema (venue, attendance, tokens, audit)
 │   ├── REGISTRATIONS-SAMPLE.json# sample request/response payloads
 │   ├── generate-diagrams.py     # regenerates the diagrams
 │   └── build-html.py            # builds the documentation sheet
 ├── server.js                    # app entry point
-├── .env.example
+├── .env.example                 # copy to .env
 └── package.json
 ```
 

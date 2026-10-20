@@ -45,7 +45,9 @@ module.exports = (sequelize) => {
         defaultValue: 'participant',
       },
       reset_password_token: {
-        type: DataTypes.STRING(255),
+        // SHA-256 hash of the token that was handed to the user. The raw
+        // token is never stored, so a leaked database cannot be replayed.
+        type: DataTypes.STRING(64),
         allowNull: true,
         defaultValue: null,
       },
@@ -58,6 +60,12 @@ module.exports = (sequelize) => {
     {
       tableName: 'USERS',
       timestamps: false,
+      indexes: [
+        // NULLs are not compared by UNIQUE indexes, so users without a
+        // pending reset are unaffected.
+        { name: 'uq_users_reset_token', unique: true, fields: ['reset_password_token'] },
+        { name: 'idx_users_role', fields: ['role'] },
+      ],
       hooks: {
         beforeSave: async (user) => {
           if (user.changed('password')) {
@@ -82,11 +90,20 @@ module.exports = (sequelize) => {
   };
 
   /**
+   * SHA-256 digest used to store reset tokens. 64 hex characters.
+   */
+  User.hashResetToken = function (rawToken) {
+    return crypto.createHash('sha256').update(String(rawToken)).digest('hex');
+  };
+
+  /**
    * Generates a cryptographically strong reset token and sets 1-hour expiration.
+   * Only the SHA-256 hash is persisted; the raw token is returned once so it
+   * can be placed in the reset link.
    */
   User.prototype.generateResetToken = async function () {
     const rawToken = crypto.randomBytes(32).toString('hex');
-    this.reset_password_token = rawToken;
+    this.reset_password_token = User.hashResetToken(rawToken);
     this.reset_password_expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     await this.save();
     return rawToken;

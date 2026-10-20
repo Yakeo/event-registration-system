@@ -144,6 +144,8 @@ users_fields = [
     ('email', 'VARCHAR(160)', 'UNIQUE, NOT NULL', 'Login name; also the duplicate-registration key'),
     ('password', 'VARCHAR(255)', 'NOT NULL', 'Bcrypt hash - never stored in plain text'),
     ('role', 'ENUM(admin, participant)', 'default participant', 'Access level of the account'),
+    ('reset_password_token', 'CHAR(64)', 'UNIQUE, NULL', 'SHA-256 digest of the password-reset token (raw token never stored)'),
+    ('reset_password_expires', 'DATETIME', 'NULL', 'Reset-token expiration (1 hour TTL)'),
 ]
 event_fields = [
     ('event_id', 'INT, auto increment', '<b>PK</b>', 'Surrogate primary key'),
@@ -152,6 +154,7 @@ event_fields = [
     ('event_date', 'DATETIME', 'NOT NULL', 'Date and time of the event'),
     ('venue', 'VARCHAR(180)', 'NOT NULL', 'Where the event is held'),
     ('max_participants', 'INT', 'NOT NULL, >= 1', 'Slot limit; registration is blocked once reached'),
+    ('(index)', 'INDEX(event_date)', 'index', 'Ordering of the public listing'),
 ]
 reg_fields = [
     ('registration_id', 'INT, auto increment', '<b>PK</b>', 'Surrogate primary key'),
@@ -160,6 +163,7 @@ reg_fields = [
     ('registration_date', 'DATETIME', 'default now', 'Timestamp when the registration was saved'),
     ('status', 'ENUM(confirmed, waitlisted, cancelled)', 'default confirmed', 'Registration state'),
     ('(composite)', 'UNIQUE(event_id, user_id)', 'index', 'Database-level duplicate prevention'),
+    ('(indexes)', 'INDEX(event_id,status) / (user_id,status) / (status,registration_date)', 'index', 'Capacity counts, participant filters, FIFO waitlist promotion'),
 ]
 
 html = f"""<!DOCTYPE html>

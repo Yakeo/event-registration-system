@@ -45,14 +45,20 @@
 **Relationship notation (crow's foot)**
 
 ```
-[EVENTS] 1 ──── 0..* [REGISTRATIONS] 0..* ──── 1 [USERS]
+[USERS] 1 ──── 0..* [REGISTRATIONS] 0..* ──── 1 [EVENTS]
 ```
 
 | Relationship | Cardinality | Meaning |
 |--------------|-------------|---------|
-| EVENTS → REGISTRATIONS | one-to-many (1 : 0..*) | An event may have zero or many registrations; each registration is for exactly one event. |
-| USERS → REGISTRATIONS | one-to-many (1 : 0..*) | A user may have zero or many registrations; each registration belongs to exactly one user. |
-| REGISTRATIONS | associative entity | Resolves many-to-many participant/event relationship; tracks registration status ('confirmed' \| 'waitlisted' \| 'cancelled'). |
+| USERS → REGISTRATIONS | one-to-many (1 : 0..*) | A user may have zero or many registrations; each registration belongs to exactly one user (`REGISTRATIONS.user_id` NOT NULL). |
+| EVENTS → REGISTRATIONS | one-to-many (1 : 0..*) | An event may have zero or many registrations; each registration is for exactly one event (`REGISTRATIONS.event_id` NOT NULL). |
+| REGISTRATIONS | associative entity | Resolves the many-to-many participant/event relationship; tracks registration status ('confirmed' \| 'waitlisted' \| 'cancelled'). |
+
+> The relationship lines in the diagram are anchored to the actual foreign-key
+> rows (`REGISTRATIONS.user_id`, `REGISTRATIONS.event_id`). For a full critique
+> of the original diagram, the normal-form analysis and the proposed v2 schema,
+> see **[DATABASE-AUDIT.md](./DATABASE-AUDIT.md)** and
+> **[schema-3nf.sql](./schema-3nf.sql)**.
 
 ---
 
@@ -67,8 +73,10 @@
 | `email` | VARCHAR(160) | UQ | NOT NULL, valid email, unique | Login identifier; duplicate-registration anchor |
 | `password` | VARCHAR(255) | | NOT NULL | Bcrypt hash (10 salt rounds) |
 | `role` | ENUM | | NOT NULL, default `participant` | `admin` (management) or `participant` |
-| `reset_password_token` | VARCHAR(255) | | NULL allowed | Cryptographically secure 64-hexadecimal token |
+| `reset_password_token` | CHAR(64) | UQ | NULL allowed | **SHA-256 digest** of the 64-hex token sent to the user; the raw token is never stored. Unique index; cleared after use or on password change |
 | `reset_password_expires`| DATETIME | | NULL allowed | Expiration timestamp (1 hour TTL) |
+
+*Indexes: `UNIQUE(email)`, `UNIQUE(reset_password_token)`, `(role)`.*
 
 ### 3.2 EVENTS — events created by the organiser
 
@@ -81,6 +89,9 @@
 | `venue` | VARCHAR(180) | | NOT NULL | Where the event is held |
 | `max_participants` | INT | | NOT NULL, ≥ 1 | Slot limit — registration blocked once reached |
 
+*Indexes: `(event_date)` — every listing is ordered by date.
+`venue` is free text; the audit proposes a `VENUES` table (see DATABASE-AUDIT.md §4.4).*
+
 ### 3.3 REGISTRATIONS — the booking record (associative entity)
 
 | Field | Type | Key | Constraints | Description |
@@ -91,6 +102,9 @@
 | `registration_date` | DATETIME | | NOT NULL, default now | When the registration was placed |
 | `status` | ENUM | | NOT NULL, default `confirmed` | `confirmed` \| `waitlisted` \| `cancelled` |
 | *(composite index)* | | UQ | `UNIQUE(event_id, user_id)` | Database-level duplicate prevention |
+
+*Indexes: `UNIQUE(event_id, user_id)`, `(event_id, status)`, `(user_id, status)`,
+`(status, registration_date)` — the last one backs FIFO waitlist promotion.*
 
 ---
 
@@ -214,10 +228,13 @@ End
 1. **Atomic Capacity Limit:** Enforced inside database transactions with parent row locks.
 2. **Strict Duplicate Prohibition:** Guaranteed by unique constraint `(event_id, user_id)`.
 3. **Re-Registration Reactivation:** Cleanly reactivates previously cancelled registrations.
-4. **FIFO Waitlist Promotion:** Automatically fills cancelled slots from earliest waitlisted participant.
-5. **Time-Limited Reset Tokens:** 64-char crypto tokens with 1-hour expiration.
-6. **Past Event Guard:** Blocks registration attempts on events that have already concluded.
-7. **Capacity Floor Guard:** Admins cannot edit event capacity below current confirmed headcount.
+4. **FIFO Waitlist Promotion:** Fills cancelled slots from the earliest waitlisted participant, inside the cancellation transaction, and only when a seat is actually free (no double promotion, no promotion for concluded events).
+5. **Waitlist Only When Full:** The waiting list rejects submissions while seats are still available.
+6. **Time-Limited Reset Tokens:** 64-char crypto tokens with 1-hour expiration; only the SHA-256 digest is stored.
+7. **Past Event Guard:** Blocks registration/waitlist attempts on events that have already concluded; new events must be scheduled in the future.
+8. **Capacity Floor Guard:** Admins cannot edit event capacity below current confirmed headcount, nor confirm a registration that would exceed capacity.
+9. **CSRF Protection:** Every state-changing request must carry the session-bound `_csrf` token.
+10. **Safe Redirects:** `?next=` targets are restricted to local paths.
 
 ---
 

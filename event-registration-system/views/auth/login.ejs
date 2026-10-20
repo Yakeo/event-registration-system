@@ -7,6 +7,7 @@
     <%- include('../partials/errors') %>
 
     <form method="POST" action="/login">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
       <label>Email address
         <input type="email" name="email" value="<%= old.email || '' %>" placeholder="juan@email.com" required />
       </label>

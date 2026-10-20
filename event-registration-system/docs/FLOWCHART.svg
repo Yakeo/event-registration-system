@@ -22,7 +22,7 @@
 <line class="arr" x1="435.0" y1="472.0" x2="520.0" y2="472.0" marker-end="url(#ah)"/>
 <text class="no" x="451.0" y="458.0">No</text>
 <g filter="url(#sh2)"><rect class="box" x="520.0" y="414" width="320" height="56" rx="10"/></g>
-<text class="proc" x="680" y="447.5" text-anchor="middle">Show &#8220;Event full&#8221; (Waitlist option)</text>
+<text class="proc" x="680" y="447.5" text-anchor="middle">Show &#8220;Event full&#8221;</text>
 <line class="arr" x1="680" y1="470" x2="680" y2="511" marker-end="url(#ah)"/>
 <g filter="url(#sh2)"><rect x="605.0" y="515" width="150" height="52" rx="26" fill="#e0425f"/></g>
 <text class="term" x="680" y="547" text-anchor="middle">End</text>
@@ -35,13 +35,13 @@
 <text class="proc" x="270.0" y="715.5" text-anchor="middle">Validate email and required fields</text>
 <line class="arr" x1="270.0" y1="738" x2="270.0" y2="772" marker-end="url(#ah)"/>
 <g filter="url(#sh2)"><rect class="box" x="70.0" y="780" width="400" height="56" rx="10"/></g>
-<text class="proc" x="270.0" y="813.5" text-anchor="middle">Save registration (or reactivate cancelled)</text>
+<text class="proc" x="270.0" y="813.5" text-anchor="middle">Save registration</text>
 <line class="arr" x1="270.0" y1="836" x2="270.0" y2="870" marker-end="url(#ah)"/>
 <g filter="url(#sh2)"><rect class="box" x="70.0" y="878" width="400" height="56" rx="10"/></g>
-<text class="proc" x="270.0" y="911.5" text-anchor="middle">Increase registered participant count</text>
+<text class="proc" x="270.0" y="911.5" text-anchor="middle">Recompute confirmed count (COUNT)</text>
 <line class="arr" x1="270.0" y1="934" x2="270.0" y2="968" marker-end="url(#ah)"/>
 <g filter="url(#sh2)"><rect class="box" x="70.0" y="976" width="400" height="56" rx="10"/></g>
-<text class="proc" x="270.0" y="1009.5" text-anchor="middle">Show confirmation & account notice</text>
+<text class="proc" x="270.0" y="1009.5" text-anchor="middle">Show confirmation</text>
 <line class="arr" x1="270.0" y1="1032" x2="270.0" y2="1066" marker-end="url(#ah)"/>
 <g filter="url(#sh2)"><rect x="185.0" y="1074" width="170" height="52" rx="26" fill="#26407a"/></g>
 <text class="term" x="270.0" y="1106" text-anchor="middle">End</text>
