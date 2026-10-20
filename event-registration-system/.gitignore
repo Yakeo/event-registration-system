@@ -22,3 +22,7 @@ Thumbs.db
 *.sqlite-wal
 *.sqlite-shm
 tmp/
+
+# Python bytecode from the docs scripts
+docs/__pycache__/
+__pycache__/

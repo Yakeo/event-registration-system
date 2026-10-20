@@ -345,51 +345,6 @@ def erd():
         'dashed = nullable reference</text>',
     ]
 
-    # --------------------------- constraints ------------------------------- #
-    ny = 1332
-    parts += [
-        f'<rect x="40" y="{ny}" width="{W-80}" height="416" rx="14" fill="#e8eeff" stroke="#c6d3fb"/>',
-        f'<text class="note-b" x="66" y="{ny+30}">Keys, constraints and rules enforced by the schema</text>',
-        f'<text class="note" x="66" y="{ny+56}"><tspan font-weight="700">Duplicate rule:</tspan> '
-        'UNIQUE (event_id, user_id) on REGISTRATIONS &#8212; one registration per participant per event.</text>',
-        f'<text class="note" x="66" y="{ny+80}"><tspan font-weight="700">Capacity rule:</tspan> '
-        "COUNT(status = 'confirmed') may never exceed EVENTS.max_participants; checked inside a transaction "
-        'with a row lock.</text>',
-        f'<text class="note" x="66" y="{ny+104}"><tspan font-weight="700">Attendance rule:</tspan> '
-        'UNIQUE (registration_id) on ATTENDANCE &#8212; a participant can be checked in only once, and only '
-        'while confirmed.</text>',
-        f'<text class="note" x="66" y="{ny+128}"><tspan font-weight="700">Venue rule:</tspan> '
-        'UNIQUE (name, city) on VENUES; EVENTS.venue_id is NOT NULL, so the venue name is stored once.</text>',
-        f'<text class="note" x="66" y="{ny+152}"><tspan font-weight="700">Referential integrity:</tspan> '
-        'REGISTRATIONS &#8594; USERS/EVENTS, ATTENDANCE &#8594; REGISTRATIONS, '
-        'REGISTRATION_STATUS_CHANGES &#8594; REGISTRATIONS &#8594; ON DELETE CASCADE;</text>',
-        f'<text class="note" x="66" y="{ny+172}">AUDIT_LOGS.actor_id and the audit columns use ON DELETE SET NULL '
-        'so history survives a deleted user.</text>',
-        f'<text class="note" x="66" y="{ny+196}"><tspan font-weight="700">Soft delete:</tspan> '
-        'EVENTS.deleted_at keeps an archived event&#8217;s registrations, attendance and status history '
-        'available for reports.</text>',
-        f'<text class="note" x="66" y="{ny+220}"><tspan font-weight="700">Indexes:</tspan> '
-        'USERS(email UQ, reset_password_token UQ, role), VENUES(name, city UQ), EVENTS(event_date, venue_id),</text>',
-        f'<text class="note" x="66" y="{ny+240}">REGISTRATIONS(event_id,status), (user_id,status), '
-        '(status,registration_date) &#8212; the FIFO waitlist queue; ATTENDANCE(registration_id UQ);</text>',
-        f'<text class="note" x="66" y="{ny+260}">REGISTRATION_STATUS_CHANGES(registration_id, changed_at); '
-        'AUDIT_LOGS(entity, entity_id), (created_at); SESSIONS(expires_at).</text>',
-        f'<text class="note" x="66" y="{ny+286}"><tspan font-weight="700">Outbox:</tspan> '
-        'NOTIFICATIONS is written in the same transaction as the change it describes, then drained '
-        'by the worker and retried up to 3 times.</text>',
-        f'<text class="note" x="66" y="{ny+310}"><tspan font-weight="700">Guest access:</tspan> '
-        'MANAGE_TOKENS stores only the SHA-256 of the link token; USERS.password is NULL until the '
-        'account is claimed (claimed_at), so a guest never needs a password to cancel.</text>',
-        f'<text class="note" x="66" y="{ny+334}"><tspan font-weight="700">SESSIONS:</tspan> '
-        'no foreign key &#8212; it stores the serialised express-session payload and is purged by expiry.</text>',
-        f'<text class="note" x="66" y="{ny+366}" fill="#8a3b12"><tspan font-weight="700">Normalisation:</tspan> '
-        '1NF/2NF/3NF are satisfied for every table shown; the one remaining 3NF exception is the single-use '
-        'reset token on USERS.</text>',
-        f'<text class="note" x="66" y="{ny+390}" fill="#8a3b12">'
-        'A stricter variant (PASSWORD_RESET_TOKENS, lookup tables, NOTIFICATIONS) is proposed in '
-        'docs/schema-3nf.sql.</text>',
-    ]
-
     parts.append('</svg>')
     return '\n'.join(parts)
 
@@ -397,341 +352,545 @@ def erd():
 # --------------------------------------------------------------------------- #
 #                             FLOWCHART                                       #
 # --------------------------------------------------------------------------- #
-def flowchart():
-    """Complete system flowchart - three bands, three columns.
+#  ISO 5807 / ANSI X3.5 symbols, one A4 portrait sheet per actor:
+#
+#     terminal  = start / stop                io       = input / output (parallelogram)
+#     process   = work done by the server      db       = stored data (cylinder)
+#     decision  = branch                       predef   = named subroutine (double bar)
+#     document  = printed or e-mailed artefact  connector = off-page link (A, B, C)
+#
+#  Every cylinder names the table and the statement it runs, because the point
+#  of the diagram is the data flow, not the screens.
+# --------------------------------------------------------------------------- #
+INK = '#1b2536'
+EDGE = '#2b3a55'
+MUTED = '#5d6b85'
+DB_FILL = '#eaf1fb'
+DB_EDGE = '#2f4f86'
+DEC_FILL = '#fffdf3'
+DOC_FILL = '#f7f9fc'
+W_SHEET, H_SHEET = 794, 1123        # A4 portrait at 96 dpi
 
-    Columns: the actor's step, the database work it triggers, and the "No"
-    branch / failure path. Every read and write is drawn explicitly.
+GAP = 11
 
-    Bands
-      A  participant      - browse, register, confirm (+ waiting-list branch)
-      B  administration   - login, dashboard, event / attendance / status changes
-      C  worker + guest   - e-mail delivery, retries, and /r/:token self-service
-    """
-    W = 1600
-    MCX, MW = 350, 380       # process column
-    DCX, DW = 830, 470       # database column
-    SCX, SW = 1345, 470      # No / failure column
 
-    # ---- vertical plan (computed once so the bands cannot overlap) ----------
-    A0 = 96
-    ay = 170
-    A_BOTTOM = 1210
-
-    B0 = A_BOTTOM + 24       # 1234
-    byy = B0 + 76
-    B_BOTTOM = B0 + 528
-
-    C0 = B_BOTTOM + 24
-    cyy = C0 + 82
-    C_BOTTOM = 2628 + 46
-    H = C_BOTTOM + 40
-
-    parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
-        f'font-family="{FONT}">',
+def _sheet_open():
+    return [
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W_SHEET} {H_SHEET}" '
+        f'width="{W_SHEET}" height="{H_SHEET}" font-family="{FONT}">',
         '<defs>',
         '<style>',
-        '.box{fill:#fff;stroke:#2f5bff;stroke-width:1.8}',
-        '.proc{fill:#15203a;font-size:14px;font-weight:600}',
-        '.proc-s{fill:#15203a;font-size:12.5px;font-weight:600}',
-        '.term{fill:#fff;font-size:14px;font-weight:700;letter-spacing:.04em}',
-        '.arr{stroke:#46527a;stroke-width:1.9;fill:none}',
-        '.yes{fill:#0c7a52;font-size:12.5px;font-weight:700}',
-        '.no{fill:#e0425f;font-size:12.5px;font-weight:700}',
-        '.h1{fill:#15203a;font-size:24px;font-weight:700}',
-        '.sub{fill:#6b7691;font-size:13px}',
-        '.sec{fill:#15203a;font-size:16px;font-weight:700}',
-        '.secs{fill:#6b7691;font-size:12px}',
-        '.colhead{fill:#2440a8;font-size:11.5px;font-weight:700;letter-spacing:.14em}',
-        '.db{fill:#eef4ff;stroke:#2440a8;stroke-width:1.4}',
-        '.dbn{fill:#f7f2fb;stroke:#5b4b8a;stroke-width:1.4}',
-        '.dbt{fill:#15203a;font-family:' + MONO + ';font-size:11.5px}',
-        '.dbn-t{fill:#3f3268;font-family:' + MONO + ';font-size:11.5px}',
-        '.rw{fill:#0c7a52;font-size:10px;font-weight:700;letter-spacing:.1em}',
-        '.ww{fill:#b42b45;font-size:10px;font-weight:700;letter-spacing:.1em}',
-        '.note{fill:#5a6584;font-size:11.5px}',
+        '.t-term{fill:#fff;font-size:11.5px;font-weight:700;letter-spacing:.03em}',
+        f'.t-proc{{fill:{INK};font-size:10.5px;font-weight:600}}',
+        f'.t-db{{fill:{DB_EDGE};font-size:9.6px;font-weight:700;letter-spacing:.02em}}',
+        f'.t-ops{{fill:{INK};font-family:{MONO};font-size:8.7px}}',
+        f'.t-lab{{fill:{MUTED};font-size:8.8px}}',
+        '.t-yes{fill:#0c6b4a;font-size:9px;font-weight:700}',
+        '.t-no{fill:#a52a3d;font-size:9px;font-weight:700}',
+        f'.t-h1{{fill:{INK};font-size:15px;font-weight:700}}',
+        f'.t-sub{{fill:{MUTED};font-size:8.8px}}',
+        f'.t-con{{fill:{INK};font-size:9.5px;font-weight:700}}',
+        f'.t-leg{{fill:{MUTED};font-size:8.2px}}',
         '</style>',
-        '<marker id="ah" markerWidth="11" markerHeight="9" refX="9" refY="4.5" orient="auto">'
-        '<path d="M0 0 L11 4.5 L0 9 z" fill="#46527a"/></marker>',
-        '<marker id="ahs" markerWidth="11" markerHeight="9" refX="2" refY="4.5" orient="auto">'
-        '<path d="M11 0 L0 4.5 L11 9 z" fill="#46527a"/></marker>',
-        '<filter id="sh" x="-20%" y="-30%" width="140%" height="160%">'
-        '<feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#15203a" flood-opacity="0.10"/></filter>',
+        '<marker id="ah" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">'
+        f'<path d="M0 0 L9 3.5 L0 7 z" fill="{EDGE}"/></marker>',
         '</defs>',
-        f'<rect width="{W}" height="{H}" fill="#f5f7fb"/>',
-        '<text class="h1" x="40" y="50">System Flowchart &#8212; Online Event Registration</text>',
-        '<text class="sub" x="40" y="74">Participant registration, administration, and the '
-        'notification worker &#8212; with every database read and write shown in order.</text>',
+        f'<rect width="{W_SHEET}" height="{H_SHEET}" fill="#ffffff"/>',
     ]
 
-    # ------------------------------------------------------------------ helpers
-    def box(y, lines, cx=MCX, w=MW, h=None, small=False):
-        if isinstance(lines, str):
-            lines = [lines]
-        h = h or (34 + 19 * (len(lines) - 1) + 28)
-        out = [f'<g filter="url(#sh)"><rect class="box" x="{cx-w/2}" y="{y}" width="{w}" height="{h}" '
-               f'rx="10"/></g>']
-        first = y + h / 2 - (len(lines) - 1) * 9.5 + 4.5
-        for i, line in enumerate(lines):
-            cls = 'proc-s' if (small or len(lines) > 1) else 'proc'
-            out.append(f'<text class="{cls}" x="{cx}" y="{first + i*19}" text-anchor="middle">{line}</text>')
-        return out, h
 
-    def stadium(y, label, cx=MCX, w=250, fill='#26407a', h=46):
-        return [f'<g filter="url(#sh)"><rect x="{cx-w/2}" y="{y}" width="{w}" height="{h}" rx="{h/2}" '
-                f'fill="{fill}"/></g>',
-                f'<text class="term" x="{cx}" y="{y+h/2+5}" text-anchor="middle">{label}</text>'], h
+def _sheet_title(parts, no, title, subtitle):
+    parts += [
+        f'<text class="t-h1" x="40" y="44">{title}</text>',
+        f'<text class="t-sub" x="40" y="61">{subtitle}</text>',
+        f'<text class="t-sub" x="{W_SHEET-40}" y="44" text-anchor="end">Sheet {no} of 3</text>',
+        f'<line x1="40" y1="70" x2="{W_SHEET-40}" y2="70" stroke="#dfe5ef"/>',
+    ]
 
-    def dbox_h(lines):
-        return 20 + 17 * len(lines) + 8
 
-    def dbox(y, lines, cx=DCX, w=DW, kind='db'):
-        h = dbox_h(lines)
-        cls = 'db' if kind == 'db' else 'dbn'
-        accent = '#2440a8' if kind == 'db' else '#5b4b8a'
-        tcls = 'dbt' if kind == 'db' else 'dbn-t'
-        out = [f'<g filter="url(#sh)"><rect class="{cls}" x="{cx-w/2}" y="{y}" width="{w}" height="{h}" '
-               f'rx="8"/></g>',
-               f'<rect x="{cx-w/2}" y="{y}" width="5" height="{h}" rx="2.5" fill="{accent}"/>']
-        for i, line in enumerate(lines):
-            out.append(f'<text class="{tcls}" x="{cx-w/2+18}" y="{y+24+i*17}">{line}</text>')
-        return out
+# --------------------------------- shapes ---------------------------------- #
+def s_term(cx, y, text, w=220):
+    h = 36
+    out = [f'<rect x="{cx-w/2}" y="{y}" width="{w}" height="{h}" rx="{h/2}" fill="{EDGE}"/>',
+           f'<text class="t-term" x="{cx}" y="{y+h/2+4}" text-anchor="middle">{text}</text>']
+    return out, h
 
-    def diamond(cx, y, w, h, lines):
-        out = [f'<g filter="url(#sh)"><path d="M{cx} {y} L{cx+w/2} {y+h/2} L{cx} {y+h} '
-               f'L{cx-w/2} {y+h/2} Z" fill="#fff" stroke="#2f5bff" stroke-width="1.8"/></g>']
-        first = y + h / 2 - (len(lines) - 1) * 9 + 5
-        for i, line in enumerate(lines):
-            out.append(f'<text class="proc" x="{cx}" y="{first + i*18}" text-anchor="middle">{line}</text>')
-        return out
 
-    def path(pts, both=False):
-        d = ' '.join(('M' if i == 0 else 'L') + f'{x} {y}' for i, (x, y) in enumerate(pts))
-        start = ' marker-start="url(#ahs)"' if both else ''
-        return f'<path class="arr" d="{d}" marker-end="url(#ah)"{start} fill="none"/>'
+def s_proc(cx, y, lines, w=300):
+    lines = [lines] if isinstance(lines, str) else lines
+    h = 20 + 14 * len(lines) + 10
+    out = [f'<rect x="{cx-w/2}" y="{y}" width="{w}" height="{h}" rx="3" fill="#ffffff" '
+           f'stroke="{EDGE}" stroke-width="1.5"/>']
+    first = y + h / 2 - (len(lines) - 1) * 7 + 3.5
+    for i, line in enumerate(lines):
+        out.append(f'<text class="t-proc" x="{cx}" y="{first + i*14}" text-anchor="middle">{line}</text>')
+    return out, h
 
-    def tag(x, y, text, cls='rw', anchor='middle'):
-        return f'<text class="{cls}" x="{x}" y="{y}" text-anchor="{anchor}">{text}</text>'
 
-    def row(y, lines, ops=None, h=None, kind='read', cx=MCX, w=MW, small=False):
-        """Process box with an optional database box centred beside it."""
-        out, hh = box(y, lines, cx=cx, w=w, h=h, small=small)
-        if ops:
-            dh = dbox_h(ops)
-            dy = y + (hh - dh) / 2
-            out += dbox(dy, ops)
-            mid = y + hh / 2
-            out += [path([(cx + w/2, mid), (DCX - DW/2 - 3, mid)], both=True),
-                    tag((cx + w/2 + DCX - DW/2) / 2, mid - 8,
-                        'READ' if kind == 'read' else 'WRITE', 'rw' if kind == 'read' else 'ww')]
-        return out, y + hh
+def s_io(cx, y, lines, w=300, skew=14):
+    lines = [lines] if isinstance(lines, str) else lines
+    h = 20 + 14 * len(lines) + 10
+    l, r = cx - w / 2, cx + w / 2
+    d = f'M{l+skew} {y} L{r} {y} L{r-skew} {y+h} L{l} {y+h} Z'
+    out = [f'<path d="{d}" fill="#ffffff" stroke="{EDGE}" stroke-width="1.5"/>']
+    first = y + h / 2 - (len(lines) - 1) * 7 + 3.5
+    for i, line in enumerate(lines):
+        out.append(f'<text class="t-proc" x="{cx}" y="{first + i*14}" text-anchor="middle">{line}</text>')
+    return out, h
 
-    body = []
 
-    # ================================================================ BAND A
-    body.append(f'<rect x="24" y="{A0}" width="{W-48}" height="{A_BOTTOM-A0}" rx="16" '
-                f'fill="#ffffff" stroke="#dbe2f0"/>')
-    body += ['<text class="sec" x="48" y="128">A &#183; Participant &#8212; browse, register, '
-             'confirm</text>',
-             '<text class="secs" x="48" y="148">Public pages. No login: the e-mailed link is the '
-             'credential, so a guest never has to invent a password.</text>',
-             f'<text class="colhead" x="{DCX}" y="128" text-anchor="middle">DATABASE</text>',
-             f'<text class="colhead" x="{SCX}" y="128" text-anchor="middle">WAITING LIST</text>']
+def s_db(cx, y, title, ops, w=300):
+    """Cylinder (stored data): `title` names the table(s), `ops` the statement."""
+    titles = [title] if isinstance(title, str) else title
+    rx, ry = w / 2, 7
+    h = 20 + 12 * len(titles) + 13 * len(ops) + 12
+    x = cx - rx
+    d = (f'M{x} {y+ry} A{rx} {ry} 0 0 1 {x+w} {y+ry} '
+         f'L{x+w} {y+h-ry} A{rx} {ry} 0 0 1 {x} {y+h-ry} Z')
+    out = [f'<path d="{d}" fill="{DB_FILL}" stroke="{DB_EDGE}" stroke-width="1.4"/>',
+           f'<path d="M{x} {y+ry} A{rx} {ry} 0 0 0 {x+w} {y+ry}" fill="none" '
+           f'stroke="{DB_EDGE}" stroke-width="1.1"/>']
+    for i, t in enumerate(titles):
+        out.append(f'<text class="t-db" x="{cx}" y="{y+22+i*12}" text-anchor="middle">{t}</text>')
+    top = y + 28 + 12 * (len(titles) - 1) + 8
+    for i, op in enumerate(ops):
+        out.append(f'<text class="t-ops" x="{x+14}" y="{top+i*13}">{op}</text>')
+    return out, h
 
-    y = ay
-    st, h = stadium(y, 'Start')
-    body += st
-    y += h
-    body += [path([(MCX, y), (MCX, 242)])]
 
-    r, y = row(242, 'Opens the event list  ( GET / )',
-               ['SELECT EVENTS &#10227; VENUES',
-                "COUNT(*) WHERE status='confirmed'",
-                'remaining = max_participants - taken'])
-    body += r
-    body += [path([(MCX, y), (MCX, 340)])]
+def s_dec(cx, y, lines, w=250, h=66):
+    lines = [lines] if isinstance(lines, str) else lines
+    l, r = cx - w / 2, cx + w / 2
+    d = f'M{cx} {y} L{r} {y+h/2} L{cx} {y+h} L{l} {y+h/2} Z'
+    out = [f'<path d="{d}" fill="{DEC_FILL}" stroke="{EDGE}" stroke-width="1.5"/>']
+    first = y + h / 2 - (len(lines) - 1) * 6 + 3.5
+    for i, line in enumerate(lines):
+        out.append(f'<text class="t-proc" x="{cx}" y="{first + i*12}" text-anchor="middle">{line}</text>')
+    return out, h
 
-    r, y = row(340, 'Selects one event  ( GET /events/:id )',
-               ['SELECT event + venue', 'COUNT confirmed seats'])
-    body += r
-    body += [path([(MCX, y), (MCX, 438)])]
 
-    body += diamond(MCX, 438, 260, 108, ['Seats still', 'available?'])
+def s_predef(cx, y, lines, w=260):
+    lines = [lines] if isinstance(lines, str) else lines
+    h = 20 + 13 * len(lines) + 8
+    x = cx - w / 2
+    out = [f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#ffffff" stroke="{EDGE}" '
+           f'stroke-width="1.5"/>',
+           f'<line x1="{x+11}" y1="{y}" x2="{x+11}" y2="{y+h}" stroke="{EDGE}" stroke-width="1.1"/>',
+           f'<line x1="{x+w-11}" y1="{y}" x2="{x+w-11}" y2="{y+h}" stroke="{EDGE}" stroke-width="1.1"/>']
+    first = y + h / 2 - (len(lines) - 1) * 6 + 3.5
+    for i, line in enumerate(lines):
+        out.append(f'<text class="t-proc" x="{cx}" y="{first + i*12}" text-anchor="middle">{line}</text>')
+    return out, h
 
-    # ---- No -> waiting list
-    body += [path([(MCX + 130, 492), (SCX - SW/2 - 3, 492)]),
-             tag(MCX + 168, 482, 'No', 'no', 'start')]
-    r, hh = box(466, 'Joins the waiting list', cx=SCX, w=SW)
-    body += r
-    body += [path([(SCX, 466 + hh), (SCX, 558)])]
-    body += dbox(558, ["INSERT REGISTRATIONS", "  status = 'waitlisted'",
-                       'INSERT REGISTRATION_STATUS_CHANGES', "INSERT NOTIFICATIONS  ('queued')"],
-                 cx=SCX, w=SW)
-    body += [tag(SCX + SW/2 - 44, 548, 'WRITE', 'ww', 'start'),
-             path([(SCX, 558 + dbox_h([0, 0, 0, 0])), (SCX, 682)])]
-    st, _ = stadium(682, 'End &#8212; on the waiting list', cx=SCX, w=320, fill='#5a6584')
-    body += st
-    body += [f'<text class="note" x="{SCX}" y="752" text-anchor="middle">Promoted to confirmed '
-             f'automatically when a seat frees up</text>',
-             f'<text class="note" x="{SCX}" y="770" text-anchor="middle">(band C: FIFO by '
-             f'registration_date)</text>']
 
-    # ---- Yes -> continue
-    body += [path([(MCX, 546), (MCX, 580)]), tag(MCX + 10, 570, 'Yes', 'yes', 'start')]
-    r, y = row(580, 'Enters full name + e-mail address')
-    body += r
-    body += [f'<text class="note" x="{DCX}" y="{y-14}" text-anchor="middle">no write yet &#8212; '
-             f'nothing is stored before validation</text>']
-    body += [path([(MCX, y), (MCX, 676)])]
+def s_doc(cx, y, lines, w=300):
+    lines = [lines] if isinstance(lines, str) else lines
+    h = 22 + 13 * len(lines) + 10
+    x = cx - w / 2
+    d = (f'M{x} {y} L{x+w} {y} L{x+w} {y+h-10} '
+         f'Q{x+w*0.75} {y+h-22} {cx} {y+h-10} Q{x+w*0.25} {y+h+2} {x} {y+h-10} Z')
+    out = [f'<path d="{d}" fill="{DOC_FILL}" stroke="{EDGE}" stroke-width="1.5"/>']
+    first = y + 17 + (0 if len(lines) == 1 else 2)
+    for i, line in enumerate(lines):
+        out.append(f'<text class="t-proc" x="{cx}" y="{first+i*13}" text-anchor="middle">{line}</text>')
+    return out, h
 
-    r, y = row(676, 'Server validates fields and the duplicate rule',
-               ['SELECT USERS, REGISTRATIONS', 'WHERE (event_id, user_id)'])
-    body += r
-    body += [path([(MCX, y), (MCX, 772)])]
 
-    r, y = row(772, 'Re-checks capacity inside a transaction',
-               ['SELECT event ... FOR UPDATE', 'COUNT confirmed (locked row)'])
-    body += r
-    body += [path([(MCX, y), (MCX, 868)])]
+def s_conn(cx, cy, letter, r=12):
+    return [f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="#ffffff" stroke="{EDGE}" stroke-width="1.5"/>',
+            f'<text class="t-con" x="{cx}" y="{cy+3.5}" text-anchor="middle">{letter}</text>'], 2 * r
 
-    body += box(868, ['BEGIN &#8594; INSERT registration',
-                      '+ status history + notification',
-                      '&#8594; COMMIT  (rollback on error)'], h=86)[0]
-    body += dbox(864, ['BEGIN', 'INSERT REGISTRATIONS', 'INSERT REGISTRATION_STATUS_CHANGES',
-                       "INSERT NOTIFICATIONS ('queued')", 'COMMIT'])
-    body += [path([(MCX + MW/2, 911), (DCX - DW/2 - 3, 911)]),
-             tag((MCX + MW/2 + DCX - DW/2) / 2, 903, 'WRITE', 'ww'),
-             f'<text class="note" x="{DCX}" y="986" text-anchor="middle">one atomic unit: the '
-             f'booking, its history and the e-mail are all-or-nothing</text>']
-    body += [path([(MCX, 954), (MCX, 1004)])]
 
-    r, y = row(1004, 'Renders the confirmation page',
-               ['SELECT COUNT confirmed (fresh)',
-                'reference = HMAC(registration_id)',
-                'shown as REG-00049-7F3A9C'])
-    body += r
-    body += [path([(MCX, y), (MCX, 1100)])]
+def s_wire(points, dashed=False, arrow=True):
+    d = ' '.join(('M' if i == 0 else 'L') + f'{x} {y}' for i, (x, y) in enumerate(points))
+    dash = ' stroke-dasharray="5 4"' if dashed else ''
+    head = ' marker-end="url(#ah)"' if arrow else ''
+    return f'<path d="{d}" fill="none" stroke="{EDGE}" stroke-width="1.4"{dash}{head}/>'
 
-    st, _ = stadium(1100, 'End &#8212; registration stored', w=340)
-    body += st
-    body += [f'<text class="note" x="{MCX}" y="1174" text-anchor="middle">the queued e-mail '
-             f'carries /r/:token &#8594; band C</text>']
 
-    # ================================================================ BAND B
-    body.append(f'<rect x="24" y="{B0}" width="{W-48}" height="{B_BOTTOM-B0}" rx="16" '
-                f'fill="#ffffff" stroke="#dbe2f0"/>')
-    body += [f'<text class="sec" x="48" y="{B0+34}">B &#183; Administration &#8212; authenticated '
-             f'session required</text>',
-             f'<text class="secs" x="48" y="{B0+54}">requireLogin + requireAdmin guard every route. '
-             f'Each action writes AUDIT_LOGS and queues a notification.</text>',
-             f'<text class="colhead" x="{DCX}" y="{B0+34}" text-anchor="middle">DATABASE</text>']
+def s_lbl(x, y, text, cls='t-lab', anchor='middle'):
+    return f'<text class="{cls}" x="{x}" y="{y}" text-anchor="{anchor}">{text}</text>'
 
-    y = byy
-    st, h = stadium(y, 'Admin logs in  ( POST /login )', w=310)
-    body += st
-    body += dbox(y - 12, ['SELECT USERS WHERE email = ?',
-                          'bcrypt.compare(password, hash)',
-                          'INSERT / UPDATE SESSIONS'])
-    body += [path([(MCX + 155, y + 23), (DCX - DW/2 - 3, y + 37)]),
-             tag((MCX + 155 + DCX - DW/2) / 2, y + 18, 'WRITE', 'ww')]
-    y += h
-    body += [path([(MCX, y), (MCX, 1386)])]
 
-    r, y = row(1386, 'Dashboard  ( GET /admin )',
-               ['SELECT aggregates:',
-                'events &#183; confirmed &#183; waitlisted',
-                'check-ins &#183; users'])
-    body += r
-    body += [path([(MCX, y), (MCX, 1482)])]
+def s_legend(y):
+    out = [f'<line x1="40" y1="{y}" x2="{W_SHEET-40}" y2="{y}" stroke="#dfe5ef"/>',
+           f'<text class="t-leg" x="40" y="{y+16}">Symbols (ISO 5807 / ANSI X3.5):</text>']
+    x, cy = 132, y + 36
+    items = ['term', 'proc', 'io', 'db', 'dec', 'predef', 'doc']
+    names = ['start / end', 'process', 'input / output', 'stored data', 'decision',
+             'subroutine', 'document']
+    for kind, name in zip(items, names):
+        if kind == 'term':
+            out.append(f'<rect x="{x-17}" y="{cy-8}" width="34" height="16" rx="8" fill="{EDGE}"/>')
+        elif kind == 'proc':
+            out.append(f'<rect x="{x-16}" y="{cy-8}" width="32" height="16" fill="#fff" stroke="{EDGE}"/>')
+        elif kind == 'io':
+            out.append(f'<path d="M{x-10} {cy-8} L{x+18} {cy-8} L{x+10} {cy+8} L{x-18} {cy+8} Z" '
+                       f'fill="#fff" stroke="{EDGE}"/>')
+        elif kind == 'db':
+            out.append(f'<path d="M{x-15} {cy-6} A15 4 0 0 1 {x+15} {cy-6} L{x+15} {cy+6} '
+                       f'A15 4 0 0 1 {x-15} {cy+6} Z" fill="{DB_FILL}" stroke="{DB_EDGE}"/>')
+        elif kind == 'dec':
+            out.append(f'<path d="M{x} {cy-9} L{x+19} {cy} L{x} {cy+9} L{x-19} {cy} Z" '
+                       f'fill="{DEC_FILL}" stroke="{EDGE}"/>')
+        elif kind == 'predef':
+            out.append(f'<rect x="{x-16}" y="{cy-8}" width="32" height="16" fill="#fff" stroke="{EDGE}"/>'
+                       f'<line x1="{x-11}" y1="{cy-8}" x2="{x-11}" y2="{cy+8}" stroke="{EDGE}"/>'
+                       f'<line x1="{x+11}" y1="{cy-8}" x2="{x+11}" y2="{cy+8}" stroke="{EDGE}"/>')
+        else:
+            out.append(f'<path d="M{x-16} {cy-9} L{x+16} {cy-9} L{x+16} {cy+5} '
+                       f'Q{x+8} {cy-3} {x} {cy+5} Q{x-8} {cy+13} {x-16} {cy+5} Z" '
+                       f'fill="{DOC_FILL}" stroke="{EDGE}"/>')
+        out.append(f'<text class="t-leg" x="{x}" y="{cy+24}" text-anchor="middle">{name}</text>')
+        x += 104
+    return out
 
-    acts = [(300, ['Creates / edits /', 'archives an event'],
-             ['INSERT / UPDATE EVENTS', 'INSERT / UPDATE VENUES', 'UPDATE deleted_at (archive)']),
-            (800, ['Checks a participant in'],
-             ['INSERT ATTENDANCE', 'UNIQUE(registration_id)', 'INSERT AUDIT_LOGS']),
-            (1300, ['Cancels or changes', 'a status'],
-             ['UPDATE REGISTRATIONS', 'INSERT STATUS_CHANGES', 'promote waitlist (FIFO)'])]
-    for cx, label, ops in acts:
-        body += box(1482, label, cx=cx, w=420)[0]
-        body += [path([(cx, 1542), (cx, 1570)])]
-        body += dbox(1570, ops, cx=cx, w=420)
-        body += [tag(cx, 1678, 'WRITE', 'ww')]
 
-    body += [f'<rect x="48" y="1696" width="{W-96}" height="46" rx="9" fill="#fdf2f5" '
-             f'stroke="#f3c9d4"/>',
-             f'<text class="note" x="68" y="1724">Every branch also writes '
-             f'<tspan font-weight="700">AUDIT_LOGS</tspan> (actor, action, entity, before/after) and '
-             f'queues <tspan font-weight="700">NOTIFICATIONS</tspan> rows &#8212; archiving an event '
-             f'queues one cancellation e-mail per affected participant.</text>']
-
-    # ================================================================ BAND C
-    body.append(f'<rect x="24" y="{C0}" width="{W-48}" height="{C_BOTTOM-C0}" rx="16" '
-                f'fill="#ffffff" stroke="#dbe2f0"/>')
-    body += [f'<text class="sec" x="48" y="{C0+34}">C &#183; Notification worker and guest '
-             f'self-service  ( /r/:token )</text>',
-             f'<text class="secs" x="48" y="{C0+54}">Delivery happens out of band, so an SMTP outage '
-             f'can never fail a registration; failures stay visible and retryable.</text>',
-             f'<text class="colhead" x="{DCX}" y="{C0+34}" text-anchor="middle">DATABASE</text>',
-             f'<text class="colhead" x="{SCX}" y="{C0+34}" text-anchor="middle">ON FAILURE</text>']
-
-    y = cyy
-    st, h = stadium(y, 'Worker timer fires (every 15 s)', w=340, fill='#0f4c5c')
-    body += st
-    body += dbox(y - 12, ["SELECT NOTIFICATIONS", "WHERE status = 'queued'",
-                          'ORDER BY created_at LIMIT 20'])
-    body += [path([(MCX + 170, y + 23), (DCX - DW/2 - 3, y + 34)]),
-             tag((MCX + 170 + DCX - DW/2) / 2, y + 18, 'READ', 'rw')]
-    y += h
-    body += [path([(MCX, y), (MCX, 1944)])]
-
-    r, y = row(1944, ['Renders the EJS e-mail template',
-                      '(subject + HTML + text alternative)'], h=72)
-    body += r
-    body += [path([(MCX, y), (MCX, 2046)])]
-
-    r, y = row(2046, 'Sends through the transport (console .eml / SMTP)')
-    body += r
-    body += [path([(MCX, y), (MCX, 2140)])]
-
-    body += diamond(MCX, 2140, 260, 104, ['Delivered?'])
-    body += [path([(MCX + 130, 2192), (SCX - SW/2 - 3, 2192)]),
-             tag(MCX + 168, 2182, 'No', 'no', 'start')]
-    body += dbox(2146, ['attempts = attempts + 1',
-                        'requeue while attempts &lt; 3',
-                        "then status = 'failed'",
-                        '+ last_error (shown in the UI)'], cx=SCX, w=SW, kind='note')
-    body += [tag(SCX - SW/2 + 58, 2182, 'WRITE', 'ww'),
-             f'<text class="note" x="{SCX}" y="2272" text-anchor="middle">the Requeue button in '
-             f'/admin/notifications drains it immediately</text>']
-
-    body += [path([(MCX, 2244), (MCX, 2282)]), tag(MCX + 10, 2270, 'Yes', 'yes', 'start')]
-    body += dbox(2282, ['UPDATE NOTIFICATIONS',
-                        "SET status = 'sent', sent_at = NOW()"], cx=MCX, w=430)
-    body += [path([(MCX, 2282 + dbox_h([0, 0])), (MCX, 2372)])]
-
-    r, y = row(2372, 'Participant receives the e-mail')
-    body += r
-    body += [path([(MCX, y), (MCX, 2464)])]
-
-    r, y = row(2464, 'Opens /r/:token &#8212; no password required',
-               ['SELECT MANAGE_TOKENS', 'WHERE token_hash = SHA-256(token)',
-                'JOIN USERS, REGISTRATIONS'])
-    body += r
-    body += [path([(MCX, y), (MCX, 2556)])]
-
-    body += box(2556, ['Views the booking, cancels it,',
-                       'or optionally sets a password'], w=340, h=72)[0]
-    body += dbox(2552, ["UPDATE status = 'cancelled'", 'INSERT STATUS_CHANGES',
-                        'promote next waitlisted (FIFO)',
-                        "INSERT NOTIFICATIONS ('queued')"])
-    body += [path([(MCX + 170, 2592), (DCX - DW/2 - 3, 2592)]),
-             tag((MCX + 170 + DCX - DW/2) / 2, 2582, 'WRITE', 'ww')]
-    body += [f'<text class="note" x="{MCX}" y="2660" text-anchor="middle">same engine as the '
-             f'logged-in cancel &#8212; cancelRegistration()</text>']
-
-    parts += body
+def _footer(parts, letter):
+    parts += s_legend(1006)
+    parts.append(f'<circle cx="628" cy="1035" r="9" fill="#ffffff" stroke="{EDGE}" stroke-width="1.4"/>')
+    parts.append(f'<text class="t-leg" x="644" y="1039">off-page connector</text>')
+    parts.append(f'<text class="t-leg" x="40" y="1102">Online Event Registration System · '
+                 f'sheet {letter} of 3 · regenerate with python3 docs/generate-diagrams.py</text>')
     parts.append('</svg>')
     return '\n'.join(parts)
+
+
+# ------------------------------- sheet A ----------------------------------- #
+def sheet_a():
+    """Participant: browse, register, confirm."""
+    cx, LANE = 236, 606
+    parts = _sheet_open()
+    _sheet_title(parts, 'A', 'A · Participant — browse, register, confirm',
+                 'Public pages. No account is needed: the e-mailed link is the credential.')
+
+    y = 84
+
+    def step(builder):
+        nonlocal y
+        out, h = builder(y)
+        parts.extend(out)
+        parts.append(s_wire([(cx, y + h), (cx, y + h + GAP)]))
+        y += h + GAP
+
+    out, h = s_term(cx, y, 'Start')
+    parts += out
+    y += h
+    parts.append(s_wire([(cx, y), (cx, y + GAP)]))
+    y += GAP
+
+    step(lambda yy: s_io(cx, yy, 'Opens the event list  ( GET / )'))
+    step(lambda yy: s_db(cx, yy, 'EVENTS ⋈ VENUES',
+                         ['SELECT events + venues',
+                          "COUNT(*) WHERE status='confirmed'",
+                          'remaining = max_participants - taken']))
+    step(lambda yy: s_io(cx, yy, 'Selects one event  ( GET /events/:id )'))
+    step(lambda yy: s_db(cx, yy, 'EVENTS / REGISTRATIONS',
+                         ['SELECT event + venue', 'COUNT confirmed seats']))
+
+    dec_y = y
+    out, h = s_dec(cx, dec_y, ['Seats still', 'available?'], w=230)
+    parts += out
+    y += h
+
+    # ---- No: waiting list, in the right-hand lane -------------------------
+    no_y = dec_y + h / 2
+    parts.append(s_wire([(cx + 115, no_y), (LANE - 160, no_y)]))
+    parts.append(s_lbl(cx + 126, no_y - 6, 'No', 't-no', 'start'))
+    wl = no_y - 18
+    out, hh = s_io(LANE, wl, 'Joins the waiting list  ( POST /events/:id/register )', w=340)
+    parts += out
+    out, h2 = s_db(LANE, wl + hh + 14, 'REGISTRATIONS',
+                   ["INSERT status = 'waitlisted'",
+                    'INSERT REGISTRATION_STATUS_CHANGES',
+                    "INSERT NOTIFICATIONS ('queued')"], w=320)
+    parts += [s_wire([(LANE, wl + hh), (LANE, wl + hh + 14)])] + out
+    pill = wl + hh + 14 + h2 + 14
+    parts.append(s_wire([(LANE, wl + hh + 14 + h2), (LANE, pill)]))
+    out, hp = s_term(LANE, pill, 'On the waiting list', w=280)
+    parts += out
+    parts.append(s_lbl(LANE, pill + hp + 16,
+                       'promoted automatically when a seat frees up (sheet C)'))
+
+    # ---- Yes: continue down the spine -------------------------------------
+    parts.append(s_wire([(cx, dec_y + h), (cx, dec_y + h + GAP)]))
+    parts.append(s_lbl(cx + 6, dec_y + h + 9, 'Yes', 't-yes', 'start'))
+    y = dec_y + h + GAP
+
+    step(lambda yy: s_io(cx, yy, 'Enters full name + e-mail address'))
+    step(lambda yy: s_db(cx, yy, 'USERS / REGISTRATIONS',
+                         ['SELECT WHERE (event_id, user_id)',
+                          'validation + duplicate rule']))
+    step(lambda yy: s_db(cx, yy, 'EVENTS / REGISTRATIONS',
+                         ['SELECT event ... FOR UPDATE',
+                          'COUNT confirmed (locked row)']))
+
+    out, h = s_db(cx, y, ['REGISTRATIONS', 'STATUS_CHANGES · NOTIFICATIONS'],
+                  ['BEGIN', 'INSERT registration', 'INSERT status history',
+                   "INSERT notification ('queued')", 'COMMIT'])
+    parts += out
+    y += h
+    parts.append(s_wire([(cx, y), (cx, y + GAP)]))
+    y += GAP
+
+    out, h = s_predef(cx, y, 'notifyRegistration()')
+    parts += out
+    y += h
+    parts.append(s_wire([(cx, y), (cx, y + GAP)]))
+    y += GAP
+
+    out, h = s_doc(cx, y, 'Confirmation page + e-mail with /r/:token')
+    parts += out
+    y += h
+    parts.append(s_wire([(cx, y), (cx, y + GAP)]))
+    y += GAP
+
+    out, h = s_term(cx, y, 'Registration stored', w=240)
+    parts += out
+    out, _ = s_conn(cx + 152, y + h / 2, 'C')
+    parts += out
+    parts.append(s_lbl(cx + 170, y + h / 2 + 3, 'e-mail path continues on sheet C', 't-lab', 'start'))
+
+    return _footer(parts, 'A')
+
+
+# ------------------------------- sheet B ----------------------------------- #
+def sheet_b():
+    """Administration: authentication, event management, attendance, status."""
+    cx, LANE = 236, 606
+    parts = _sheet_open()
+    _sheet_title(parts, 'B', 'B · Administration — authenticated session required',
+                 'requireLogin + requireAdmin. Every branch audits and queues a notification.')
+
+    y = 84
+    out, h = s_term(cx, y, 'Admin opens /admin', w=240)
+    parts += out
+    y += h + GAP
+
+    dec_y = y
+    parts.append(s_wire([(cx, dec_y - GAP), (cx, dec_y)]))
+    out, h = s_dec(cx, dec_y, ['Signed in with', 'an admin role?'], w=230)
+    parts += out
+    y = dec_y + h
+
+    # ---- No: login, in the right-hand lane --------------------------------
+    no_y = dec_y + h / 2
+    parts.append(s_wire([(cx + 115, no_y), (LANE - 160, no_y)]))
+    parts.append(s_lbl(cx + 126, no_y - 6, 'No', 't-no', 'start'))
+    ly = no_y - 20
+    out, h1 = s_io(LANE, ly, 'Login form  ( POST /login )', w=320)
+    parts += out
+    out, h2 = s_db(LANE, ly + h1 + 12, 'USERS',
+                   ['SELECT WHERE email = ?', 'bcrypt.compare(password, hash)'], w=320)
+    parts += [s_wire([(LANE, ly + h1), (LANE, ly + h1 + 12)])] + out
+    out, h3 = s_db(LANE, ly + h1 + h2 + 24, 'SESSIONS',
+                   ['INSERT / UPDATE session row'], w=320)
+    parts += [s_wire([(LANE, ly + h1 + h2 + 12), (LANE, ly + h1 + h2 + 24)])] + out
+    tail = ly + h1 + h2 + h3 + 24
+    parts.append(s_wire([(LANE, tail), (LANE, tail + 12)]))
+    out, h4 = s_term(LANE, tail + 12, 'Redirects to /admin', w=280)
+    parts += out
+    parts.append(s_lbl(LANE, tail + 12 + h4 + 14,
+                       'the session row carries the login from here on', 't-lab'))
+
+    # ---- Yes: dashboard ----------------------------------------------------
+    parts.append(s_wire([(cx, dec_y + h), (cx, dec_y + h + GAP)]))
+    parts.append(s_lbl(cx + 6, dec_y + h + 9, 'Yes', 't-yes', 'start'))
+    y = dec_y + h + GAP
+
+    out, h = s_io(cx, y, 'Dashboard  ( GET /admin )')
+    parts += out
+    y += h + GAP
+    parts.append(s_wire([(cx, y - GAP), (cx, y)]))
+    out, h = s_db(cx, y, 'EVENTS / REGISTRATIONS',
+                  ['SELECT aggregates:', 'events · confirmed · waitlisted',
+                   'check-ins · users'])
+    parts += out
+    y += h + GAP
+
+    dec_y = y
+    parts.append(s_wire([(cx, dec_y - GAP), (cx, dec_y)]))
+    out, h = s_dec(cx, dec_y, ['Which action?'], w=230)
+    parts += out
+    y = dec_y + h
+
+    # ---- three alternatives, stacked in the right-hand lane ----------------
+    def g_event(yy):
+        return s_db(LANE, yy, 'EVENTS / VENUES',
+                    ['INSERT / UPDATE EVENTS', 'INSERT / UPDATE VENUES',
+                     'UPDATE deleted_at (archive)'], w=320)
+
+    def g_checkin(yy):
+        return s_db(LANE, yy, 'ATTENDANCE / AUDIT_LOGS',
+                    ['INSERT ATTENDANCE', 'INSERT AUDIT_LOGS'], w=320)
+
+    def g_cancel(yy):
+        out, hh = s_predef(LANE, yy, 'cancelRegistration()', w=320)
+        o, h2 = s_db(LANE, yy + hh + 10, 'REGISTRATIONS / STATUS_CHANGES',
+                     ['UPDATE status', 'INSERT status change',
+                      'promote next waitlisted (FIFO)', "INSERT NOTIFICATIONS ('queued')"], w=320)
+        out += [s_wire([(LANE, yy + hh), (LANE, yy + hh + 10)])] + o
+        return out, hh + 10 + h2
+
+    groups = [
+        ('creates / edits / archives an event', 'event', g_event),
+        ('checks a participant in', 'check-in', g_checkin),
+        ('cancels or changes a status', 'status', g_cancel),
+    ]
+
+    cursor = y + 46
+    taps = []
+    for caption, tag, build in groups:
+        _, gh = build(0)
+        taps.append((cursor + gh / 2, cursor, caption, tag, build, gh))
+        cursor += gh + 46
+
+    last_bottom = taps[-1][1] + taps[-1][5]
+    term_y = last_bottom + 30
+    parts.append(s_wire([(cx, dec_y + h), (cx, term_y)]))
+    for tap_y, top, caption, tag, build, gh in taps:
+        parts.append(s_wire([(cx, tap_y), (LANE - 162, tap_y)]))
+        out, _ = build(top)
+        parts += out
+        parts.append(s_lbl(LANE - 168, tap_y - 5, tag, 't-lab', 'end'))
+        parts.append(s_lbl(LANE - 160, top - 7, caption, 't-lab', 'start'))
+
+    out, ht = s_term(cx, term_y, 'Action committed', w=230)
+    parts += out
+    parts.append(s_lbl(cx, term_y + ht + 18,
+                       'every path above writes AUDIT_LOGS and queues NOTIFICATIONS', 't-lab'))
+
+    return _footer(parts, 'B')
+
+
+def sheet_c():
+    """Worker delivery loop and passwordless guest self-service."""
+    cx, LANE, g = 236, 606, 7
+    parts = _sheet_open()
+    _sheet_title(parts, 'C', 'C · Notification worker and guest self-service',
+                 'Delivery runs out of band, so an SMTP failure can never roll back a booking.')
+
+    y = 84
+    out, h = s_term(cx, y, 'Worker timer fires (every 15 s)', w=300)
+    parts += out
+    y += h + g
+
+    parts.append(s_wire([(cx, y - g), (cx, y)]))
+    out, h = s_db(cx, y, 'NOTIFICATIONS',
+                  ["SELECT WHERE status = 'queued'", 'ORDER BY created_at LIMIT 20'])
+    parts += out
+    y += h + g
+
+    parts.append(s_wire([(cx, y - g), (cx, y)]))
+    out, h = s_proc(cx, y, ['Renders the e-mail template, then sends it',
+                            'through the transport (console .eml / SMTP)'])
+    parts += out
+    y += h + g
+
+    dec_y = y
+    parts.append(s_wire([(cx, dec_y - g), (cx, dec_y)]))
+    out, h = s_dec(cx, dec_y, ['Delivered?'], w=230)
+    parts += out
+    y = dec_y + h
+
+    # ---- No: retry, in the right-hand lane --------------------------------
+    no_y = dec_y + h / 2
+    parts.append(s_wire([(cx + 115, no_y), (LANE - 160, no_y)]))
+    parts.append(s_lbl(cx + 126, no_y - 6, 'No', 't-no', 'start'))
+    out, h2 = s_db(LANE, no_y - 28, 'NOTIFICATIONS',
+                   ['attempts = attempts + 1', 'requeue while attempts &lt; 3',
+                    "then status = 'failed'", '+ last_error (shown in /admin)'], w=320)
+    parts += out
+    parts.append(s_lbl(LANE, no_y + 76, 'Requeue button drains it immediately', 't-lab'))
+
+    # ---- Yes ---------------------------------------------------------------
+    y = dec_y + h + 22
+    parts.append(s_wire([(cx, dec_y + h), (cx, y)]))
+    parts.append(s_lbl(cx - 8, dec_y + h + 15, 'Yes', 't-yes', 'end'))
+
+    out, h = s_db(cx, y, 'NOTIFICATIONS',
+                  ["UPDATE status = 'sent'", 'SET sent_at = NOW()'])
+    parts += out
+    y += h + g
+
+    parts.append(s_wire([(cx, y - g), (cx, y)]))
+    io_y = y
+    out, h = s_io(cx, io_y, 'Recipient opens /r/:token', w=300)
+    parts += out
+    out, _ = s_conn(cx + 152, io_y + h / 2, 'A')
+    parts += out
+    parts.append(s_lbl(cx + 170, io_y + h / 2 + 3, 'from sheet A', 't-lab', 'start'))
+    y += h + g
+
+    parts.append(s_wire([(cx, y - g), (cx, y)]))
+    out, h = s_db(cx, y, 'MANAGE_TOKENS',
+                  ['SELECT by token_hash = SHA-256(token)', 'JOIN USERS, REGISTRATIONS'])
+    parts += out
+    y += h + g
+
+    dec_y = y
+    parts.append(s_wire([(cx, dec_y - g), (cx, dec_y)]))
+    out, h = s_dec(cx, dec_y, ['What does the', 'guest do?'], w=230)
+    parts += out
+    y = dec_y + h
+
+    def g_view(yy):
+        return s_doc(LANE, yy, 'Booking page: event, venue, seats', w=320)
+
+    def g_cancel(yy):
+        return s_db(LANE, yy, 'REGISTRATIONS / STATUS_CHANGES',
+                    ['cancelRegistration()', "UPDATE status = 'cancelled'",
+                     'INSERT status change', 'promote next waitlisted (FIFO)',
+                     "INSERT NOTIFICATIONS ('queued')"], w=320)
+
+    def g_claim(yy):
+        return s_db(LANE, yy, 'USERS / MANAGE_TOKENS',
+                    ['UPDATE password + claimed_at', 'UPDATE used_at (consume link)'], w=320)
+
+    groups = [
+        ('views the booking', 'view', g_view),
+        ('cancels it · promotes the next waitlisted participant', 'cancel', g_cancel),
+        ('sets a password (optional)', 'claim', g_claim),
+    ]
+
+    cursor = y + 22
+    taps = []
+    for caption, tag, build in groups:
+        _, gh = build(0)
+        taps.append((cursor + gh / 2, cursor, caption, tag, build, gh))
+        cursor += gh + 16
+
+    last_bottom = taps[-1][1] + taps[-1][5]
+    term_y = last_bottom + 22
+    parts.append(s_wire([(cx, dec_y + h), (cx, term_y)]))
+    for tap_y, top, caption, tag, build, gh in taps:
+        parts.append(s_wire([(cx, tap_y), (LANE - 162, tap_y)]))
+        out, _ = build(top)
+        parts += out
+        parts.append(s_lbl(LANE - 168, tap_y - 4, tag, 't-lab', 'end'))
+        parts.append(s_lbl(LANE - 160, top - 7, caption, 't-lab', 'start'))
+
+    out, ht = s_term(cx, term_y, 'End', w=200)
+    parts += out
+
+    return _footer(parts, 'C')
+
+
+# --------------------------------------------------------------------------- #
+#                    FLOWCHART (all three sheets stacked)                      #
+# --------------------------------------------------------------------------- #
+def flowchart():
+    """The three A4 sheets stacked vertically, for docs/SYSTEM-DOCS.html."""
+    sheets = [('A', sheet_a()), ('B', sheet_b()), ('C', sheet_c())]
+    W, H = W_SHEET, H_SHEET
+    body = []
+    for i, (key, svg) in enumerate(sheets):
+        inner = svg[svg.index('>') + 1: svg.rindex('</svg>')]
+        inner = inner.replace('id="ah"', f'id="ah{key}"').replace('url(#ah)', f'url(#ah{key})')
+        body.append(f'<g transform="translate(0 {i*H})">{inner}</g>')
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H*3}" '
+            f'width="{W}" height="{H*3}" font-family="{FONT}">\n'
+            + '\n'.join(body) + '\n</svg>')
 
 
 # --------------------------------------------------------------------------- #
@@ -818,7 +977,10 @@ def mvc():
 
 
 if __name__ == '__main__':
-    for name, builder in [('ERD.svg', erd), ('FLOWCHART.svg', flowchart), ('MVC-ARCHITECTURE.svg', mvc)]:
+    for name, builder in [('ERD.svg', erd), ('MVC-ARCHITECTURE.svg', mvc),
+                          ('FLOWCHART.svg', flowchart),
+                          ('FLOWCHART-A.svg', sheet_a), ('FLOWCHART-B.svg', sheet_b),
+                          ('FLOWCHART-C.svg', sheet_c)]:
         path = os.path.join(OUT, name)
         with open(path, 'w', encoding='utf-8') as fh:
             fh.write(builder())
