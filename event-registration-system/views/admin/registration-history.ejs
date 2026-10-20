@@ -1,0 +1,66 @@
+<%- include('../partials/header') %>
+
+<a class="back" href="/admin/events/<%= registration.event_id %>/participants">← Back to participants</a>
+
+<section class="section-head">
+  <div>
+    <h1>Registration #<%= registration.registration_id %></h1>
+    <p class="muted">
+      <%= registration.user.full_name %> (<%= registration.user.email %>) ·
+      <%= registration.event.title %> · <%= fmtDate(registration.event.event_date) %>
+    </p>
+  </div>
+  <span class="badge <%= registration.status === 'confirmed' ? 'badge-success' : registration.status === 'waitlisted' ? 'badge-warn' : 'badge-muted' %>">
+    <%= registration.status %>
+  </span>
+</section>
+
+<table class="kv">
+  <tr><th>Reference</th><td>REG-<%= String(registration.registration_id).padStart(5, '0') %></td>
+      <th>Event</th><td><%= registration.event.title %></td></tr>
+  <tr><th>Venue</th><td><%= venueName(registration.event) %></td>
+      <th>Registered on</th><td><%= fmtDate(registration.registration_date) %></td></tr>
+  <tr><th>Attendance</th>
+      <td>
+        <% if (registration.attendance) { %>
+          Checked in <%= fmtDate(registration.attendance.checked_in_at) %>
+        <% } else { %>
+          Not checked in
+        <% } %>
+      </td>
+      <th>Status changes</th><td><%= changes.length %></td></tr>
+</table>
+
+<h2>Status timeline</h2>
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr><th>#</th><th>When</th><th>From</th><th>To</th><th>By</th><th>Reason</th></tr>
+    </thead>
+    <tbody>
+      <% changes.forEach(function (c, i) { %>
+        <tr>
+          <td><%= i + 1 %></td>
+          <td><%= fmtDate(c.changed_at) %></td>
+          <td><%= c.from_status || '—' %></td>
+          <td>
+            <span class="badge <%= c.to_status === 'confirmed' ? 'badge-success' : c.to_status === 'waitlisted' ? 'badge-warn' : 'badge-muted' %>"><%= c.to_status %></span>
+          </td>
+          <td>
+            <% if (c.changedBy) { %>
+              <%= c.changedBy.full_name %>
+            <% } else { %>
+              <span class="muted">system</span>
+            <% } %>
+          </td>
+          <td><%= c.reason || '—' %></td>
+        </tr>
+      <% }); %>
+      <% if (!changes.length) { %>
+        <tr><td colspan="6" class="muted">No status changes recorded for this registration.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../partials/footer') %>

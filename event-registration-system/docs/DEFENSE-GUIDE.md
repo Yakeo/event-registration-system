@@ -47,14 +47,28 @@ event-registration-system/
 
 ## 3. Database Design & Entity Relationships (ERD)
 
-### Relational Schema:
-- **`USERS` (1) ──── (0..*) `REGISTRATIONS` (0..*) ──── (1) `EVENTS`**
+### Relational Schema (8 tables):
+- **`VENUES` (1) ── (0..*) `EVENTS` (1) ── (0..*) `REGISTRATIONS` (0..*) ── (1) `USERS`**
+- **`REGISTRATIONS` (1) ── (0..1) `ATTENDANCE`** · **`REGISTRATIONS` (1) ── (0..*) `REGISTRATION_STATUS_CHANGES`**
+- **`USERS` (1) ── (0..*) `AUDIT_LOGS`** · **`SESSIONS`** (session store, no FK)
 
 | Entity | Primary Key | Foreign Keys | Key Attributes & Constraints |
 |---|---|---|---|
-| **`USERS`** | `user_id` (INT) | None | `email` (UNIQUE), `password` (bcrypt hash), `role` ('admin' \| 'participant'), `reset_password_token` (VARCHAR 255), `reset_password_expires` (DATETIME) |
-| **`EVENTS`** | `event_id` (INT) | None | `title`, `event_date`, `venue`, `max_participants` (INT >= 1) |
+| **`VENUES`** | `venue_id` (INT) | None | `name`, `address`, `city`, **`UNIQUE(name, city)`** |
+| **`USERS`** | `user_id` (INT) | None | `email` (UNIQUE), `password` (bcrypt hash), `role` ('admin' \| 'participant'), `reset_password_token` (CHAR(64), SHA-256 digest, UNIQUE), `reset_password_expires` (DATETIME) |
+| **`EVENTS`** | `event_id` (INT) | `venue_id` → `VENUES` | `title`, `event_date`, `max_participants` (INT >= 1), `deleted_at` (soft delete) |
 | **`REGISTRATIONS`** | `registration_id` (INT) | `user_id` → `USERS`<br>`event_id` → `EVENTS` | `registration_date`, `status` ('confirmed' \| 'waitlisted' \| 'cancelled'), **`UNIQUE(event_id, user_id)`** |
+| **`ATTENDANCE`** | `attendance_id` (INT) | `registration_id` → `REGISTRATIONS`<br>`checked_in_by` → `USERS` | `checked_in_at`, **`UNIQUE(registration_id)`** — a participant is checked in once |
+| **`REGISTRATION_STATUS_CHANGES`** | `change_id` (INT) | `registration_id` → `REGISTRATIONS`<br>`changed_by` → `USERS` | `from_status`, `to_status`, `changed_at`, `reason` — `changed_by` NULL = automated promotion |
+| **`AUDIT_LOGS`** | `log_id` (BIGINT) | `actor_id` → `USERS` | `action`, `entity`, `entity_id`, `detail` (JSON), `created_at` |
+| **`SESSIONS`** | `sid` (VARCHAR 64) | None | `data` (session JSON), `expires_at` |
+
+### Normal form (panel question)
+Every table is in 1NF, 2NF and 3NF. `VENUES` removes the transitive dependency
+`event → venue → address`; `REGISTRATION_STATUS_CHANGES` keeps transition data
+out of `REGISTRATIONS` (so no half-empty `cancelled_at`/`promoted_at` columns).
+The one documented exception is the single-use reset token on `USERS`; the
+stricter variant is in `docs/schema-3nf.sql`. Full proof: `docs/DATABASE-AUDIT.md`.
 
 ### Cascade Behavior:
 - `ON DELETE CASCADE`: Deleting an event or a user safely cleans up associated registrations without leaving orphaned records.

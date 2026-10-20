@@ -13,7 +13,7 @@
     <table class="kv">
       <tr><th>Event</th><td><%= event.title %></td></tr>
       <tr><th>Date &amp; time</th><td><%= fmtDate(event.event_date) %></td></tr>
-      <tr><th>Venue</th><td><%= event.venue %></td></tr>
+      <tr><th>Venue</th><td><%= venueName(event) %></td></tr>
       <tr><th>Capacity</th><td><%= capacity.taken %> / <%= capacity.max %></td></tr>
     </table>
 

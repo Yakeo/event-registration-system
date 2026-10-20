@@ -4,7 +4,20 @@
  * and user account administration.
  */
 const { Op } = require('sequelize');
-const { User, Event, Registration, sequelize, getEventCapacity } = require('../models');
+const {
+  User,
+  Venue,
+  Event,
+  Registration,
+  Attendance,
+  RegistrationStatusChange,
+  AuditLog,
+  sequelize,
+  eventVenueInclude,
+  getEventCapacity,
+  logAudit,
+  logStatusChange,
+} = require('../models');
 const { decorateWithCapacity } = require('./eventController');
 const { promoteFromWaitlist } = require('./registrationController');
 const { validateAdminPassword } = require('../middlewares/validate');
@@ -23,14 +36,18 @@ function csvEscape(value) {
 const adminController = {
   /** GET /admin -> dashboard tiles + capacity table + latest registrations */
   async dashboard(req, res) {
-    const [totalEvents, totalUsers, confirmed, waitlisted] = await Promise.all([
+    const [totalEvents, totalUsers, confirmed, waitlisted, checkedIn] = await Promise.all([
       Event.count(),
       User.count(),
       Registration.count({ where: { status: 'confirmed' } }),
       Registration.count({ where: { status: 'waitlisted' } }),
+      Attendance.count(),
     ]);
 
-    const events = await Event.findAll({ order: [['event_date', 'ASC']] });
+    const events = await Event.findAll({
+      include: [eventVenueInclude],
+      order: [['event_date', 'ASC']],
+    });
     const decorated = await decorateWithCapacity(events);
 
     const latest = await Registration.findAll({
@@ -50,6 +67,7 @@ const adminController = {
         totalUsers,
         confirmed,
         waitlisted,
+        checkedIn,
         seatsOffered: decorated.reduce((s, e) => s + e.max, 0),
         seatsTaken: decorated.reduce((s, e) => s + e.taken, 0),
       },
@@ -60,7 +78,7 @@ const adminController = {
 
   /** GET /admin/events/:id/participants -> registered participants per event */
   async participants(req, res) {
-    const event = await Event.findByPk(req.params.id);
+    const event = await Event.findByPk(req.params.id, { include: [eventVenueInclude] });
     if (!event) {
       return res.status(404).render('error', {
         title: 'Event not found',
@@ -78,16 +96,21 @@ const adminController = {
 
     const rows = await Registration.findAll({
       where,
-      include: [{ model: User, as: 'user', attributes: ['user_id', 'full_name', 'email'] }],
+      include: [
+        { model: User, as: 'user', attributes: ['user_id', 'full_name', 'email'] },
+        { model: Attendance, as: 'attendance', required: false },
+      ],
       order: [['registration_date', 'ASC']],
     });
 
     const [decorated] = await decorateWithCapacity([event]);
+    const checkedIn = rows.filter((r) => r.attendance).length;
     return res.render('admin/participants', {
       title: `Participants - ${event.title}`,
       event: decorated,
       rows,
       status,
+      checkedIn,
     });
   },
 
@@ -131,13 +154,21 @@ const adminController = {
       }
 
       await registration.update({ status: next }, { transaction: t });
+      await logStatusChange({
+        registrationId: registration.registration_id,
+        from: previous,
+        to: next,
+        actorId: req.session.user ? req.session.user.user_id : null,
+        reason: 'Changed by an administrator',
+        transaction: t,
+      });
 
       // Auto-promote from waiting list if a confirmed slot was cancelled
       let promoted = null;
       if (next === 'cancelled' && previous === 'confirmed') {
         promoted = await promoteFromWaitlist(registration.event_id, t);
       }
-      return { registration, next, promoted };
+      return { registration, next, promoted, previous };
     });
 
     if (outcome.notFound) {
@@ -153,6 +184,14 @@ const adminController = {
       return res.redirect(fallbackUrl);
     }
 
+    await logAudit({
+      req,
+      action: 'registration.status_change',
+      entity: 'REGISTRATION',
+      entityId: req.params.id,
+      detail: { from: outcome.previous, to: next, promoted: outcome.promoted ? outcome.promoted.registration_id : null },
+    });
+
     req.session.flashSuccess = outcome.promoted
       ? `Registration #${req.params.id} set to "${next}". Waitlisted participant ${
           outcome.promoted.user ? outcome.promoted.user.full_name : ''
@@ -164,7 +203,7 @@ const adminController = {
 
   /** GET /admin/events/:id/attendance -> printable attendance list */
   async attendance(req, res) {
-    const event = await Event.findByPk(req.params.id);
+    const event = await Event.findByPk(req.params.id, { include: [eventVenueInclude] });
     if (!event) {
       return res.status(404).render('error', {
         title: 'Event not found',
@@ -174,22 +213,27 @@ const adminController = {
     }
     const rows = await Registration.findAll({
       where: { event_id: event.event_id, status: 'confirmed' },
-      include: [{ model: User, as: 'user', attributes: ['full_name', 'email'] }],
+      include: [
+        { model: User, as: 'user', attributes: ['full_name', 'email'] },
+        { model: Attendance, as: 'attendance', required: false, include: [{ model: User, as: 'checkedInBy', attributes: ['full_name'], required: false }] },
+      ],
       order: [['registration_date', 'ASC']],
     });
     const [decorated] = await decorateWithCapacity([event]);
+    const checkedIn = rows.filter((r) => r.attendance).length;
 
     return res.render('admin/attendance', {
       title: `Attendance list - ${event.title}`,
       event: decorated,
       rows,
+      checkedIn,
       generatedAt: new Date(),
     });
   },
 
   /** GET /admin/events/:id/attendance.csv -> attendance list as CSV download */
   async attendanceCsv(req, res) {
-    const event = await Event.findByPk(req.params.id);
+    const event = await Event.findByPk(req.params.id, { include: [eventVenueInclude] });
     if (!event) {
       return res.status(404).render('error', {
         title: 'Event not found',
@@ -199,11 +243,22 @@ const adminController = {
     }
     const rows = await Registration.findAll({
       where: { event_id: event.event_id, status: 'confirmed' },
-      include: [{ model: User, as: 'user', attributes: ['full_name', 'email'] }],
+      include: [
+        { model: User, as: 'user', attributes: ['full_name', 'email'] },
+        { model: Attendance, as: 'attendance', required: false },
+      ],
       order: [['registration_date', 'ASC']],
     });
 
-    const header = ['No.', 'Participant Name', 'Email', 'Registration Date', 'Status', 'Signature'];
+    const header = [
+      'No.',
+      'Participant Name',
+      'Email',
+      'Registration Date',
+      'Status',
+      'Checked in at',
+      'Signature',
+    ];
     const lines = [header.join(',')];
     rows.forEach((r, i) => {
       lines.push(
@@ -213,6 +268,7 @@ const adminController = {
           r.user.email,
           new Date(r.registration_date).toLocaleString('en-PH'),
           r.status,
+          r.attendance ? new Date(r.attendance.checked_in_at).toLocaleString('en-PH') : '',
           '',
         ]
           .map(csvEscape)
@@ -277,7 +333,15 @@ const adminController = {
       }
     }
 
+    const previousRole = target.role;
     await target.update({ role: newRole });
+    await logAudit({
+      req,
+      action: 'user.role_change',
+      entity: 'USER',
+      entityId: target.user_id,
+      detail: { from: previousRole, to: newRole, email: target.email },
+    });
     req.session.flashSuccess = `Role for ${target.full_name} (${target.email}) changed to "${newRole}".`;
     return res.redirect('/admin/users');
   },
@@ -304,10 +368,238 @@ const adminController = {
     target.reset_password_expires = null;
     await target.save();
 
+    await logAudit({
+      req,
+      action: 'user.password_reset',
+      entity: 'USER',
+      entityId: target.user_id,
+      detail: { email: target.email, by: 'administrator' },
+    });
+
     // The plaintext password is intentionally NOT echoed back into a flash
     // message (it would end up in logs, browser history and session storage).
     req.session.flashSuccess = `Password for ${target.full_name} (${target.email}) was reset. Share the new password securely and ask the user to change it after signing in.`;
     return res.redirect('/admin/users');
+  },
+
+  /* ------------------------------- ATTENDANCE ------------------------------ */
+
+  /**
+   * POST /admin/attendance/:registrationId
+   * Toggles a physical check-in. Attendance is its own table, so a confirmed
+   * participant who never shows up stays "not checked in" in the report.
+   */
+  async toggleAttendance(req, res) {
+    const registration = await Registration.findByPk(req.params.registrationId);
+    if (!registration) {
+      req.session.flashError = 'Registration not found.';
+      return res.redirect('/admin/events');
+    }
+    const back = `/admin/events/${registration.event_id}/attendance`;
+
+    const existing = await Attendance.findOne({
+      where: { registration_id: registration.registration_id },
+    });
+
+    if (existing) {
+      await existing.destroy();
+      await logAudit({
+        req,
+        action: 'attendance.undo_check_in',
+        entity: 'REGISTRATION',
+        entityId: registration.registration_id,
+        detail: { checked_in_at: existing.checked_in_at },
+      });
+      req.session.flashInfo = 'Check-in was undone.';
+      return res.redirect(back);
+    }
+
+    if (registration.status !== 'confirmed') {
+      req.session.flashError =
+        'Only confirmed participants can be checked in. Confirm the registration first.';
+      return res.redirect(back);
+    }
+
+    await Attendance.create({
+      registration_id: registration.registration_id,
+      checked_in_at: new Date(),
+      checked_in_by: req.session.user ? req.session.user.user_id : null,
+    });
+    await logAudit({
+      req,
+      action: 'attendance.check_in',
+      entity: 'REGISTRATION',
+      entityId: registration.registration_id,
+      detail: { event_id: registration.event_id },
+    });
+
+    req.session.flashSuccess = `Participant checked in for registration #${registration.registration_id}.`;
+    return res.redirect(back);
+  },
+
+  /* -------------------------- REGISTRATION HISTORY ------------------------- */
+
+  /** GET /admin/registrations/:id/history -> status timeline + audit trail */
+  async registrationHistory(req, res) {
+    const registration = await Registration.findByPk(req.params.id, {
+      include: [
+        { model: User, as: 'user', attributes: ['user_id', 'full_name', 'email'] },
+        { model: Event, as: 'event', include: [eventVenueInclude] },
+        { model: Attendance, as: 'attendance', required: false },
+      ],
+    });
+    if (!registration) {
+      return res.status(404).render('error', {
+        title: 'Registration not found',
+        status: 404,
+        message: 'That registration does not exist.',
+      });
+    }
+
+    const changes = await RegistrationStatusChange.findAll({
+      where: { registration_id: registration.registration_id },
+      include: [{ model: User, as: 'changedBy', attributes: ['full_name', 'email'], required: false }],
+      order: [['changed_at', 'ASC'], ['change_id', 'ASC']],
+    });
+
+    return res.render('admin/registration-history', {
+      title: `History - registration #${registration.registration_id}`,
+      registration,
+      changes,
+    });
+  },
+
+  /* --------------------------------- AUDIT -------------------------------- */
+
+  /** GET /admin/audit -> paginated, filterable AUDIT_LOGS browser */
+  async auditIndex(req, res) {
+    const pageSize = 25;
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const q = (req.query.q || '').trim();
+    const entity = (req.query.entity || '').trim().toUpperCase();
+
+    const where = {};
+    if (entity) where.entity = entity;
+    if (q) {
+      where[Op.or] = [
+        { action: { [Op.like]: `%${q}%` } },
+        { entity: { [Op.like]: `%${q}%` } },
+        { entity_id: { [Op.like]: `%${q}%` } },
+      ];
+    }
+
+    const { rows, count } = await AuditLog.findAndCountAll({
+      where,
+      include: [{ model: User, as: 'actor', attributes: ['user_id', 'full_name', 'email'], required: false }],
+      order: [['created_at', 'DESC'], ['log_id', 'DESC']],
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    });
+
+    const totalPages = Math.max(Math.ceil(count / pageSize), 1);
+    const entities = await AuditLog.findAll({
+      attributes: ['entity'],
+      group: ['entity'],
+      raw: true,
+    });
+
+    return res.render('admin/audit', {
+      title: 'Audit log',
+      rows,
+      count,
+      page,
+      pageSize,
+      totalPages,
+      q,
+      entity,
+      entities: entities.map((e) => e.entity),
+    });
+  },
+
+  /* --------------------------------- VENUES -------------------------------- */
+
+  /** GET /admin/venues -> venue master data + usage counts */
+  async venues(req, res) {
+    const venues = await Venue.findAll({
+      include: [{ model: Event, as: 'events', attributes: ['event_id'], required: false }],
+      order: [['name', 'ASC']],
+    });
+    return res.render('admin/venues', {
+      title: 'Venues',
+      venues: venues.map((v) => {
+        const plain = v.get({ plain: true });
+        return { ...plain, eventCount: (plain.events || []).length };
+      }),
+      errors: [],
+      old: {},
+    });
+  },
+
+  /** POST /admin/venues -> add a venue */
+  async createVenue(req, res) {
+    const name = (req.body.name || '').trim();
+    const city = (req.body.city || '').trim().slice(0, 120);
+    const address = (req.body.address || '').trim().slice(0, 255) || null;
+
+    const errors = [];
+    if (name.length < 2) errors.push('Venue name must be at least 2 characters.');
+    if (name.length > 180) errors.push('Venue name must not exceed 180 characters.');
+
+    const duplicate = await Venue.findOne({ where: { name, city } });
+    if (!errors.length && duplicate) {
+      errors.push(`"${name}${city ? `, ${city}` : ''}" already exists.`);
+    }
+
+    if (errors.length) {
+      const venues = await Venue.findAll({
+        include: [{ model: Event, as: 'events', attributes: ['event_id'], required: false }],
+        order: [['name', 'ASC']],
+      });
+      return res.status(422).render('admin/venues', {
+        title: 'Venues',
+        venues: venues.map((v) => {
+          const plain = v.get({ plain: true });
+          return { ...plain, eventCount: (plain.events || []).length };
+        }),
+        errors,
+        old: { name, city, address },
+      });
+    }
+
+    const venue = await Venue.create({ name, city, address });
+    await logAudit({
+      req,
+      action: 'venue.create',
+      entity: 'VENUE',
+      entityId: venue.venue_id,
+      detail: { name, city },
+    });
+    req.session.flashSuccess = `Venue "${venue.displayName()}" was added.`;
+    return res.redirect('/admin/venues');
+  },
+
+  /** POST /admin/venues/:id/delete -> only when no event uses it */
+  async deleteVenue(req, res) {
+    const venue = await Venue.findByPk(req.params.id);
+    if (!venue) {
+      req.session.flashError = 'Venue not found.';
+      return res.redirect('/admin/venues');
+    }
+    const used = await Event.count({ where: { venue_id: venue.venue_id } });
+    if (used > 0) {
+      req.session.flashError = `"${venue.displayName()}" is used by ${used} event(s) and cannot be deleted.`;
+      return res.redirect('/admin/venues');
+    }
+    await venue.destroy();
+    await logAudit({
+      req,
+      action: 'venue.delete',
+      entity: 'VENUE',
+      entityId: venue.venue_id,
+      detail: { name: venue.name },
+    });
+    req.session.flashSuccess = `Venue "${venue.displayName()}" was deleted.`;
+    return res.redirect('/admin/venues');
   },
 };
 

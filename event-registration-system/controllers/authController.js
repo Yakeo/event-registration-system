@@ -4,9 +4,10 @@
  * and academic-defense-grade Forgot / Reset Password workflow.
  */
 const { Op } = require('sequelize');
-const { User, Registration, Event } = require('../models');
+const { User, Registration, Event, eventVenueInclude, logAudit } = require('../models');
 const { normalizeEmail, validatePassword, LIMITS } = require('../middlewares/validate');
 const { safeRedirect, regenerateSession } = require('../middlewares/auth');
+const { accountLoginLockout } = require('../middlewares/rateLimit');
 
 const authController = {
   // GET /register
@@ -88,6 +89,8 @@ const authController = {
     const ok = user ? await user.verifyPassword(password) : false;
 
     if (!ok) {
+      // Count consecutive failures per e-mail address, whatever the IP.
+      accountLoginLockout.fail(req);
       return res.status(401).render('auth/login', {
         title: 'Log in',
         errors: ['Invalid email or password.'],
@@ -96,6 +99,7 @@ const authController = {
       });
     }
 
+    accountLoginLockout.succeed(req);
     await regenerateSession(req);
     req.session.user = {
       user_id: user.user_id,
@@ -116,7 +120,7 @@ const authController = {
   async myRegistrations(req, res) {
     const rows = await Registration.findAll({
       where: { user_id: req.session.user.user_id },
-      include: [{ model: Event, as: 'event' }],
+      include: [{ model: Event, as: 'event', include: [eventVenueInclude] }],
       order: [['registration_date', 'DESC']],
     });
     return res.render('my-registrations', { title: 'My registrations', rows });
@@ -148,12 +152,17 @@ const authController = {
     }
 
     const user = await User.findOne({ where: { email } });
+
+    // Account-enumeration guard: the response is identical whether or not the
+    // address exists. Only a development build shows the demo link.
     if (!user) {
-      return res.status(404).render('auth/forgot-password', {
+      return res.render('auth/forgot-password', {
         title: 'Forgot Password',
-        errors: ['No account was found with that email address. Please check and try again.'],
+        errors: [],
         old: { email },
         resetLink: null,
+        targetUser: null,
+        submitted: true,
       });
     }
 
@@ -176,6 +185,7 @@ const authController = {
       old: { email },
       resetLink: resetUrl,
       targetUser: { full_name: user.full_name, email: user.email },
+      submitted: true,
     });
   },
 
@@ -245,6 +255,15 @@ const authController = {
     user.reset_password_expires = null;
     await user.save();
 
+    await logAudit({
+      req,
+      actorId: user.user_id,
+      action: 'user.password_reset',
+      entity: 'USER',
+      entityId: user.user_id,
+      detail: { email: user.email, via: 'reset-token' },
+    });
+
     req.session.flashSuccess = 'Password reset successful! You can now log in with your new password.';
     return res.redirect('/login');
   },
@@ -283,6 +302,15 @@ const authController = {
     user.reset_password_token = null;
     user.reset_password_expires = null;
     await user.save();
+
+    await logAudit({
+      req,
+      actorId: user.user_id,
+      action: 'user.password_change',
+      entity: 'USER',
+      entityId: user.user_id,
+      detail: { email: user.email },
+    });
 
     req.session.flashSuccess = 'Your password has been changed successfully.';
     return res.redirect(user.role === 'admin' ? '/admin' : '/my-registrations');

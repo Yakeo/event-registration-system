@@ -43,6 +43,12 @@ module.exports = (sequelize) => {
         type: DataTypes.ENUM('admin', 'participant'),
         allowNull: false,
         defaultValue: 'participant',
+        validate: {
+          isIn: {
+            args: [['admin', 'participant']],
+            msg: 'Role must be admin or participant.',
+          },
+        },
       },
       reset_password_token: {
         // SHA-256 hash of the token that was handed to the user. The raw

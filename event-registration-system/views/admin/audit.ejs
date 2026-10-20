@@ -1,0 +1,68 @@
+<%- include('../partials/header') %>
+
+<a class="back" href="/admin">← Back to dashboard</a>
+
+<section class="section-head">
+  <div>
+    <h1>Audit log</h1>
+    <p class="muted">
+      Every administrative state change — event create/update/archive, role changes,
+      password resets, registration status changes and attendance check-ins.
+    </p>
+  </div>
+  <span class="badge badge-muted"><%= count %> entries</span>
+</section>
+
+<form class="search" action="/admin/audit" method="GET">
+  <input type="search" name="q" value="<%= q %>" placeholder="Search action, entity or id…" />
+  <select name="entity">
+    <option value="">All entities</option>
+    <% entities.forEach(function (e) { %>
+      <option value="<%= e %>" <%= entity === e ? 'selected' : '' %>><%= e %></option>
+    <% }); %>
+  </select>
+  <button class="btn btn-outline btn-sm" type="submit">Filter</button>
+  <% if (q || entity) { %><a class="btn btn-ghost btn-sm" href="/admin/audit">Clear</a><% } %>
+</form>
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr><th>#</th><th>When</th><th>Actor</th><th>Action</th><th>Entity</th><th>ID</th><th>Detail</th></tr>
+    </thead>
+    <tbody>
+      <% rows.forEach(function (r) { %>
+        <tr>
+          <td><%= r.log_id %></td>
+          <td><%= fmtDate(r.created_at) %></td>
+          <td>
+            <% if (r.actor) { %>
+              <%= r.actor.full_name %><br /><small class="muted"><%= r.actor.email %></small>
+            <% } else { %>
+              <span class="muted">system / anonymous</span>
+            <% } %>
+          </td>
+          <td><code><%= r.action %></code></td>
+          <td><%= r.entity %></td>
+          <td><%= r.entity_id || '—' %></td>
+          <td><small class="muted"><%= r.detail || '' %></small></td>
+        </tr>
+      <% }); %>
+      <% if (!rows.length) { %><tr><td colspan="7" class="muted">No audit entries match this filter.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+
+<% if (totalPages > 1) { %>
+  <nav class="pager">
+    <% if (page > 1) { %>
+      <a class="btn btn-outline btn-sm" href="/admin/audit?page=<%= page - 1 %>&q=<%= encodeURIComponent(q) %>&entity=<%= entity %>">← Newer</a>
+    <% } %>
+    <span class="muted">Page <%= page %> of <%= totalPages %></span>
+    <% if (page < totalPages) { %>
+      <a class="btn btn-outline btn-sm" href="/admin/audit?page=<%= page + 1 %>&q=<%= encodeURIComponent(q) %>&entity=<%= entity %>">Older →</a>
+    <% } %>
+  </nav>
+<% } %>
+
+<%- include('../partials/footer') %>

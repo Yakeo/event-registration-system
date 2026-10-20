@@ -13,8 +13,29 @@
  * otherwise two simultaneous cancellations could each promote a person and
  * overbook the event.
  */
-const { User, Event, Registration, sequelize, dialect, getEventCapacity } = require('../models');
+const {
+  User,
+  Event,
+  Registration,
+  sequelize,
+  dialect,
+  eventVenueInclude,
+  getEventCapacity,
+  logStatusChange,
+} = require('../models');
 const { validateRegistration, normalizeEmail } = require('../middlewares/validate');
+
+/**
+ * The account that triggered a public registration action, when it is a
+ * signed-in participant acting on their own e-mail. Otherwise null (anonymous
+ * visitor), which is how the history distinguishes "self-service" from admin
+ * actions.
+ */
+function actorIdFor(req, email) {
+  const user = req.session ? req.session.user : null;
+  if (!user) return null;
+  return normalizeEmail(user.email) === normalizeEmail(email) ? user.user_id : null;
+}
 
 /** Row lock that is a no-op on SQLite (single writer, no FOR UPDATE support). */
 function lockOption(transaction) {
@@ -23,7 +44,7 @@ function lockOption(transaction) {
 
 /** Renders the event page again with validation errors. */
 async function rerenderWithErrors(req, res, eventId, errors, old, status = 422) {
-  const event = await Event.findByPk(eventId);
+  const event = await Event.findByPk(eventId, { include: [eventVenueInclude] });
   if (!event) {
     return res.status(404).render('error', {
       title: 'Event not found',
@@ -68,6 +89,16 @@ async function promoteFromWaitlist(eventId, transaction) {
   if (!next) return null;
 
   await next.update({ status: 'confirmed' }, { transaction });
+  // Automatic promotion: changed_by stays NULL so the history shows the system
+  // did it, not an administrator.
+  await logStatusChange({
+    registrationId: next.registration_id,
+    from: 'waitlisted',
+    to: 'confirmed',
+    actorId: null,
+    reason: 'Automatically promoted from the waiting list',
+    transaction,
+  });
   return next;
 }
 
@@ -81,7 +112,7 @@ const registrationController = {
     const full_name = (req.body.full_name || '').trim();
     const email = normalizeEmail(req.body.email);
 
-    const event = await Event.findByPk(eventId);
+    const event = await Event.findByPk(eventId, { include: [eventVenueInclude] });
     if (!event) {
       return res.status(404).render('error', {
         title: 'Event not found',
@@ -191,22 +222,37 @@ const registrationController = {
             },
             { transaction: t }
           );
+          await logStatusChange({
+            registrationId: priorReg.registration_id,
+            from: 'cancelled',
+            to: 'confirmed',
+            actorId: actorIdFor(req, email),
+            reason: 'Participant re-registered after cancelling',
+            transaction: t,
+          });
           isReactivation = true;
           return { registration: priorReg };
         }
 
         // Fresh registration
-        return {
-          registration: await Registration.create(
-            {
-              user_id: user.user_id,
-              event_id: eventId,
-              registration_date: new Date(),
-              status: 'confirmed',
-            },
-            { transaction: t }
-          ),
-        };
+        const created = await Registration.create(
+          {
+            user_id: user.user_id,
+            event_id: eventId,
+            registration_date: new Date(),
+            status: 'confirmed',
+          },
+          { transaction: t }
+        );
+        await logStatusChange({
+          registrationId: created.registration_id,
+          from: null,
+          to: 'confirmed',
+          actorId: actorIdFor(req, email),
+          reason: 'Online registration',
+          transaction: t,
+        });
+        return { registration: created };
       });
 
       if (outcome.conflict) {
@@ -265,7 +311,7 @@ const registrationController = {
     const full_name = (req.body.full_name || '').trim();
     const email = normalizeEmail(req.body.email);
 
-    const event = await Event.findByPk(eventId);
+    const event = await Event.findByPk(eventId, { include: [eventVenueInclude] });
     if (!event) {
       return res.status(404).render('error', {
         title: 'Event not found',
@@ -338,6 +384,14 @@ const registrationController = {
           { status: 'waitlisted', registration_date: new Date() },
           { transaction: t }
         );
+        await logStatusChange({
+          registrationId: existing.registration_id,
+          from: 'cancelled',
+          to: 'waitlisted',
+          actorId: actorIdFor(req, email),
+          reason: 'Joined the waiting list',
+          transaction: t,
+        });
         return { registration: existing, user, isNewAccount };
       }
 
@@ -350,6 +404,14 @@ const registrationController = {
         },
         { transaction: t }
       );
+      await logStatusChange({
+        registrationId: registration.registration_id,
+        from: null,
+        to: 'waitlisted',
+        actorId: actorIdFor(req, email),
+        reason: 'Joined the waiting list',
+        transaction: t,
+      });
       return { registration, user, isNewAccount };
     });
 
@@ -417,6 +479,14 @@ const registrationController = {
 
       const previousStatus = registration.status;
       await registration.update({ status: 'cancelled' }, { transaction: t });
+      await logStatusChange({
+        registrationId: registration.registration_id,
+        from: previousStatus,
+        to: 'cancelled',
+        actorId: req.session.user ? req.session.user.user_id : null,
+        reason: isAdmin && !isOwner ? 'Cancelled by an administrator' : 'Cancelled by the participant',
+        transaction: t,
+      });
 
       // Promote the earliest person on the waiting list into the freed slot
       let promoted = null;

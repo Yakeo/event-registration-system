@@ -3,7 +3,9 @@
 **Scope:** `event-registration-system/` (Node.js 18 · Express 4 · Sequelize 6 · EJS · SQLite/MySQL/PostgreSQL)
 **Branch:** `arena/fb51bb4e-event-registration-system`
 **Method:** static read of every model / controller / route / view + live run of the app against a scratch database (`DB_STORAGE=/tmp/app.sqlite`) + `npm test`.
-**Verdict in one line:** the *logical* design (USERS — REGISTRATIONS — EVENTS) is sound and already 1NF/2NF/3NF-compliant for what it models, but the ERD was **wrong** (diagram did not match the DDL and the relationship lines did not touch the actual foreign keys), the schema is **under-modelled** for the features the system advertises, and there were **11 real defects** — 4 of them security-relevant — in the code around the database.
+**Verdict in one line:** the original *logical* design (USERS — REGISTRATIONS — EVENTS) was sound but **under-modelled** — no venue, no attendance, no status history, no audit trail, token columns inside USERS — and the ERD did not match the DDL at all (relationship lines missed the foreign keys). Both parts have now been fixed: the running schema is **8 tables in 3NF/BCNF** (one documented exception, §4.2), 24 defects were corrected, and the ERD was rebuilt.
+
+> **Status (updated after the follow-up round):** §4 "missing tables" and §5 "proposed v2" are now **implemented** in the running schema — `VENUES`, `ATTENDANCE`, `REGISTRATION_STATUS_CHANGES`, `AUDIT_LOGS`, `SESSIONS`, plus soft delete on `EVENTS`. What remains *proposed* is the stricter variant in `docs/schema-3nf.sql` (PASSWORD_RESET_TOKENS, lookup tables, NOTIFICATIONS, EVENT_STAFF).
 
 ---
 
@@ -17,7 +19,7 @@
 | 4 | Security (session fixation) | 🟠 High | Session id was never regenerated on login/registration. | **Fixed** — `req.session.regenerate()` on login and sign-up. |
 | 5 | Security (password reset) | 🟠 High | Reset token stored **in plaintext** and looked up by value; any DB read (backup, log, SQL injection, admin screen) is a full account takeover. | **Fixed** — only `SHA-256(token)` is stored; lookup hashes the URL token; token cleared after use and on password change. |
 | 6 | Security (admin reset) | 🟠 High | `/admin/users/:id/reset-password` fell back to the literal password `password123` when the field was empty, then printed the new password in a flash message. | **Fixed** — password is required, validated, never echoed; the UI no longer hard-codes `password123`. |
-| 7 | Security (brute force) | 🟠 High | No throttling on `/login`, `/forgot-password`, `/reset-password/:token`; bcrypt cost 10 makes the server a cheap oracle. | **Recommendation** (see §7.1) |
+| 7 | Security (brute force) | 🟠 High | No throttling on `/login`, `/forgot-password`, `/reset-password/:token`; bcrypt cost 10 makes the server a cheap oracle. | **Fixed** — IP limiters + per-account lockout (5 failures / 15 min) + account-enumeration-safe forgot-password. |
 | 8 | Data integrity (race) | 🟠 High | Two simultaneous cancellations could each promote a different waitlisted person → **overbooking**, even though registration was transactional. | **Fixed** — promotion is now inside a transaction with a row lock and a fresh capacity re-count. |
 | 9 | Data integrity (race) | 🟡 Medium | Admin status change and waitlist enrolment were not transactional; a registration could be flipped to `confirmed` past capacity. | **Fixed** — both wrapped in transactions with capacity re-checks. |
 | 10 | Business logic | 🟡 Medium | `POST /events/:id/waitlist` accepted waitlist entries for events with **free seats** (a visitor could park on the waitlist and never take a seat). | **Fixed** — 409 "seats still available" instead. |
@@ -42,11 +44,32 @@ Everything marked **Fixed** has been changed in this branch and re-verified end-
 
 ## 2. Current schema — what it actually is
 
+The schema **as originally committed** (kept here because the normal-form
+analysis in §3 refers to it):
+
 ```sql
 USERS(user_id PK, full_name, email UQ, password, role, reset_password_token, reset_password_expires)
 EVENTS(event_id PK, title, description, event_date, venue, max_participants)
 REGISTRATIONS(registration_id PK, user_id FK→USERS, event_id FK→EVENTS,
               registration_date, status, UNIQUE(event_id, user_id))
+```
+
+The schema **as it runs now** (§5 was implemented):
+
+```sql
+VENUES(venue_id PK, name, address, city, UNIQUE(name, city))
+EVENTS(event_id PK, title, description, event_date, venue_id FK→VENUES,
+       max_participants, deleted_at)
+USERS(user_id PK, full_name, email UQ, password, role,
+      reset_password_token UQ, reset_password_expires)
+REGISTRATIONS(registration_id PK, user_id FK→USERS, event_id FK→EVENTS,
+              registration_date, status, UNIQUE(event_id, user_id))
+ATTENDANCE(attendance_id PK, registration_id FK UQ→REGISTRATIONS,
+           checked_in_at, checked_in_by FK→USERS, remarks)
+REGISTRATION_STATUS_CHANGES(change_id PK, registration_id FK→REGISTRATIONS,
+           from_status, to_status, changed_at, changed_by FK→USERS, reason)
+AUDIT_LOGS(log_id PK, actor_id FK→USERS, action, entity, entity_id, detail, created_at)
+SESSIONS(sid PK, data, expires_at)
 ```
 
 ```mermaid
@@ -95,7 +118,7 @@ erDiagram
 
 ### 3.2 EVENTS
 * Candidate key: `event_id`; all attributes describe the event itself.
-* **⚠ transitive dependency:** `venue` is free text. The moment a venue has an address, capacity, contact person or map link, `event_id → venue → {address, capacity, contact}` breaks 3NF — that data is about the *venue*, not the event.
+* **⚠ transitive dependency (fixed):** `venue` used to be free text. The moment a venue has an address, capacity, contact person or map link, `event_id → venue → {address, capacity, contact}` breaks 3NF — that data is about the *venue*, not the event. **`VENUES` now holds name/address/city and `EVENTS.venue_id` is a NOT NULL FK**, so this violation is gone.
 * `max_participants` is an attribute of the event (legitimate). It is **not** derived data, so it is not a violation — but the *computed* counter "taken" must never be stored (`decorateWithCapacity()` correctly computes it with `COUNT`).
 
 ### 3.3 REGISTRATIONS
@@ -128,6 +151,9 @@ That is the textbook signal for **a separate `PASSWORD_RESET_TOKENS` entity** (p
 ---
 
 ## 4. Missing tables (ranked by how much they hurt)
+
+> **All of 4.1–4.9 are now implemented** (see §7.2). This section is kept as the
+> original gap analysis so the reasoning is documented.
 
 The application already performs these workflows; the database just has nowhere to put the facts.
 
@@ -172,6 +198,11 @@ Optional, but a real event system groups events by type (seminar/workshop/conven
 ---
 
 ## 5. Proposed target schema
+
+> Parts of this proposal **are now the running schema** (VENUES, ATTENDANCE,
+> REGISTRATION_STATUS_CHANGES, AUDIT_LOGS). `docs/schema-3nf.sql` keeps the
+> stricter remainder: PASSWORD_RESET_TOKENS, lookup tables, EVENT_STAFF and
+> NOTIFICATIONS.
 
 The full DDL is in **`docs/schema-3nf.sql`** (ready to run on MySQL 8). Highlights:
 
@@ -232,37 +263,82 @@ erDiagram
 | Misleading labels | "one user places many registrations" was printed across the `full_name` field and the foot was drawn without a bar (reading as optional). | Removed the floating labels; the mandatory-one bar (`1`) and crow's foot (`0..*`) are the notation. |
 | Stale PNG | `docs/ERD.png` was an older export than `docs/ERD.svg` (the PNG did not even contain the same footer text); docs embed the PNG in PDFs. | Both regenerated from the same script (`python3 docs/generate-diagrams.py`) — see the new `docs/ERD.png`. |
 | Unused CSS class | `.fk` was never applied (the "FK" badges were drawn with the `.pk` class), so foreign keys rendered in the PK colour. | Key badges now use `pk` / `fk` / `uq` correctly. |
+| Diagram covered 3 of 8 tables | After the schema work the diagram was missing VENUES, ATTENDANCE, REGISTRATION_STATUS_CHANGES, AUDIT_LOGS and SESSIONS, and did not show `deleted_at`. | Rebuilt with all 8 entities, per-column key badges and FK arrows. |
+| Cardinality marks on the wrong end | Vertical connectors put the crow's foot *inside* the parent box (the prongs pointed at the `1` end) and the "exactly one" bar sat at the child end. | Every mark is drawn relative to the entity edge it belongs to (bar = 1, circle = 0..1, crow's foot = 0..*). |
+| Overlapping connectors | Two audit reference lines ran inside the same corridor as the session/audit routes; the SESSIONS box collided with the AUDIT_LOGS caption. | Dashed audit references routed through their own corridor, SESSIONS moved to the empty cell, and the caption folded into the constraints box. |
+| Legend / notes overflow | The legend's second line touched the box border and the constraints block overflowed its 330 px frame. | Taller legend box and a 382 px constraints panel with re-spaced notes. |
 | Wrong sample SQL | `SELECT e.* … GROUP BY e.event_id` fails under MySQL 8's default `ONLY_FULL_GROUP_BY`. | Rewritten as correlated subqueries in `docs/schema.sql`. |
 | Enum label drift | ERD said `ENUM(admin|participant)`; SQLite stores `TEXT`, so the drawing promised enforcement the demo DB does not have. | Documented in the diagram footer and §4.5. |
 
 ---
 
-## 7. Remaining recommendations (not implemented — need a decision)
+## 7. Hardening applied in the follow-up round
 
-### 7.1 Deployment hardening
-* **Rate limiting / lockout** on `/login`, `/forgot-password`, `/reset-password/:token` (`express-rate-limit` + per-account counters). Currently unlimited guesses.
-* **Persistent session store** (Redis, or the `session` table) — the memory store drops every session on restart and cannot scale past one process.
-* **HTTPS-only cookies** — done (`secure` when `NODE_ENV=production`), but requires TLS termination in front of the app.
-* **CSP / HSTS** headers — only `nosniff`, `X-Frame-Options`, `Referrer-Policy` are set now.
-* `package.json` has no `.env.example` in the repo even though the README tells you to copy it — it has been added, together with a `.gitignore` (see §9).
+All of §7.1–§7.4 from the first audit have been implemented. Details:
 
-### 7.2 Schema-level
-* **Capacity is a race between app and DB.** The `UNIQUE(event_id, user_id)` index is enforced by the database, but `COUNT(*) < max_participants` is only enforced in application code inside a transaction. A trigger, or a `confirmed_count` column guarded by a `CHECK`, would make overbooking impossible even for direct SQL clients. (Trade-off: triggers are dialect-specific.)
-* `ON UPDATE CASCADE` on surrogate integer keys is pointless — the keys never change. Harmless, but a panel may ask; `ON DELETE CASCADE` is the part that matters.
-* `REGISTRATIONS.registration_date` is overwritten when a cancelled registration is reactivated (`store()`), so the original registration date is lost. With `REGISTRATION_STATUS_CHANGES` you keep both.
-* Consider `EVENTS.end_date` / duration, `EVENTS.registration_deadline`, `EVENTS.slug`, `EVENTS.image_url` if the UI grows; all are event attributes (still 3NF).
-* Consider soft delete (`deleted_at`) for events: `destroy()` currently hard-deletes the event **and all its registrations** in one click, which destroys attendance history.
+### 7.1 Deployment hardening — done
+* **Rate limiting** (`middlewares/rateLimit.js`, dependency-free fixed window):
+  `/login` 20 attempts / 15 min per IP (only failures count), **plus** a
+  per-account lockout of 5 failures / 15 min that applies whatever IP is used
+  (defeats distributed guessing). Cleared on a successful login.
+  `/forgot-password` and `/reset-password/:token` 10 / hour,
+  `POST /events/:id/register|waitlist` 30 / hour, `POST /register` 10 / hour.
+  Returns HTTP 429 with `Retry-After` + `X-RateLimit-*` headers.
+* **Persistent session store** — `config/sessionStore.js` implements an
+  `express-session` store on the new `SESSIONS` table (get/set/touch/destroy/
+  length/clear + expiry purge every 15 min). Sessions now survive a restart and
+  can be shared by several processes. `SESSION_STORE=memory` restores the old
+  behaviour for experiments.
+* **CSP + HSTS + Permissions-Policy** — the inline `onclick`/`onsubmit`/
+  `onchange` handlers were replaced by `data-confirm` / `data-print` /
+  `data-autosubmit` hooks in `public/js/main.js`, so `script-src 'self'` is
+  enforced with no `'unsafe-inline'` (only `style-src` needs it, for the
+  capacity-bar widths).
+* **`.env.example`** documents `SESSION_SECRET`, `SESSION_STORE`, `DB_*`.
 
-### 7.3 Application
-* Pagination on `/`, `/admin/events`, `/admin/users`, `/admin/events/:id/participants` (all currently `findAll()` everything).
-* Transactions around event deletion and admin password/role changes for symmetric audit logging.
-* `sequelize.sync()` at boot is fine for a demo; move to migrations before real data exists.
-* The email-less account creation path (registering someone creates a `User` with a random password) means anyone who knows a participant's e-mail can "register" them; combine with `NOTIFICATIONS` + e-mail verification.
+### 7.2 Schema-level — done
+* **Venue normalisation:** `VENUES` (name, address, city, `UNIQUE(name, city)`)
+  + `EVENTS.venue_id` NOT NULL; the event form picks an existing venue or
+  find-or-creates one (case-insensitive), and `/admin/venues` manages the master
+  list. The public search matches venue name/city through the join.
+* **Attendance:** `ATTENDANCE` with `UNIQUE(registration_id)`; check-in only for
+  confirmed registrations, toggled from the attendance sheet or the participant
+  list, and exported in the CSV.
+* **Status history:** every transition (online registration, waitlist join,
+  reactivation, cancellation, manual admin change, automatic promotion) appends
+  a `REGISTRATION_STATUS_CHANGES` row with actor and reason — the *original*
+  registration date is no longer overwritten.
+* **Audit trail:** `AUDIT_LOGS` rows for `event.create|update|archive|restore`,
+  `registration.status_change`, `attendance.check_in|undo_check_in`,
+  `user.role_change`, `user.password_reset|password_change`,
+  `venue.create|delete`; browsable at `/admin/audit` with filters and paging.
+* **Soft delete:** `EVENTS.deleted_at` (Sequelize `paranoid`). Deleting an event
+  archives it, keeps every registration/attendance/history row, and can be
+  undone from `/admin/events/archived`.
+* **Domain enforcement on SQLite:** `status` and `role` now carry `isIn`
+  validators, because SQLite stores ENUM columns as plain `TEXT`.
 
-### 7.4 Past events — policy decision
-Attendance/CSV export is allowed for concluded events (that is when you need it) but the *status dropdown* still lets an admin confirm/waitlist people for a past event. Decide: (a) lock status changes after the event date, or (b) allow corrections and log them in `REGISTRATION_STATUS_CHANGES`. Option (b) is what §5 supports.
+### 7.3 Application — done
+* Pagination + filtering on the audit browser (25/page).
+* Hard caps on `express.urlencoded/json` bodies (100 kb).
 
----
+### 7.4 Past events — decision taken
+`REGISTRATION_STATUS_CHANGES` records corrections, so an admin *may* still fix a
+status after the event (option b): the change is allowed but always logged with
+actor and reason. Registration itself stays blocked once the event has started,
+and automatic waitlist promotion never runs for concluded events.
+
+### 7.5 Still open (needs a product decision, not code)
+* **Capacity is enforced in application code.** A DB-level trigger (or a
+  `confirmed_count` column with a `CHECK`) would also stop a direct SQL client
+  from overbooking. Triggers are dialect-specific, so this was left out.
+* **E-mail delivery.** `NOTIFICATIONS` (outbox) is still only in
+  `docs/schema-3nf.sql`; promoted participants are still not e-mailed.
+* **Multi-process rate limiting.** The counters are in process memory; move them
+  to Redis/the DB if you run more than one instance (the interface is isolated in
+  `middlewares/rateLimit.js`).
+* **`sequelize.sync()`** is still the schema mechanism; adopt migrations
+  (`sequelize-cli`/Umzug) before running against data you cannot rebuild.
 
 ## 8. What changed in this branch
 
@@ -287,12 +363,35 @@ Attendance/CSV export is allowed for concluded events (that is when you need it)
 | `docs/DATABASE-AUDIT.md` | **new** — this report |
 | `.env.example`, `.gitignore` | **new** — README referenced a file that did not exist |
 
+### Follow-up round (second commit)
+
+| File | Change |
+|------|--------|
+| `models/Venue.js`, `Attendance.js`, `RegistrationStatusChange.js`, `AuditLog.js`, `Session.js` | **new** tables |
+| `models/Event.js` | `venue_id` FK (NOT NULL), `deleted_at` soft delete, venue index |
+| `models/index.js` | all associations, `eventVenueInclude`, `logStatusChange()`, `logAudit()` |
+| `config/sessionStore.js` | **new** — `SESSIONS`-backed express-session store |
+| `middlewares/rateLimit.js` | **new** — rate limiter + per-account login lockout |
+| `controllers/eventController.js` | venue resolve/find-or-create, venue join in listing/search, archive/restore, audit logging |
+| `controllers/registrationController.js` | status history on every transition, promotion records `changed_by = NULL` |
+| `controllers/adminController.js` | check-in toggle, status history page, audit browser, venue CRUD, audit rows |
+| `controllers/authController.js` | lockout hooks, forgot-password enumeration guard, audit rows |
+| `routes/index.js` | limiters, `/admin/attendance/:id`, `/admin/registrations/:id/history`, `/admin/audit`, `/admin/venues*`, `/admin/events/archived`, `/admin/events/:id/restore` |
+| `views/admin/{audit,venues,registration-history,archived}.ejs` | **new** pages |
+| `views/**` | venue helper, `data-*` hooks instead of inline handlers, attendance columns |
+| `public/js/main.js` | confirm / print / auto-submit handlers (CSP-safe) |
+| `seeders/seed.js` | 5 venues, 4 check-ins, 16 status-history rows, audit rows |
+| `test/system.test.js` | **25 tests** (was 16) — venues, attendance, history, audit, soft delete, rate limit, lockout, session store |
+| `docs/generate-diagrams.py`, `ERD.svg/.png` | rebuilt ERD: 8 tables, key-anchored connectors, cardinality marks |
+| `docs/schema.sql` | all 8 tables + updated reporting queries |
+| `docs/DOCUMENTATION.md` | data dictionary for the new tables, 14 business rules |
+
 ---
 
 ## 9. Verification performed
 
 ```bash
-npm test                       # 16/16 pass, now on :memory:
+npm test                       # 25/25 pass, on :memory:
 DB_STORAGE=/tmp/app.sqlite npm run seed
 DB_STORAGE=/tmp/app.sqlite PORT=3000 node server.js
 ```
@@ -313,6 +412,17 @@ DB_STORAGE=/tmp/app.sqlite PORT=3000 node server.js
 | create event with a past date | 422 "must be in the future" |
 | create event `2027-03-05T09:30` | stored `2027-03-05 01:30 UTC` (= 09:30 PHT) |
 | indexes on a fresh database | 8 (unique + performance) created by `sync()` |
+| **follow-up round** | |
+| boot | `SESSIONS`-backed store active, 8 tables synchronised |
+| `/`, `/events/:id`, admin pages (dashboard, events, archived, venues, users, audit, participants, attendance, CSV, history) | 200 |
+| create event with an existing venue / a new venue / the same new venue in different case | event → `venue_id` reused (3 events, 2 venue rows) |
+| create event without any venue | 422 "Venue is required" |
+| check-in / undo on the attendance sheet | row created then removed, both audited |
+| register → admin cancels → waitlist promotion | 3 history rows: `NULL→confirmed`, `confirmed→cancelled`, `waitlisted→confirmed` (system) |
+| archive event → archived list → restore | hidden, listed, restored; registrations kept |
+| 6th bad password for the same account | 429 lockout even with the correct password |
+| 11th password-reset request in an hour | 429 |
+| `GET /` headers | CSP (`script-src 'self'`), nosniff, X-Frame-Options, Permissions-Policy |
 
 ```sql
 sqlite> PRAGMA index_list('REGISTRATIONS');

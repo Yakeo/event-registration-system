@@ -1,0 +1,65 @@
+<%- include('../partials/header') %>
+
+<a class="back" href="/admin">← Back to dashboard</a>
+
+<section class="section-head">
+  <div>
+    <h1>Venues</h1>
+    <p class="muted">
+      Venue name and address are stored once and referenced by events
+      (<code>EVENTS.venue_id → VENUES.venue_id</code>).
+    </p>
+  </div>
+</section>
+
+<%- include('../partials/errors') %>
+
+<div class="two-col">
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr><th>#</th><th>Venue</th><th>City</th><th>Address</th><th>Events</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% venues.forEach(function (v) { %>
+          <tr>
+            <td><%= v.venue_id %></td>
+            <td><strong><%= v.name %></strong></td>
+            <td><%= v.city || '—' %></td>
+            <td><%= v.address || '—' %></td>
+            <td><%= v.eventCount %></td>
+            <td>
+              <% if (v.eventCount === 0) { %>
+                <form action="/admin/venues/<%= v.venue_id %>/delete" method="POST" class="inline"
+                      data-confirm="Delete venue <%= v.name %>?">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                  <button class="link danger" type="submit">Delete</button>
+                </form>
+              <% } else { %>
+                <span class="muted">in use</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+        <% if (!venues.length) { %><tr><td colspan="6" class="muted">No venues yet.</td></tr><% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <form class="card-form" method="POST" action="/admin/venues">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <h2>Add a venue</h2>
+    <label>Name *
+      <input type="text" name="name" maxlength="180" required value="<%= old.name || '' %>" placeholder="University Gymnasium" />
+    </label>
+    <label>City
+      <input type="text" name="city" maxlength="120" value="<%= old.city || '' %>" placeholder="Cagayan de Oro" />
+    </label>
+    <label>Address
+      <input type="text" name="address" maxlength="255" value="<%= old.address || '' %>" placeholder="Corrales Ave." />
+    </label>
+    <button class="btn btn-primary" type="submit">Add venue</button>
+  </form>
+</div>
+
+<%- include('../partials/footer') %>

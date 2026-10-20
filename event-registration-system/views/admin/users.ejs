@@ -37,7 +37,7 @@
           <td><%= u.confirmedCount %></td>
           <td>
             <form action="/admin/users/<%= u.user_id %>/role" method="POST" class="inline"
-                  onsubmit="return confirm('Change role of <%= u.full_name %> to <%= u.role === 'admin' ? 'participant' : 'admin' %>?');">
+                  data-confirm="Change role of <%= u.full_name %> to <%= u.role === 'admin' ? 'participant' : 'admin' %>?">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
               <input type="hidden" name="role" value="<%= u.role === 'admin' ? 'participant' : 'admin' %>" />
               <button class="link <%= u.role === 'admin' ? 'danger' : '' %>" type="submit">
@@ -47,7 +47,7 @@
           </td>
           <td>
             <form action="/admin/users/<%= u.user_id %>/reset-password" method="POST" class="inline"
-                  onsubmit="return confirm('Set a new password for <%= u.full_name %>?');">
+                  data-confirm="Set a new password for <%= u.full_name %>?">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
               <input type="password" name="new_password" minlength="6" maxlength="72"
                      placeholder="New temp password" required class="input-inline" />

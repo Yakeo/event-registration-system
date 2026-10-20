@@ -39,12 +39,16 @@ function validateRegistration({ full_name, email }) {
 }
 
 /**
+ * Validates the event fields. The venue is *not* validated here any more: it is
+ * either `venue_id` (a VENUES foreign key) or the "new venue" fields, both
+ * resolved by eventController.resolveVenue().
+ *
  * @param {object} event
  * @param {{ requireFuture?: boolean }} [options] - when creating an event the
  *   start date must be in the future; existing (historical) events may still
  *   be edited while keeping their original date.
  */
-function validateEvent({ title, description, event_date, venue, max_participants }, options = {}) {
+function validateEvent({ title, description, event_date, max_participants }, options = {}) {
   const errors = [];
   if (!title || !title.trim()) {
     errors.push('Event title is required.');
@@ -65,12 +69,6 @@ function validateEvent({ title, description, event_date, venue, max_participants
     } else if (options.requireFuture && parsedDate <= new Date()) {
       errors.push('The event date and time must be in the future.');
     }
-  }
-
-  if (!venue || !venue.trim()) {
-    errors.push('Venue is required.');
-  } else if (venue.trim().length > LIMITS.venue) {
-    errors.push(`Venue must not exceed ${LIMITS.venue} characters.`);
   }
 
   const max = Number(max_participants);

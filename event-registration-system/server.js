@@ -9,8 +9,9 @@ const express = require('express');
 const session = require('express-session');
 const methodOverride = require('method-override');
 
-const { sequelize, dialect } = require('./models');
+const { sequelize, dialect, Session } = require('./models');
 const { exposeUser, csrfProtection } = require('./middlewares/auth');
+const { SequelizeSessionStore } = require('./config/sessionStore');
 const routes = require('./routes');
 
 const app = express();
@@ -35,6 +36,27 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'same-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  // No inline <script>/onclick handlers anywhere in views; styles are inline
+  // only for capacity-bar widths, so style-src keeps 'unsafe-inline'.
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "img-src 'self' data:",
+      "style-src 'self' 'unsafe-inline'",
+      "script-src 'self'",
+      "font-src 'self'",
+      "connect-src 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'self'",
+      "base-uri 'self'",
+      "object-src 'none'",
+    ].join('; ')
+  );
+  if (isProduction) {
+    res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
+  }
   next();
 });
 
@@ -42,10 +64,17 @@ app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(express.json({ limit: '100kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(methodOverride('_method')); // lets HTML forms send PUT / DELETE
+// Sessions live in the SESSIONS table by default (survives restarts and can be
+// shared by several processes); SESSION_STORE=memory restores the old
+// behaviour for local experiments.
+const sessionStore =
+  process.env.SESSION_STORE === 'memory' ? undefined : new SequelizeSessionStore();
+
 app.use(
   session({
     name: 'eventreg.sid',
     secret: process.env.SESSION_SECRET || DEV_SESSION_SECRET,
+    store: sessionStore,
     resave: false,
     saveUninitialized: false,
     rolling: true,
@@ -60,10 +89,10 @@ app.use(
 app.use(exposeUser);
 app.use(csrfProtection); // every POST/PUT/PATCH/DELETE needs the form token
 
-if (isProduction) {
+if (!sessionStore) {
   console.warn(
-    '[WARN] express-session is using the in-memory store. Sessions are lost on restart ' +
-      'and are not shared between processes; configure a persistent store before scaling out.'
+    '[WARN] SESSION_STORE=memory - sessions are lost on restart and are not shared ' +
+      'between processes.'
   );
 }
 
@@ -73,6 +102,20 @@ if (isProduction) {
 app.locals.currentUser = null;
 app.locals.flash = { success: null, error: null, info: null };
 app.locals.csrfToken = '';
+/**
+ * Venue display helper. `event.venue` is the associated VENUES row (or null if
+ * a query did not include it); older call sites passed a plain string.
+ */
+app.locals.venueName = (value) => {
+  if (!value) return '-';
+  const venue = value.venue !== undefined ? value.venue : value;
+  if (!venue) return '-';
+  if (typeof venue === 'string') return venue;
+  const name = venue.name || '';
+  const city = venue.city || '';
+  if (!name) return '-';
+  return city ? `${name}, ${city}` : name;
+};
 
 app.locals.money = (v) => Number(v || 0).toLocaleString();
 app.locals.fmtDate = (d) => {
@@ -165,8 +208,15 @@ async function start() {
   await sequelize.authenticate();
   console.log(`✔ Database connected (dialect: ${dialect})`);
 
-  await sequelize.sync(); // creates / updates USERS, EVENTS, REGISTRATIONS
-  console.log('✔ Models synchronised (USERS, EVENTS, REGISTRATIONS)');
+  await sequelize.sync(); // creates / updates every table defined in models/
+  console.log(
+    `✔ Models synchronised (USERS, VENUES, EVENTS, REGISTRATIONS, ATTENDANCE, ` +
+      `REGISTRATION_STATUS_CHANGES, AUDIT_LOGS, SESSIONS)`
+  );
+  if (sessionStore) {
+    sessionStore.startCleanup();
+    console.log('✔ Sessions persisted in the SESSIONS table');
+  }
 
   return new Promise((resolve) => {
     const server = app.listen(PORT, '0.0.0.0', () => {
@@ -183,4 +233,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, start };
+module.exports = { app, start, sessionStore };

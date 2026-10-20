@@ -3,7 +3,8 @@
 <section class="section-head">
   <h1>Manage events</h1>
   <div class="btn-row">
-    <a class="btn btn-outline" href="/admin/users">Manage users</a>
+    <a class="btn btn-outline" href="/admin/venues">Venues</a>
+    <a class="btn btn-outline" href="/admin/events/archived">Archived (<%= archivedCount %>)</a>
     <a class="btn btn-primary" href="/admin/events/new">+ Create event</a>
   </div>
 </section>
@@ -19,7 +20,7 @@
           <td><%= e.event_id %></td>
           <td><strong><%= e.title %></strong></td>
           <td><%= fmtDate(e.event_date) %></td>
-          <td><%= e.venue %></td>
+          <td><%= venueName(e) %></td>
           <td><%= e.max %></td>
           <td><%= e.taken %></td>
           <td>
@@ -37,7 +38,7 @@
             <a class="link" href="/admin/events/<%= e.event_id %>/attendance">Attendance</a>
             <a class="link" href="/admin/events/<%= e.event_id %>/edit">Edit</a>
             <form action="/admin/events/<%= e.event_id %>?_method=DELETE" method="POST" class="inline"
-                  onsubmit="return confirm('Delete this event and all of its registrations?');">
+                  data-confirm="Archive this event? Its registrations and attendance history are preserved.">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
               <button class="link danger" type="submit">Delete</button>
             </form>

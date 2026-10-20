@@ -14,7 +14,7 @@
 
     <h1><%= event.title %></h1>
     <p class="event-meta">📅 <%= fmtDate(event.event_date) %></p>
-    <p class="event-meta">📍 <%= event.venue %></p>
+    <p class="event-meta">📍 <%= venueName(event) %></p>
     <p class="event-meta">👥 <%= event.taken %> of <%= event.max %> slots taken</p>
 
     <div class="capacity">

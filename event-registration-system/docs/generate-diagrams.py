@@ -19,20 +19,23 @@ MONO = "'Consolas','Courier New',monospace"
 #                                ERD                                          #
 # --------------------------------------------------------------------------- #
 def erd():
-    """Corrected crow's-foot ERD.
+    """Crow's-foot ERD for the CURRENT schema (8 tables).
 
-    Fixes over the previous version:
-      * every relationship line is anchored to the actual FK row
-        (REGISTRATIONS.user_id / REGISTRATIONS.event_id), not to a random y;
-      * the reset-password columns that exist in the schema are shown;
-      * unique / index / business constraints are written on the diagram;
-      * the summary strip follows the same left-to-right direction as the
-        boxes (USERS -> REGISTRATIONS <- EVENTS).
+    Improvements over the original diagram:
+      * one row per real column, including the new tables (VENUES, ATTENDANCE,
+        REGISTRATION_STATUS_CHANGES, AUDIT_LOGS, SESSIONS) and deleted_at;
+      * every relationship line starts and ends on the FK/IPK row it describes
+        (no arbitrary y coordinates);
+      * solid lines = enforced foreign keys, dashed = nullable audit reference;
+      * cardinality marks drawn on the correct end (1 bar / 0..1 circle /
+        0..* crow's foot);
+      * unique keys, indexes, soft delete and the 3NF notes are written on the
+        diagram instead of a separate paragraph.
     """
-    W, H = 1540, 880
-    BOX_W, HEAD, ROW = 380, 50, 34
-    X1, X2, X3 = 40, 580, 1120
-    Y = 148
+    HEAD, ROW, BOX_W = 44, 30, 360
+    W, H = 1500, 1470
+    XA, XB, XC = 40, 560, 1080
+    Y1, Y2, Y3 = 132, 480, 800
 
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
@@ -41,77 +44,59 @@ def erd():
         '<linearGradient id="hd" x1="0" y1="0" x2="1" y2="0">'
         '<stop offset="0%" stop-color="#26407a"/><stop offset="100%" stop-color="#2f5bff"/></linearGradient>',
         '<style>'
-        '.ent-title{fill:#fff;font-size:18px;font-weight:700;letter-spacing:.06em}'
-        '.fld{fill:#15203a;font-size:13.5px}'
-        '.typ{fill:#6b7691;font-size:11.5px}'
-        '.pk{fill:#b42b45;font-size:10.5px;font-weight:700}'
-        '.fk{fill:#2440a8;font-size:10.5px;font-weight:700}'
-        '.uq{fill:#0c7a52;font-size:10.5px;font-weight:700}'
-        '.rel{fill:#15203a;font-size:13.5px;font-weight:700}'
-        '.card{fill:#46527a;font-size:12px}'
-        '.note{fill:#33406b;font-size:12.5px}'
+        '.ent-title{fill:#fff;font-size:16px;font-weight:700;letter-spacing:.05em}'
+        '.fld{fill:#15203a;font-size:13px}'
+        '.typ{fill:#6b7691;font-size:11px}'
+        '.pk{fill:#b42b45;font-size:10px;font-weight:700}'
+        '.fk{fill:#2440a8;font-size:10px;font-weight:700}'
+        '.uq{fill:#0c7a52;font-size:10px;font-weight:700}'
+        '.rel{fill:#15203a;font-size:12.5px;font-weight:700}'
+        '.card{fill:#46527a;font-size:11.5px}'
+        '.note{fill:#33406b;font-size:12px}'
         '.note-b{fill:#15203a;font-size:12.5px;font-weight:700}'
-        '.h1{fill:#15203a;font-size:23px;font-weight:700}'
-        '.sub{fill:#6b7691;font-size:13px}'
-        '.legend{fill:#46527a;font-size:12px}'
+        '.h1{fill:#15203a;font-size:22px;font-weight:700}'
+        '.sub{fill:#6b7691;font-size:12.5px}'
+        '.legend{fill:#46527a;font-size:11.5px}'
         '</style>',
         '<filter id="sh" x="-20%" y="-20%" width="140%" height="140%">'
-        '<feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#15203a" flood-opacity="0.13"/></filter>',
-        '<marker id="many" markerWidth="1" markerHeight="1"/>',
+        '<feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#15203a" flood-opacity="0.12"/></filter>',
         '</defs>',
         f'<rect width="{W}" height="{H}" fill="#f5f7fb"/>',
-        '<text class="h1" x="40" y="54">Entity Relationship Diagram (current schema)</text>',
-        '<text class="sub" x="40" y="78">Event Registration System &#183; USERS / EVENTS / REGISTRATIONS &#183; '
-        'crow&#8217;s-foot notation &#183; field-level anchors</text>',
+        '<text class="h1" x="40" y="48">Entity Relationship Diagram — Event Registration System</text>',
+        '<text class="sub" x="40" y="72">8 tables · crow&#8217;s-foot notation · solid = enforced foreign key, '
+        'dashed = nullable audit reference</text>',
     ]
 
-    # ---------------------------- legend ----------------------------------- #
-    lx, ly = 1030, 40
-    parts += [
-        f'<rect x="{lx}" y="{ly}" width="470" height="62" rx="10" fill="#fff" stroke="#dbe2f0"/>',
-        f'<rect x="{lx+14}" y="{ly+14}" width="26" height="15" rx="4" fill="#fdeaee"/>'
-        f'<text class="pk" x="{lx+21}" y="{ly+25}">PK</text>'
-        f'<text class="legend" x="{lx+48}" y="{ly+26}">primary key</text>',
-        f'<rect x="{lx+150}" y="{ly+14}" width="26" height="15" rx="4" fill="#e8eeff"/>'
-        f'<text class="fk" x="{lx+157}" y="{ly+25}">FK</text>'
-        f'<text class="legend" x="{lx+184}" y="{ly+26}">foreign key</text>',
-        f'<rect x="{lx+290}" y="{ly+14}" width="26" height="15" rx="4" fill="#e6f7ef"/>'
-        f'<text class="uq" x="{lx+294}" y="{ly+25}">UQ</text>'
-        f'<text class="legend" x="{lx+324}" y="{ly+26}">unique</text>',
-        f'<text class="legend" x="{lx+14}" y="{ly+48}">&#8226; NOT NULL unless marked NULL &#183; '
-        '1 = exactly one &#183; 0..* = zero or many</text>',
-    ]
-
-    def entity(x, name, rows):
-        """Draws a table box. rows: (field, type, key, nullable). Returns (parts, anchors)."""
+    def entity(x, y, name, rows):
+        """rows: (field, type, key, nullable); key in {PK, FK, UQ, FK/UQ, None}."""
         h = HEAD + ROW * len(rows)
         out = ['<g filter="url(#sh)">',
-               f'<rect x="{x}" y="{Y}" width="{BOX_W}" height="{h}" rx="12" fill="#fff" stroke="#dbe2f0"/>',
-               f'<path d="M{x} {Y+12} a12 12 0 0 1 12-12 h{BOX_W-24} a12 12 0 0 1 12 12 v{HEAD-12} h{-BOX_W} z" '
-               f'fill="url(#hd)"/>',
-               f'<text class="ent-title" x="{x+18}" y="{Y+33}">{name}</text>',
+               f'<rect x="{x}" y="{y}" width="{BOX_W}" height="{h}" rx="11" fill="#fff" stroke="#dbe2f0"/>',
+               f'<path d="M{x} {y+11} a11 11 0 0 1 11-11 h{BOX_W-22} a11 11 0 0 1 11 11 v{HEAD-11} h{-BOX_W} z" '
+               'fill="url(#hd)"/>',
+               f'<text class="ent-title" x="{x+16}" y="{y+29}">{name}</text>',
                '</g>']
         anchors = {}
-        cy = Y + HEAD
+        cy = y + HEAD
         for i, (fname, ftype, key, nullable) in enumerate(rows):
             if i:
                 out.append(f'<line x1="{x}" y1="{cy}" x2="{x+BOX_W}" y2="{cy}" stroke="#eef1f8"/>')
             if key:
-                fill = {'PK': '#fdeaee', 'FK': '#e8eeff', 'UQ': '#e6f7ef'}[key]
-                colour = {'PK': 'pk', 'FK': 'fk', 'UQ': 'uq'}[key]
-                out.append(f'<rect x="{x+14}" y="{cy+9}" width="26" height="15" rx="4" fill="{fill}"/>'
-                           f'<text class="{colour}" x="{x+21}" y="{cy+20}">{key}</text>')
-            out.append(f'<text class="fld" x="{x+50}" y="{cy+22}">{fname}</text>')
-            if nullable:
-                out.append(f'<text class="typ" x="{x+BOX_W-14}" y="{cy+22}" text-anchor="end">'
-                           f'{ftype} &#183; NULL</text>')
-            else:
-                out.append(f'<text class="typ" x="{x+BOX_W-14}" y="{cy+22}" text-anchor="end">{ftype}</text>')
+                label = 'UQ' if key == 'UQ' else ('FK' if key == 'FK' else 'PK')
+                if key == 'FK/UQ':
+                    label = 'UQ'
+                fill = {'PK': '#fdeaee', 'FK': '#e8eeff', 'UQ': '#e6f7ef', 'FK/UQ': '#e6f7ef'}[key]
+                colour = {'PK': 'pk', 'FK': 'fk', 'UQ': 'uq', 'FK/UQ': 'uq'}[key]
+                out.append(f'<rect x="{x+12}" y="{cy+8}" width="24" height="14" rx="4" fill="{fill}"/>'
+                           f'<text class="{colour}" x="{x+18}" y="{cy+19}">{label}</text>')
+            out.append(f'<text class="fld" x="{x+46}" y="{cy+20}">{fname}</text>')
+            type_text = f'{ftype} &#183; NULL' if nullable else ftype
+            out.append(f'<text class="typ" x="{x+BOX_W-12}" y="{cy+20}" text-anchor="end">{type_text}</text>')
             anchors[fname] = cy + ROW / 2
             cy += ROW
-        return out, anchors
+        return out, anchors, h
 
-    users_svg, users_a = entity(X1, 'USERS', [
+    users_svg, U, users_h = entity(XA, Y1, 'USERS', [
         ('user_id', 'INT AI', 'PK', False),
         ('full_name', 'VARCHAR(120)', None, False),
         ('email', 'VARCHAR(160)', 'UQ', False),
@@ -120,104 +105,216 @@ def erd():
         ('reset_password_token', 'CHAR(64) sha256', None, True),
         ('reset_password_expires', 'DATETIME', None, True),
     ])
-    reg_svg, reg_a = entity(X2, 'REGISTRATIONS', [
+    reg_svg, R, _ = entity(XB, Y1, 'REGISTRATIONS', [
         ('registration_id', 'INT AI', 'PK', False),
         ('user_id', 'INT &#8594; USERS', 'FK', False),
         ('event_id', 'INT &#8594; EVENTS', 'FK', False),
         ('registration_date', 'DATETIME', None, False),
         ('status', "ENUM('confirmed','waitlisted','cancelled')", None, False),
     ])
-    event_svg, event_a = entity(X3, 'EVENTS', [
+    events_svg, E, _ = entity(XC, Y1, 'EVENTS', [
         ('event_id', 'INT AI', 'PK', False),
         ('title', 'VARCHAR(180)', None, False),
         ('description', 'TEXT', None, True),
         ('event_date', 'DATETIME', None, False),
-        ('venue', 'VARCHAR(180)', None, False),
+        ('venue_id', 'INT &#8594; VENUES', 'FK', False),
         ('max_participants', 'INT &#8805; 1', None, False),
+        ('deleted_at', 'DATETIME (soft delete)', None, True),
+    ])
+    audit_svg, A, _ = entity(XA, Y2, 'AUDIT_LOGS', [
+        ('log_id', 'BIGINT AI', 'PK', False),
+        ('actor_id', 'INT &#8594; USERS', 'FK', True),
+        ('action', 'VARCHAR(60)', None, False),
+        ('entity', 'VARCHAR(60)', None, False),
+        ('entity_id', 'VARCHAR(60)', None, True),
+        ('detail', 'JSON/TEXT', None, True),
+        ('created_at', 'DATETIME', None, False),
+    ])
+    rsc_svg, S, _ = entity(XB, Y2, 'REGISTRATION_STATUS_CHANGES', [
+        ('change_id', 'INT AI', 'PK', False),
+        ('registration_id', 'INT &#8594; REGISTRATIONS', 'FK', False),
+        ('from_status', 'VARCHAR(20)', None, True),
+        ('to_status', 'VARCHAR(20)', None, False),
+        ('changed_at', 'DATETIME', None, False),
+        ('changed_by', 'INT &#8594; USERS', 'FK', True),
+        ('reason', 'VARCHAR(255)', None, True),
+    ])
+    venues_svg, V, _ = entity(XC, Y2, 'VENUES', [
+        ('venue_id', 'INT AI', 'PK', False),
+        ('name', 'VARCHAR(180)', 'UQ', False),
+        ('address', 'VARCHAR(255)', None, True),
+        ('city', 'VARCHAR(120)', 'UQ', False),
+    ])
+    sessions_svg, SS, _ = entity(XC, Y3, 'SESSIONS', [
+        ('sid', 'VARCHAR(64)', 'PK', False),
+        ('data', 'TEXT (session JSON)', None, False),
+        ('expires_at', 'DATETIME', None, False),
+    ])
+    att_svg, AT, _ = entity(XB, Y3, 'ATTENDANCE', [
+        ('attendance_id', 'INT AI', 'PK', False),
+        ('registration_id', 'INT &#8594; REGISTRATIONS', 'FK/UQ', False),
+        ('checked_in_at', 'DATETIME', None, False),
+        ('checked_in_by', 'INT &#8594; USERS', 'FK', True),
+        ('remarks', 'VARCHAR(255)', None, True),
     ])
 
-    # ------------------------- connectors (behind boxes) ------------------- #
+    # ------------------------------- marks --------------------------------- #
+    def bar_v(x, y):
+        return f'<line x1="{x}" y1="{y-10}" x2="{x}" y2="{y+10}" stroke="#46527a" stroke-width="2.4"/>'
+
+    def bar_h(x, y):
+        return f'<line x1="{x-10}" y1="{y}" x2="{x+10}" y2="{y}" stroke="#46527a" stroke-width="2.4"/>'
+
+    def crow_h(x, y, direction):
+        """Crow's foot whose prongs touch the entity edge at (x, y)."""
+        tip = x + direction * 20
+        return (
+            f'<line x1="{x}" y1="{y-10}" x2="{tip}" y2="{y}" stroke="#46527a" stroke-width="1.8"/>'
+            f'<line x1="{x}" y1="{y+10}" x2="{tip}" y2="{y}" stroke="#46527a" stroke-width="1.8"/>'
+        )
+
+    def crow_v(x, y, direction):
+        """Crow's foot whose prongs touch the entity edge at (x, y); the foot
+        opens away from the box, so pass -1 for an entity below the line."""
+        tip = y + direction * 20
+        return (
+            f'<line x1="{x-10}" y1="{y}" x2="{x}" y2="{tip}" stroke="#46527a" stroke-width="1.8"/>'
+            f'<line x1="{x+10}" y1="{y}" x2="{x}" y2="{tip}" stroke="#46527a" stroke-width="1.8"/>'
+        )
+
+    def circle(x, y):
+        return f'<circle cx="{x}" cy="{y}" r="5" fill="#fff" stroke="#46527a" stroke-width="1.8"/>'
+
+    def line(points, dashed=False):
+        d = ' '.join(('M' if i == 0 else 'L') + f'{px} {py}' for i, (px, py) in enumerate(points))
+        dash = ' stroke-dasharray="7 5"' if dashed else ''
+        return f'<path d="{d}" fill="none" stroke="#46527a" stroke-width="1.7"{dash}/>'
+
+    def label(x, y, text, anchor='middle', cls='rel'):
+        return f'<text class="{cls}" x="{x}" y="{y}" text-anchor="{anchor}">{text}</text>'
+
+    A_RIGHT, B_LEFT, B_RIGHT, C_LEFT = XA + BOX_W, XB, XB + BOX_W, XC
+    BOX_BOTTOM_1 = Y1 + HEAD + ROW * 7
     lines = []
-    uy = users_a['user_id']
-    ry_user = reg_a['user_id']
-    ry_event = reg_a['event_id']
-    ey = event_a['event_id']
-    mid_left = (X1 + BOX_W + X2) / 2
-    mid_right = (X2 + BOX_W + X3) / 2
 
-    # USERS (1) ---< REGISTRATIONS (0..*): anchored to user_id on both sides
-    lines += [
-        f'<polyline points="{X1+BOX_W},{uy} {mid_left},{uy} {mid_left},{ry_user} {X2},{ry_user}" '
-        'fill="none" stroke="#46527a" stroke-width="1.8"/>',
-        # exactly-one bar near USERS
-        f'<line x1="{X1+BOX_W+16}" y1="{uy-11}" x2="{X1+BOX_W+16}" y2="{uy+11}" stroke="#46527a" stroke-width="2.4"/>',
-        # crow's foot at REGISTRATIONS.user_id (opening away from the box)
-        f'<line x1="{X2}" y1="{ry_user-11}" x2="{X2-20}" y2="{ry_user}" stroke="#46527a" stroke-width="1.8"/>',
-        f'<line x1="{X2}" y1="{ry_user+11}" x2="{X2-20}" y2="{ry_user}" stroke="#46527a" stroke-width="1.8"/>',
-    ]
+    # 1. USERS (1) ---< REGISTRATIONS (0..*), anchored on user_id
+    rail = 462
+    lines.append(line([(A_RIGHT, U['user_id']), (rail, U['user_id']), (rail, R['user_id']), (B_LEFT, R['user_id'])]))
+    lines.append(bar_v(A_RIGHT + 14, U['user_id']))
+    lines.append(crow_h(B_LEFT, R['user_id'], -1))
+    lines.append(label(A_RIGHT + 22, U['user_id'] - 12, '1'))
+    lines.append(label(B_LEFT - 34, R['user_id'] - 13, '0..*'))
 
-    # EVENTS (1) ---< REGISTRATIONS (0..*): anchored to event_id on both sides
-    lines += [
-        f'<polyline points="{X3},{ey} {mid_right},{ey} {mid_right},{ry_event} {X2+BOX_W},{ry_event}" '
-        'fill="none" stroke="#46527a" stroke-width="1.8"/>',
-        f'<line x1="{X3-16}" y1="{ey-11}" x2="{X3-16}" y2="{ey+11}" stroke="#46527a" stroke-width="2.4"/>',
-        f'<line x1="{X2+BOX_W}" y1="{ry_event-11}" x2="{X2+BOX_W+20}" y2="{ry_event}" stroke="#46527a" stroke-width="1.8"/>',
-        f'<line x1="{X2+BOX_W}" y1="{ry_event+11}" x2="{X2+BOX_W+20}" y2="{ry_event}" stroke="#46527a" stroke-width="1.8"/>',
-    ]
+    # 2. EVENTS (1) ---< REGISTRATIONS (0..*), anchored on event_id
+    rail2 = 962
+    lines.append(line([(C_LEFT, E['event_id']), (rail2, E['event_id']), (rail2, R['event_id']), (B_RIGHT, R['event_id'])]))
+    lines.append(bar_h(C_LEFT - 14, E['event_id']))
+    lines.append(crow_h(B_RIGHT, R['event_id'], 1))
+    lines.append(label(C_LEFT - 22, E['event_id'] - 12, '1', 'end'))
+    lines.append(label(B_RIGHT + 34, R['event_id'] - 13, '0..*', 'start'))
 
-    labels = [
-        f'<text class="rel" x="{X1+BOX_W+26}" y="{uy-16}">1</text>',
-        f'<text class="rel" x="{X2-46}" y="{ry_user-18}" text-anchor="end">0..*</text>',
-        f'<text class="rel" x="{X3-30}" y="{ey-16}" text-anchor="end">1</text>',
-        f'<text class="rel" x="{X2+BOX_W+30}" y="{ry_event-18}">0..*</text>',
-    ]
+    # 3. VENUES (1) ---< EVENTS (0..*), vertical inside column C
+    vx = XC + 150
+    ev_bottom = Y1 + HEAD + ROW * 7
+    lines.append(line([(vx, ev_bottom), (vx, Y2)]))
+    lines.append(bar_h(vx, Y2 - 12))
+    lines.append(crow_v(vx, ev_bottom, 1))
+    lines.append(label(vx + 14, ev_bottom + 24, '0..*', 'start'))
+    lines.append(label(vx + 14, Y2 - 20, '1', 'start'))
 
-    parts += lines + users_svg + reg_svg + event_svg + labels
+    # 4. REGISTRATIONS (1) ---< REGISTRATION_STATUS_CHANGES (0..*)
+    rx = XB + 130
+    reg_bottom = Y1 + HEAD + ROW * 5
+    lines.append(line([(rx, reg_bottom), (rx, Y2)]))
+    lines.append(bar_v(rx, reg_bottom + 12))
+    lines.append(crow_v(rx, Y2, -1))
+    lines.append(label(rx + 14, reg_bottom + 26, '1', 'start'))
+    lines.append(label(rx + 14, Y2 - 22, '0..*', 'start'))
 
-    # --------------------------- summary strip ----------------------------- #
-    by = 520
+    # 5. REGISTRATIONS (1) ---o ATTENDANCE (0..1) routed through the corridor
+    corridor = 1000
+    att_y = AT['registration_id']
+    lines.append(line([(XB + 250, reg_bottom), (XB + 250, 420), (corridor, 420), (corridor, att_y), (B_RIGHT, att_y)]))
+    lines.append(bar_v(XB + 250, reg_bottom + 12))
+    lines.append(circle(B_RIGHT - 16, att_y))
+    lines.append(label(corridor + 14, 412, '0..1', 'start', 'rel'))
+
+    # 6. USERS (1) ---< AUDIT_LOGS (0..*), vertical inside column A
+    ax = XA + 120
+    lines.append(line([(ax, Y1 + HEAD + ROW * 7), (ax, Y2)]))
+    lines.append(bar_h(ax, Y1 + HEAD + ROW * 7 + 12))
+    lines.append(crow_v(ax, Y2, -1))
+    lines.append(label(ax + 14, Y1 + HEAD + ROW * 7 + 32, '1', 'start'))
+    lines.append(label(ax + 14, Y2 - 22, '0..*', 'start'))
+
+    # 7. USERS (1) ---< REGISTRATION_STATUS_CHANGES (changed_by, dashed)
+    rail3 = 500
+    lines.append(line([(A_RIGHT, 372), (rail3, 372), (rail3, S['changed_by']), (B_LEFT, S['changed_by'])], dashed=True))
+    lines.append(crow_h(B_LEFT, S['changed_by'], -1))
+    lines.append(bar_v(A_RIGHT + 14, 372))
+
+
+    notes = []
+    parts += lines + users_svg + reg_svg + events_svg + audit_svg + rsc_svg + venues_svg + sessions_svg + att_svg
+    parts += notes
+
+    # ------------------------------- legend -------------------------------- #
+    ly = 84
     parts += [
-        f'<rect x="40" y="{by}" width="{W-80}" height="96" rx="14" fill="#fff" stroke="#dbe2f0"/>',
-        f'<text class="rel" x="70" y="{by+36}">[USERS]</text>',
-        f'<text class="rel" x="156" y="{by+36}">1</text>',
-        f'<line x1="172" y1="{by+31}" x2="252" y2="{by+31}" stroke="#46527a" stroke-width="1.8"/>',
-        f'<text class="rel" x="268" y="{by+36}">0..*</text>',
-        f'<text class="rel" x="322" y="{by+36}">[REGISTRATIONS]</text>',
-        f'<text class="rel" x="500" y="{by+36}">0..*</text>',
-        f'<line x1="542" y1="{by+31}" x2="622" y2="{by+31}" stroke="#46527a" stroke-width="1.8"/>',
-        f'<text class="rel" x="638" y="{by+36}">1</text>',
-        f'<text class="rel" x="660" y="{by+36}">[EVENTS]</text>',
-        f'<text class="card" x="70" y="{by+66}">A USER has zero or many REGISTRATIONS; each REGISTRATION belongs to exactly one USER '
-        '(REGISTRATIONS.user_id is NOT NULL).</text>',
-        f'<text class="card" x="70" y="{by+86}">An EVENT has zero or many REGISTRATIONS; each REGISTRATION is for exactly one EVENT '
-        '(REGISTRATIONS.event_id is NOT NULL).</text>',
+        f'<rect x="{W-470}" y="{ly}" width="430" height="54" rx="9" fill="#fff" stroke="#dbe2f0"/>',
+        f'<rect x="{W-456}" y="{ly+13}" width="24" height="14" rx="4" fill="#fdeaee"/>'
+        f'<text class="pk" x="{W-450}" y="{ly+24}">PK</text>'
+        f'<text class="legend" x="{W-426}" y="{ly+25}">primary key</text>',
+        f'<rect x="{W-336}" y="{ly+13}" width="24" height="14" rx="4" fill="#e8eeff"/>'
+        f'<text class="fk" x="{W-330}" y="{ly+24}">FK</text>'
+        f'<text class="legend" x="{W-306}" y="{ly+25}">foreign key</text>',
+        f'<rect x="{W-216}" y="{ly+13}" width="24" height="14" rx="4" fill="#e6f7ef"/>'
+        f'<text class="uq" x="{W-210}" y="{ly+24}">UQ</text>'
+        f'<text class="legend" x="{W-186}" y="{ly+25}">unique key</text>',
+        f'<line x1="{W-116}" y1="{ly+21}" x2="{W-86}" y2="{ly+21}" stroke="#46527a" stroke-width="1.7"/>'
+        f'<text class="legend" x="{W-80}" y="{ly+25}">1</text>',
+        f'<text class="legend" x="{W-64}" y="{ly+25}">bar</text>',
+        f'<text class="legend" x="{W-456}" y="{ly+44}">0..* = zero or many &#183; 0..1 = optional one &#183; '
+        'dashed = nullable audit reference</text>',
     ]
 
     # --------------------------- constraints ------------------------------- #
-    ny = 636
+    ny = 1010
     parts += [
-        f'<rect x="40" y="{ny}" width="{W-80}" height="212" rx="14" fill="#e8eeff" stroke="#c6d3fb"/>',
-        f'<text class="note-b" x="66" y="{ny+30}">Constraints and indexes shown in the database</text>',
-        f'<text class="note" x="66" y="{ny+56}">'
-        '<tspan font-weight="700">Duplicate rule:</tspan> UNIQUE (event_id, user_id) on REGISTRATIONS &#8212; '
-        'one registration per participant per event (also backs the cancelled-then-reactivated flow).</text>',
-        f'<text class="note" x="66" y="{ny+80}">'
-        '<tspan font-weight="700">Capacity rule:</tspan> COUNT(status = &#8217;confirmed&#8217;) may never exceed '
-        'EVENTS.max_participants; enforced in a transaction with row locking.</text>',
-        f'<text class="note" x="66" y="{ny+104}">'
-        '<tspan font-weight="700">Referential integrity:</tspan> REGISTRATIONS.user_id &#8594; USERS.user_id and '
-        'REGISTRATIONS.event_id &#8594; EVENTS.event_id (ON DELETE CASCADE, ON UPDATE CASCADE).</text>',
-        f'<text class="note" x="66" y="{ny+128}">'
-        '<tspan font-weight="700">Indexes:</tspan> USERS(email UNIQUE, reset_password_token UNIQUE, role), '
-        'EVENTS(event_date), REGISTRATIONS(event_id, status),</text>',
-        f'<text class="note" x="66" y="{ny+148}">'
-        'REGISTRATIONS(user_id, status), REGISTRATIONS(status, registration_date) for the waitlist FIFO queue.</text>',
-        f'<text class="note" x="66" y="{ny+176}" fill="#8a3b12">'
-        '<tspan font-weight="700">Normalisation caveat:</tspan> USERS still carries the single-use reset token. '
-        'Because that token has its own key and lifetime, the</text>',
-        f'<text class="note" x="66" y="{ny+196}" fill="#8a3b12">'
-        'strictly 3NF form is a separate PASSWORD_RESET_TOKENS table &#8212; see docs/DATABASE-AUDIT.md for the '
-        'proposed schema.</text>',
+        f'<rect x="40" y="{ny}" width="{W-80}" height="382" rx="14" fill="#e8eeff" stroke="#c6d3fb"/>',
+        f'<text class="note-b" x="66" y="{ny+30}">Keys, constraints and rules enforced by the schema</text>',
+        f'<text class="note" x="66" y="{ny+56}"><tspan font-weight="700">Duplicate rule:</tspan> '
+        'UNIQUE (event_id, user_id) on REGISTRATIONS &#8212; one registration per participant per event.</text>',
+        f'<text class="note" x="66" y="{ny+80}"><tspan font-weight="700">Capacity rule:</tspan> '
+        "COUNT(status = 'confirmed') may never exceed EVENTS.max_participants; checked inside a transaction "
+        'with a row lock.</text>',
+        f'<text class="note" x="66" y="{ny+104}"><tspan font-weight="700">Attendance rule:</tspan> '
+        'UNIQUE (registration_id) on ATTENDANCE &#8212; a participant can be checked in only once, and only '
+        'while confirmed.</text>',
+        f'<text class="note" x="66" y="{ny+128}"><tspan font-weight="700">Venue rule:</tspan> '
+        'UNIQUE (name, city) on VENUES; EVENTS.venue_id is NOT NULL, so the venue name is stored once.</text>',
+        f'<text class="note" x="66" y="{ny+152}"><tspan font-weight="700">Referential integrity:</tspan> '
+        'REGISTRATIONS &#8594; USERS/EVENTS, ATTENDANCE &#8594; REGISTRATIONS, '
+        'REGISTRATION_STATUS_CHANGES &#8594; REGISTRATIONS &#8594; ON DELETE CASCADE;</text>',
+        f'<text class="note" x="66" y="{ny+172}">AUDIT_LOGS.actor_id and the audit columns use ON DELETE SET NULL '
+        'so history survives a deleted user.</text>',
+        f'<text class="note" x="66" y="{ny+196}"><tspan font-weight="700">Soft delete:</tspan> '
+        'EVENTS.deleted_at keeps an archived event&#8217;s registrations, attendance and status history '
+        'available for reports.</text>',
+        f'<text class="note" x="66" y="{ny+220}"><tspan font-weight="700">Indexes:</tspan> '
+        'USERS(email UQ, reset_password_token UQ, role), VENUES(name, city UQ), EVENTS(event_date, venue_id),</text>',
+        f'<text class="note" x="66" y="{ny+240}">REGISTRATIONS(event_id,status), (user_id,status), '
+        '(status,registration_date) &#8212; the FIFO waitlist queue; ATTENDANCE(registration_id UQ);</text>',
+        f'<text class="note" x="66" y="{ny+260}">REGISTRATION_STATUS_CHANGES(registration_id, changed_at); '
+        'AUDIT_LOGS(entity, entity_id), (created_at); SESSIONS(expires_at).</text>',
+        f'<text class="note" x="66" y="{ny+286}"><tspan font-weight="700">SESSIONS:</tspan> '
+        'no foreign key &#8212; it stores the serialised express-session payload and is purged by expiry.</text>',
+        f'<text class="note" x="66" y="{ny+318}" fill="#8a3b12"><tspan font-weight="700">Normalisation:</tspan> '
+        '1NF/2NF/3NF are satisfied for every table shown; the one remaining 3NF exception is the single-use '
+        'reset token on USERS.</text>',
+        f'<text class="note" x="66" y="{ny+344}" fill="#8a3b12">'
+        'A stricter variant (PASSWORD_RESET_TOKENS, lookup tables, NOTIFICATIONS) is proposed in '
+        'docs/schema-3nf.sql.</text>',
     ]
 
     parts.append('</svg>')

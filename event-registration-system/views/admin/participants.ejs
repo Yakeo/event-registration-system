@@ -5,7 +5,7 @@
 <section class="section-head">
   <div>
     <h1>Registered participants</h1>
-    <p class="muted"><%= event.title %> · <%= fmtDate(event.event_date) %> · <%= event.venue %></p>
+    <p class="muted"><%= event.title %> · <%= fmtDate(event.event_date) %> · <%= venueName(event) %></p>
   </div>
   <div class="btn-row">
     <a class="btn btn-outline btn-sm" href="/admin/events/<%= event.event_id %>/attendance">Attendance list</a>
@@ -15,7 +15,7 @@
 
 <div class="capacity wide">
   <div class="capacity-bar"><span style="width:<%= event.percent %>%"></span></div>
-  <small><%= event.taken %> confirmed / <%= event.max %> slots · <%= event.remaining %> remaining</small>
+  <small><%= event.taken %> confirmed / <%= event.max %> slots · <%= event.remaining %> remaining · <%= checkedIn %> checked in</small>
 </div>
 
 <div class="filters">
@@ -28,7 +28,7 @@
 <div class="table-wrap">
   <table class="table">
     <thead>
-      <tr><th>#</th><th>Ref</th><th>Participant name</th><th>Email</th><th>Registration date</th><th>Status</th><th>Update status</th></tr>
+      <tr><th>#</th><th>Ref</th><th>Participant name</th><th>Email</th><th>Registration date</th><th>Status</th><th>Attendance</th><th>Update status</th><th>History</th></tr>
     </thead>
     <tbody>
       <% rows.forEach(function (r, i) { %>
@@ -40,18 +40,31 @@
           <td><%= fmtDate(r.registration_date) %></td>
           <td><span class="badge <%= r.status === 'confirmed' ? 'badge-success' : r.status === 'waitlisted' ? 'badge-warn' : 'badge-muted' %>"><%= r.status %></span></td>
           <td>
+            <% if (r.attendance) { %>
+              <span class="badge badge-success">Checked in</span>
+            <% } else if (r.status === 'confirmed') { %>
+              <form action="/admin/attendance/<%= r.registration_id %>" method="POST" class="inline">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                <button class="link" type="submit">Check in</button>
+              </form>
+            <% } else { %>
+              <span class="muted">—</span>
+            <% } %>
+          </td>
+          <td>
             <form action="/admin/registrations/<%= r.registration_id %>/status" method="POST" class="inline">
-  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-              <select name="status" onchange="this.form.submit()">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+              <select name="status" data-autosubmit>
                 <% ['confirmed','waitlisted','cancelled'].forEach(function (s) { %>
                   <option value="<%= s %>" <%= r.status === s ? 'selected' : '' %>><%= s %></option>
                 <% }); %>
               </select>
             </form>
           </td>
+          <td><a class="link" href="/admin/registrations/<%= r.registration_id %>/history">Timeline</a></td>
         </tr>
       <% }); %>
-      <% if (!rows.length) { %><tr><td colspan="7" class="muted">No participants for this filter.</td></tr><% } %>
+      <% if (!rows.length) { %><tr><td colspan="9" class="muted">No participants for this filter.</td></tr><% } %>
     </tbody>
   </table>
 </div>
