@@ -5,8 +5,10 @@
 <div class="no-print">
   <div class="btn-row">
     <button class="btn btn-primary btn-sm" data-print type="button">🖨️ Print attendance sheet</button>
-    <a class="btn btn-outline btn-sm" href="/admin/events/<%= event.event_id %>/attendance.csv">⬇ Download CSV</a>
+    <a class="btn btn-outline btn-sm" href="/admin/events/<%= event.event_id %>/attendance.csv?sort=<%= sort.key %>&dir=<%= sort.dir %>">⬇ Download CSV</a>
   </div>
+  <p class="muted sort-note">Sorted by <strong><%= sortLabel(sort.key) %></strong> (<%= sort.dir === 'asc' ? 'ascending' : 'descending' %>).
+    Click a column heading to re-sort; the printed sheet and the CSV follow the same order.</p>
 </div>
 
 <section class="sheet">
@@ -29,10 +31,10 @@
       <tr>
         <th style="width:48px">No.</th>
         <th>Reference</th>
-        <th>Participant name</th>
-        <th>Email address</th>
-        <th>Registration date</th>
-        <th>Checked in at</th>
+        <th><a class="sort-link" href="<%= sortHref('name') %>">Participant name<span class="sort-arrow no-print"><%= sortArrow('name') %></span></a></th>
+        <th><a class="sort-link" href="<%= sortHref('email') %>">Email address<span class="sort-arrow no-print"><%= sortArrow('email') %></span></a></th>
+        <th><a class="sort-link" href="<%= sortHref('date') %>">Registration date<span class="sort-arrow no-print"><%= sortArrow('date') %></span></a></th>
+        <th><a class="sort-link" href="<%= sortHref('attendance') %>">Checked in at<span class="sort-arrow no-print"><%= sortArrow('attendance') %></span></a></th>
         <th class="no-print" style="width:120px">Check-in</th>
         <th style="width:150px">Signature</th>
       </tr>

@@ -117,6 +117,7 @@ files = [
     ('-', 'seeders/seed.js', 'Demo users, 11 events and registrations (npm run seed)'),
     ('-', 'services/notifications.js', 'Transactional outbox: queue + render e-mail'),
     ('-', 'services/notificationWorker.js', 'Background worker that drains the outbox'),
+    ('-', 'services/sorting.js', 'Whitelisted ?sort=/&dir= ordering shared by every list'),
     ('-', 'models/Notification.js', 'NOTIFICATIONS - one row per e-mail owed'),
     ('-', 'models/Venue.js', 'VENUES - venue master data (name, address, city)'),
     ('-', 'models/Attendance.js', 'ATTENDANCE - physical check-in, UNIQUE(registration_id)'),

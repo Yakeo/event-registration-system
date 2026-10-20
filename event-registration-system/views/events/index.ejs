@@ -29,6 +29,13 @@
     </form>
   </div>
 
+  <div class="filters" role="group" aria-label="Sort events">
+    <% [['date', 'Date'], ['name', 'Title A–Z'], ['seats', 'Seats left']].forEach(function (pair) { %>
+      <a class="chip <%= sort.key === pair[0] ? 'chip-active' : '' %>"
+         href="<%= sortHref(pair[0]) %>"><%= pair[1] %><%= sort.key === pair[0] ? (sort.dir === 'asc' ? ' ↑' : ' ↓') : '' %></a>
+    <% }); %>
+  </div>
+
   <% if (!events.length) { %>
     <p class="empty">No events found. <% if (q) { %>Try a different search term.<% } %></p>
   <% } else { %>
