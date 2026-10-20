@@ -12,7 +12,7 @@ its own database file the first time it starts.
 npm start ──► node server.js
                  │
                  ├─ connect to SQLite file: database/event_registration.sqlite
-                 ├─ sequelize.sync()  ──► CREATE TABLE IF NOT EXISTS × 8
+                 ├─ sequelize.sync()  ──► CREATE TABLE IF NOT EXISTS × 10
                  └─ listen on http://localhost:3000
 ```
 
