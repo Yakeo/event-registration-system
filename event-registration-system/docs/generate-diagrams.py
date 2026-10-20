@@ -675,7 +675,7 @@ def sheet_a():
 
 def sheet_b():
     """Administration: sign in, dashboard, the three day-to-day jobs."""
-    cx, LANE = 236, 606
+    cx, LANE, LANE_W = 236, 596, 320
     parts = _sheet_open()
     _sheet_title(parts, 'B', 'B · Administration — what the organizer does',
                  'Sign in, read the counters, then edit an event, check people in, or change a booking.')
@@ -729,49 +729,61 @@ def sheet_b():
 
     dec_y = y
     parts.append(s_wire([(cx, dec_y - GAP), (cx, dec_y)]))
-    out, h = s_dec(cx, dec_y, ['Which form was', 'submitted?'], w=240)
-    parts += out
-    y = dec_y + h
-
-    # ---- three day-to-day jobs ----------------------------------------------
     def g_event(yy):
         return s_db(LANE, yy, 'Edits an event',
                     ['Saves it, or hides it from the public list.'],
-                    tag='events and venues', w=340)
+                    tag='events and venues', w=LANE_W)
 
     def g_checkin(yy):
         return s_db(LANE, yy, 'Checks someone in',
                     ['Marks them arrived, notes who did it.'],
-                    tag='attendance and its history', w=340)
+                    tag='attendance and its history', w=LANE_W)
 
     def g_cancel(yy):
         return s_db(LANE, yy, 'Cancels or changes a booking',
                     ['Frees the seat and offers it to the next one waiting.'],
-                    tag='booking, history, mail', w=340)
+                    tag='booking, history, mail', w=LANE_W)
 
-    groups = [
-        ('', 'event form', g_event),
-        ('', 'check-in form', g_checkin),
-        ('', 'booking change', g_cancel),
-    ]
+    # Three jobs as an else-if ladder: every decision is a yes/no test, and the
+    # three outcomes rejoin on a rail to the right of the lane.
+    DW, DH = 250, 64
+    RET = LANE + LANE_W / 2 + 14
 
-    cursor = y + 46
-    taps = []
-    for caption, tag, build in groups:
-        _, gh = build(0)
-        taps.append((cursor + gh / 2, cursor, caption, tag, build, gh))
-        cursor += gh + 46
+    d1_y = dec_y
+    out, _ = s_dec(cx, d1_y, ['Was it the', 'event form?'], w=DW, h=DH)
+    parts += out
+    b1_top = d1_y + DH / 2 - 30
+    parts.append(s_wire([(cx + DW / 2, d1_y + DH / 2), (LANE - LANE_W / 2 - 2, d1_y + DH / 2)]))
+    parts.append(s_lbl(cx + DW / 2 + 8, d1_y + DH / 2 - 6, 'Yes', 't-yes', 'start'))
+    out, b1_h = g_event(b1_top)
+    parts += out
 
-    last_bottom = taps[-1][1] + taps[-1][5]
-    term_y = last_bottom + 30
-    parts.append(s_wire([(cx, dec_y + h), (cx, term_y)]))
-    for tap_y, top, caption, tag, build, gh in taps:
-        parts.append(s_wire([(cx, tap_y), (LANE - 172, tap_y)]))
-        out, _ = build(top)
-        parts += out
-        parts.append(s_lbl(cx + 16, tap_y - 6, tag, 't-lab', 'start'))
-        if caption:
-            parts.append(s_lbl(LANE - 158, top - 7, caption, 't-lab', 'start'))
+    d2_y = d1_y + DH + 26
+    parts.append(s_wire([(cx, d1_y + DH), (cx, d2_y)]))
+    parts.append(s_lbl(cx + 8, d1_y + DH + 18, 'No', 't-no', 'start'))
+    out, _ = s_dec(cx, d2_y, ['Was it the', 'check-in form?'], w=DW, h=DH)
+    parts += out
+    b2_top = d2_y + DH / 2 - 30
+    parts.append(s_wire([(cx + DW / 2, d2_y + DH / 2), (LANE - LANE_W / 2 - 2, d2_y + DH / 2)]))
+    parts.append(s_lbl(cx + DW / 2 + 8, d2_y + DH / 2 - 6, 'Yes', 't-yes', 'start'))
+    out, b2_h = g_checkin(b2_top)
+    parts += out
+
+    b3_top = max(b1_top + b1_h, b2_top + b2_h) + 26
+    b3_cy = b3_top + 30
+    parts.append(s_wire([(cx, d2_y + DH), (cx, b3_cy), (LANE - LANE_W / 2 - 2, b3_cy)]))
+    parts.append(s_lbl(cx + 8, d2_y + DH + 18, 'No', 't-no', 'start'))
+    out, b3_h = g_cancel(b3_top)
+    parts += out
+
+    rail = b3_top + b3_h + 20
+    term_y = rail + 24
+    for top, hh in ((b1_top, b1_h), (b2_top, b2_h), (b3_top, b3_h)):
+        parts.append(s_wire([(LANE + LANE_W / 2, top + hh / 2 - 4),
+                             (RET, top + hh / 2 - 4), (RET, rail)], arrow=False))
+    parts.append(s_wire([(RET, rail), (cx, rail)], arrow=False))
+    parts.append(s_wire([(cx, rail), (cx, term_y)]))
+    parts.append(s_lbl(RET - 8, rail - 7, 'all three rejoin', 't-lab', 'end'))
 
     out, ht = s_term(cx, term_y, 'Change saved', w=230)
     parts += out
@@ -784,7 +796,7 @@ def sheet_b():
 
 def sheet_c():
     """The e-mail worker, and what happens when a guest opens the link."""
-    cx, LANE, g = 236, 606, 7
+    cx, LANE, LANE_W, g = 236, 596, 320, 7
     parts = _sheet_open()
     _sheet_title(parts, 'C', 'C · Sending the mail, and the guest manage link',
                  'Mail goes out in the background, so a broken mailbox never breaks a booking.')
@@ -851,46 +863,57 @@ def sheet_c():
 
     dec_y = y
     parts.append(s_wire([(cx, dec_y - g), (cx, dec_y)]))
-    out, h = s_dec(cx, dec_y, ['Which action did', 'the link ask for?'], w=250)
-    parts += out
-    y = dec_y + h
-
     def g_view(yy):
-        return s_doc(LANE, yy, 'Sees the booking: event, date, place', w=340)
+        return s_doc(LANE, yy, 'Sees the booking: event, date, place', w=LANE_W)
 
     def g_cancel(yy):
         return s_db(LANE, yy, 'Cancels the booking',
                     ['Same as the signed-in page: seat freed, next one offered it.'],
-                    tag='booking, history, mail', w=340)
+                    tag='booking, history, mail', w=LANE_W)
 
     def g_claim(yy):
         return s_db(LANE, yy, 'Sets a password',
                     ['Saves it and marks the link as used.'],
-                    tag='people and their links', w=340)
+                    tag='people and their links', w=LANE_W)
 
-    groups = [
-        ('', 'view only', g_view),
-        ('', 'cancel', g_cancel),
-        ('', 'claim a password', g_claim),
-    ]
+    # Same ladder: two yes/no tests, and the third outcome is what remains.
+    DW, DH = 250, 64
+    RET = LANE + LANE_W / 2 + 14
 
-    cursor = y + 22
-    taps = []
-    for caption, tag, build in groups:
-        _, gh = build(0)
-        taps.append((cursor + gh / 2, cursor, caption, tag, build, gh))
-        cursor += gh + 14
+    d1_y = dec_y
+    out, _ = s_dec(cx, d1_y, ['Just opening', 'the page?'], w=DW, h=DH)
+    parts += out
+    b1_top = d1_y + DH / 2 - 26
+    parts.append(s_wire([(cx + DW / 2, d1_y + DH / 2), (LANE - LANE_W / 2 - 2, d1_y + DH / 2)]))
+    parts.append(s_lbl(cx + DW / 2 + 8, d1_y + DH / 2 - 6, 'Yes', 't-yes', 'start'))
+    out, b1_h = g_view(b1_top)
+    parts += out
 
-    last_bottom = taps[-1][1] + taps[-1][5]
-    term_y = last_bottom + 18
-    parts.append(s_wire([(cx, dec_y + h), (cx, term_y)]))
-    for tap_y, top, caption, tag, build, gh in taps:
-        parts.append(s_wire([(cx, tap_y), (LANE - 174, tap_y)]))
-        out, _ = build(top)
-        parts += out
-        parts.append(s_lbl(cx + 16, tap_y - 6, tag, 't-lab', 'start'))
-        if caption:
-            parts.append(s_lbl(LANE - 158, top - 7, caption, 't-lab', 'start'))
+    d2_y = d1_y + DH + 24
+    parts.append(s_wire([(cx, d1_y + DH), (cx, d2_y)]))
+    parts.append(s_lbl(cx + 8, d1_y + DH + 17, 'No', 't-no', 'start'))
+    out, _ = s_dec(cx, d2_y, ['Asking to', 'cancel?'], w=DW, h=DH)
+    parts += out
+    b2_top = d2_y + DH / 2 - 30
+    parts.append(s_wire([(cx + DW / 2, d2_y + DH / 2), (LANE - LANE_W / 2 - 2, d2_y + DH / 2)]))
+    parts.append(s_lbl(cx + DW / 2 + 8, d2_y + DH / 2 - 6, 'Yes', 't-yes', 'start'))
+    out, b2_h = g_cancel(b2_top)
+    parts += out
+
+    b3_top = max(b1_top + b1_h, b2_top + b2_h) + 24
+    b3_cy = b3_top + 30
+    parts.append(s_wire([(cx, d2_y + DH), (cx, b3_cy), (LANE - LANE_W / 2 - 2, b3_cy)]))
+    parts.append(s_lbl(cx + 8, d2_y + DH + 17, 'No', 't-no', 'start'))
+    out, b3_h = g_claim(b3_top)
+    parts += out
+
+    rail = b3_top + b3_h + 18
+    term_y = rail + 22
+    for top, hh in ((b1_top, b1_h), (b2_top, b2_h), (b3_top, b3_h)):
+        parts.append(s_wire([(LANE + LANE_W / 2, top + hh / 2 - 4),
+                             (RET, top + hh / 2 - 4), (RET, rail)], arrow=False))
+    parts.append(s_wire([(RET, rail), (cx, rail)], arrow=False))
+    parts.append(s_wire([(cx, rail), (cx, term_y)]))
 
     out, ht = s_term(cx, term_y, 'Done', w=200)
     parts += out
